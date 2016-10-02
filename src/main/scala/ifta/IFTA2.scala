@@ -92,3 +92,40 @@ case class Edge(from:Int,cc:ClockCons,act:Set[String]
     if (pos == 1) Edge(prod(from,loc), cc, act,reset,fe, prod(to,loc)) 
       else Edge(prod(loc,from), cc, act,reset,fe, prod(loc,to))
 }
+
+
+/*
+Example from paper Coffee machine (cm) and Router.
+val cm = IFTA(
+    Set(0,1),
+    Set(0),
+    Set("c","ca","b"),
+    Set(),
+    Set(),
+    Set(
+        Edge(0,CTrue,Set("c"),Set(),FTrue,1),
+        Edge(0,CTrue,Set("ca"),Set(),FTrue,1),
+        Edge(1,CTrue,Set("b"),Set(),FTrue,0)), 
+    Map(),
+    FTrue,
+    Set(),
+    Set("c","ca"),
+    Set("b"))
+
+val router = 
+IFTA(
+    Set(3,4),
+    Set(3),
+    Set("c","ca","i"),
+    Set(),
+    Set(),
+    Set(
+        Edge(3,CTrue,Set("i"),Set(),FTrue,4),
+        Edge(4,CTrue,Set("c"),Set(),FTrue,3),
+        Edge(4,CTrue,Set("ca"),Set(),FTrue,3)),
+    Map(),
+    FTrue,
+    Set(),
+    Set("i"),
+    Set("c","ca"))
+*/
