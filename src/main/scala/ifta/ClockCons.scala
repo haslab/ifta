@@ -3,7 +3,9 @@ package ifta
 /**
   * Created by jose on 30/09/16.
   */
-sealed trait ClockCons
+sealed trait ClockCons {
+  def &(other:ClockCons) = CAnd(this,other)
+}
 
 case object CTrue                extends ClockCons
 case class LT(c:String,n:Float)  extends ClockCons

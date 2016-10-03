@@ -1,4 +1,6 @@
-package ifta
+package ifta.backend
+
+import ifta.{Edge, IFTA}
 
 /**
   * Created by jose on 30/09/16.
