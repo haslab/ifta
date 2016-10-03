@@ -6,22 +6,29 @@
 
  /**
    * Represents an Interface Featured Timed Automata (IFTA)
+   *
    * @param locs locations (states of the automata)
    * @param init initial locations
    * @param act actions
    * @param clocks clocks
    * @param feats features
    * @param edges edges
-   * @param inv invariants of locations
+   * @param cInv invariants of locations
    * @param fm feature model
    * @param vars variables (of feature expressions)
    * @param in input ports
    * @param out output ports
    */
- case class IFTA(locs:Set[Int],init:Set[Int],act:Set[String],clocks:Set[String]
-                 ,feats:Set[String],edges:Set[Edge],inv:Map[Int,FExp],fm:FExp
-                 ,vars:Set[String],in:Set[String],out:Set[String]) {
+ case class IFTA(locs:Set[Int], init:Set[Int], act:Set[String], clocks:Set[String]
+                 , feats:Set[String], edges:Set[Edge], cInv:Map[Int,ClockCons], fm:FExp
+                 , vars:Set[String], in:Set[String], out:Set[String]) {
 
+   /**
+     * compose 2 IFTAs with shared ports
+     *
+     * @param other
+     * @return
+     */
    def *(other:IFTA): IFTA = {
      // index of loc1 and loc2 will be used to new locations
      val loc1 = locs.toList
@@ -43,14 +50,14 @@
 
      val resEdges = (for (e1 <- edges; e2 <- other.edges; if e1.compat(e2,shared))
                       yield e1.join(e2,prod))            ++
-                    (for (e1 <- edges; loc <- other.locs; if e1.act.intersect(shared).isEmpty) 
+                    (for (e1 <- edges; loc <- other.locs; if e1.act.intersect(shared).isEmpty)
                       yield e1.independent(loc, prod,1)) ++
-                    (for (e2 <- other.edges; loc <- locs; if e2.act.intersect(shared).isEmpty) 
+                    (for (e2 <- other.edges; loc <- locs; if e2.act.intersect(shared).isEmpty)
                       yield e2.independent(loc, prod,2))
-  
+
      val resInv = (for (l1<-loc1; l2<-loc2)
-         yield prod(l1, l2) -> FAnd(inv.withDefaultValue(FTrue)(l1),
-                              other.inv.withDefaultValue(FTrue)(l2))).toMap[Int,FExp]
+         yield prod(l1, l2) -> CAnd(cInv.withDefaultValue(CTrue)(l1),
+                               other.cInv.withDefaultValue(CTrue)(l2))).toMap[Int,ClockCons]
      val resFm = FAnd(fm,other.fm)
      val resVars = vars ++ other.vars
      val resIn = (in ++ other.in) -- shared
@@ -59,22 +66,42 @@
      IFTA(resLocs,resInit,resAct,resCl,resFeat,resEdges,resInv,resFm,resVars,resIn,resOut)
    }
 
+   // constructors
+   def ++(e: Edge): IFTA =
+     IFTA(locs+e.from+e.to,init,act++e.act,clocks++e.cCons.clocks,feats++e.fe.feats,edges+e,cInv,fm,vars,in,out)
+   def +++(e:Edge*) = {
+     var res = this
+     for (ed <- e) res = res++ed
+     res
+   }
+   def when(f:FExp): IFTA =
+     IFTA(locs,init,act,clocks,feats,edges,cInv,fm && f,vars,in,out)
+   def get(p:String): IFTA =
+     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,vars,in+p,out)
+   def pub(p:String): IFTA =
+     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,vars,in,out+p)
+   def startWith(i:Int): IFTA =
+     IFTA(locs,init+i,act,clocks,feats,edges,cInv,fm,vars,in,out)
+   def inv(l:Int,cc:ClockCons): IFTA =
+     IFTA(locs,init,act,clocks,feats,edges,cInv+(l->cc),fm,vars,in,out)
 
  }
 
  /**
    * Represents an edge of an IFTA
+ *
    * @param from source location
-   * @param cc clock constraint
+   * @param cCons clock constraint
    * @param act actions
-   * @param reset clocks to be reset
+   * @param cReset clocks to be reset
    * @param fe feature expression (guard)
    * @param to destination location
    */
- case class Edge(from:Int,cc:ClockCons,act:Set[String]
-                 ,reset:Set[String],fe:FExp,to:Int) {
+ case class Edge(from:Int, cCons: ClockCons, act:Set[String]
+                 ,cReset:Set[String], fe:FExp, to:Int) {
    /**
      * Checks if 2 edges are compatible (have the same shared actions)
+ *
      * @param other edge to compare against
      * @param shared edges that must match
      * @return
@@ -84,24 +111,35 @@
 
    /**
      * Combines 2 compatible edges (pointwise union/conjunction)
+ *
      * @param other edge to combine with
      * @param prod function to combine location numbers
      * @return
      */
    def join(other:Edge,prod:(Int,Int)=>Int): Edge =
-     Edge(prod(from,other.from), CAnd(cc,other.cc), act++other.act
-         ,reset++other.reset,FAnd(fe,other.fe),prod(to,other.to))
-   
+     Edge(prod(from,other.from), CAnd(cCons, other.cCons), act++other.act
+         ,cReset++other.cReset,FAnd(fe,other.fe),prod(to,other.to))
+
    /**
-    * Creates an edge taken independently during composition 
+    * Creates an edge taken independently during composition
+ *
     * @param loc location of the other automata for composed transition
     * @param prod function to combine location numbers
     * @param pos whether the edge is from automata A1 or A2 (in A1xA2)
     */
-   def independent(loc:Int,prod:(Int,Int) => Int, pos:Int): Edge = 
-     if (pos == 1) Edge(prod(from,loc), cc, act,reset,fe, prod(to,loc)) 
-     else          Edge(prod(loc,from), cc, act,reset,fe, prod(loc,to))
+   def independent(loc:Int,prod:(Int,Int) => Int, pos:Int): Edge =
+     if (pos == 1) Edge(prod(from,loc), cCons, act,cReset,fe, prod(to,loc))
+     else          Edge(prod(loc,from), cCons, act,cReset,fe, prod(loc,to))
+
+   // constructors
+   def reset(c:String) = Edge(from,cCons,act,Set(c),fe,to)
+   def reset(c:Iterable[String]) = Edge(from,cCons,act,c.toSet,fe,to)
+   def by(a:String) = Edge(from,cCons,Set(a),cReset,fe,to)
+   def by(as:Iterable[String]) = Edge(from,cCons,as.toSet,cReset,fe,to)
+   def cc(c:ClockCons) = Edge(from,c,act,cReset,fe,to)
+   def when(f:FExp) = Edge(from,cCons,act,cReset,fe && f,to)
  }
+
 
  /*
  import ifta._

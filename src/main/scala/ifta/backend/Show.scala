@@ -26,7 +26,7 @@ object Show {
     case LT(c, n) => s"$c < $n"
     case GT(c, n) => s"$c > $n"
     case LE(c, n) => s"$c <= $n"
-    case GE(c, n) => s"$c <= $n"
+    case GE(c, n) => s"$c >= $n"
     case CAnd(cc1, cc2) => s"${apply(cc1)} & ${apply(cc2)}"
   }
 }
