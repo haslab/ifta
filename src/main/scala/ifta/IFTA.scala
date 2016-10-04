@@ -87,6 +87,8 @@
        case None => DSL.ifta
      }
    }
+   def instance(f:FExp):IFTA =
+     this when (this.fm && f)
 
 
    // constructors
