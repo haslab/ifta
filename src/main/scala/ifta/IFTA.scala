@@ -58,7 +58,8 @@
      val resInv = (for (l1<-loc1; l2<-loc2)
          yield prod(l1, l2) -> CAnd(cInv.withDefaultValue(CTrue)(l1),
                                other.cInv.withDefaultValue(CTrue)(l2))).toMap[Int,ClockCons]
-     val resFm = fm <-> other.fm
+     val resFm = (fm && other.fm) &&
+       (for (a <- shared) yield (featExpPorts(a) <-> other.featExpPorts(a))).reduce(_&&_)
      val resVars = vars ++ other.vars
      val resIn = (in ++ other.in) -- shared
      val resOut = (out ++ other.out) -- shared
@@ -88,6 +89,21 @@
      }
    }
 
+   /**
+     * Feature expression of a port, defined as
+     * OR of all fexp associated to edges (_,_,{_,port,_},_,_)
+     * @param port
+     * @return
+     */
+   private def fEPort(port:String) :FExp =
+     (for ( e <- edges; if e.act contains port) yield e.fe).reduce(_||_)
+
+   /**
+     * Feature expression of each port
+     * for now uses all actions, but it should only be define for ports
+     */
+   val featExpPorts:Map[String,FExp] =
+     (act map {a => (a -> fEPort(a))}).toMap
 
    // constructors
    def ++(e: Edge): IFTA =
