@@ -51,7 +51,7 @@ class TestIFTA extends JUnitSuite {
       Set("i"),
       Set("c","ca"))
 
-  val cmRouter = IFTA(Set(0, 1, 2, 3),Set(0),Set("b", "i"),Set(),Set(),Set(Edge(1,CTrue,Set("i"),Set(),FTrue,3), Edge(2,CAnd(CTrue,CTrue),Set("ca"),Set(),FAnd(FTrue,FTrue),1), Edge(1,CAnd(CTrue,CTrue),Set("b", "i"),Set(),FAnd(FTrue,FTrue),2), Edge(2,CAnd(CTrue,CTrue),Set("c"),Set(),FAnd(FTrue,FTrue),1), Edge(3,CTrue,Set("b"),Set(),FTrue,2), Edge(1,CTrue,Set("b"),Set(),FTrue,0), Edge(0,CTrue,Set("i"),Set(),FTrue,2)),Map(0 -> CAnd(CTrue,CTrue), 2 -> CAnd(CTrue,CTrue), 1 -> CAnd(CTrue,CTrue), 3 -> CAnd(CTrue,CTrue)),FAnd(FTrue,FTrue),Set(),Set("i"),Set("b"))
+  val cmRouter = IFTA(Set(0, 1, 2, 3),Set(0),Set("b", "i"),Set(),Set(),Set(Edge(1,CTrue,Set("i"),Set(),FTrue,3), Edge(2,CAnd(CTrue,CTrue),Set("ca"),Set(),FAnd(FTrue,FTrue),1), Edge(1,CAnd(CTrue,CTrue),Set("b", "i"),Set(),FAnd(FTrue,FTrue),2), Edge(2,CAnd(CTrue,CTrue),Set("c"),Set(),FAnd(FTrue,FTrue),1), Edge(3,CTrue,Set("b"),Set(),FTrue,2), Edge(1,CTrue,Set("b"),Set(),FTrue,0), Edge(0,CTrue,Set("i"),Set(),FTrue,2)),Map(0 -> CAnd(CTrue,CTrue), 2 -> CAnd(CTrue,CTrue), 1 -> CAnd(CTrue,CTrue), 3 -> CAnd(CTrue,CTrue)),FAnd(FOr(FNot(FTrue),FTrue),FOr(FNot(FTrue),FTrue)),Set(),Set("i"),Set("b"))
 
 //  @Test def TestComm(): Unit =
 //    assertEquals("composition comutes",cm*router,router*cm)

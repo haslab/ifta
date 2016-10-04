@@ -1,12 +1,13 @@
 package ifta.backend
 
 import ifta._
+import ifta.analyse.Simplify
 
 /**
   * Created by jose on 03/10/16.
   */
 object Show {
-  def apply(fExp: FExp): String = fExp match {
+  def apply(fExp: FExp): String = Simplify(fExp) match {
     case FTrue => "true"
     case v: Var => v.name
 //    case FAnd(e1, e2@FAnd(_,_)) => parShow(e1)+" && "+Show(e2)

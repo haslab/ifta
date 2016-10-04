@@ -58,13 +58,36 @@
      val resInv = (for (l1<-loc1; l2<-loc2)
          yield prod(l1, l2) -> CAnd(cInv.withDefaultValue(CTrue)(l1),
                                other.cInv.withDefaultValue(CTrue)(l2))).toMap[Int,ClockCons]
-     val resFm = FAnd(fm,other.fm)
+     val resFm = fm <-> other.fm
      val resVars = vars ++ other.vars
      val resIn = (in ++ other.in) -- shared
      val resOut = (out ++ other.out) -- shared
 
      IFTA(resLocs,resInit,resAct,resCl,resFeat,resEdges,resInv,resFm,resVars,resIn,resOut)
    }
+
+   /**
+     * Checks if the IFTA is valid, i.e., if its feature model has solutions
+     */
+   lazy val isValid:Boolean =
+      analyse.Solver(fm).isDefined
+   /**
+     * Finds a solution for its feature model and uses it to project into a timed automata,
+     * i.e., a IFTA without the feature model
+     */
+   lazy val instance:IFTA = {
+     analyse.Solver(fm) match {
+       case Some(sol) =>
+         IFTA(locs,init,act,clocks
+           ,(for ((s,b)<-sol; if b && (feats contains s)) yield s).toSet
+           , for (e <- edges; if e.fe.check(sol)) yield e when FTrue
+           , cInv,FTrue
+           ,(for ((s,b)<-sol; if b && (vars contains s)) yield s).toSet
+           , in,out) // in out could be filtered to only valid ports?
+       case None => DSL.ifta
+     }
+   }
+
 
    // constructors
    def ++(e: Edge): IFTA =
@@ -131,13 +154,13 @@
      if (pos == 1) Edge(prod(from,loc), cCons, act,cReset,fe, prod(to,loc))
      else          Edge(prod(loc,from), cCons, act,cReset,fe, prod(loc,to))
 
-   // constructors
+   // constructors (replace parameters)
    def reset(c:String) = Edge(from,cCons,act,Set(c),fe,to)
    def reset(c:Iterable[String]) = Edge(from,cCons,act,c.toSet,fe,to)
    def by(a:String) = Edge(from,cCons,Set(a),cReset,fe,to)
    def by(as:Iterable[String]) = Edge(from,cCons,as.toSet,cReset,fe,to)
    def cc(c:ClockCons) = Edge(from,c,act,cReset,fe,to)
-   def when(f:FExp) = Edge(from,cCons,act,cReset,fe && f,to)
+   def when(f:FExp) = Edge(from,cCons,act,cReset,f,to)
  }
 
 
