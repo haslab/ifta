@@ -11,7 +11,7 @@ object Examples {
     0 --> 1 by "co" when "cf"&&"mk" reset "c",
     0 --> 1 by "ca" when "cf"       reset "c",
     1 --> 0 by "b" cc "c">=2
-    ) startWith 0 inv(1,"c"<=5) get "co" get "ca" pub "b"
+    ) startWith 0 when "mk"-->"cf" inv(1,"c"<=5) get "co" get "ca" pub "b"
 
 
   val router = ifta +++ (

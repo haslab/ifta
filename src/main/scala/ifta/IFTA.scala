@@ -88,6 +88,8 @@
        case None => DSL.ifta
      }
    }
+   def instance(f:FExp):IFTA =
+     this when (this.fm && f)
 
    /**
      * Feature expression of a port, defined as

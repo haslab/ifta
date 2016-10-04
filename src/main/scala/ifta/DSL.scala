@@ -27,8 +27,8 @@ object DSL {
   val ifta = IFTA(Set(),Set(),Set(),Set(),Set(),Set(),Map(),true,Set(),Set(),Set())
 
   def toDot(iFTA: IFTA) = backend.Dot(iFTA)
-  def toUpp(iFTA: IFTA) = backend.Uppaal(iFTA)
-  def toUpp(iFTA: IFTA,file:String) = {
+  def toUppal(iFTA: IFTA) = backend.Uppaal(iFTA)
+  def toUppal(iFTA: IFTA, file:String) = {
     val bw = new BufferedWriter(new FileWriter(file))
     bw.write(backend.Uppaal(iFTA))
     bw.close()
