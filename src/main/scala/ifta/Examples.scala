@@ -20,4 +20,6 @@ object Examples {
     4 --> 3 by "ca" when "vi" && "vo2"
     ) startWith 3 get "i" pub "co" pub "ca"
 
+//  val network = nifta <<>> (cm,router)
+  val network = NIFTA(Set(cm,router))
 }

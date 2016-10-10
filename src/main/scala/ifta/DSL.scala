@@ -15,6 +15,7 @@ object DSL {
     def -->(other:Int): Edge = Edge(i,true,Set(),Set(),true,other)
   }
 
+  implicit def toNIFTA(iFTA:IFTA): NIFTA = NIFTA(Set(iFTA))
   implicit def toFeat(s:String): Feat = Feat(s)
   implicit def toCVar(s:String): CVar = new CVar(s)
   implicit def boolToCC(b:Boolean): ClockCons =
@@ -25,12 +26,18 @@ object DSL {
 
   def not(fExp: FExp) = FNot(fExp)
   val ifta = IFTA(Set(),Set(),Set(),Set(),Set(),Set(),Map(),true,Set(),Set(),Set())
+//  val nifta = NIFTA(Set())
 
-  def toDot(iFTA: IFTA) = backend.Dot(iFTA)
-  def toUppal(iFTA: IFTA) = backend.Uppaal(iFTA)
-  def toUppal(iFTA: IFTA, file:String) = {
+//  def toDot(iFTA: IFTA) = backend.Dot(iFTA)
+  //Perhaps add to Dot.scala a Dot(NIFTA)
+  def toDot(nIFTA:NIFTA):String = {
+    if (nIFTA.iFTAs.isEmpty) ""
+    else nIFTA.iFTAs.map(i => backend.Dot(i)).mkString("\n")
+  }
+  def toUppaal(nIFTA: NIFTA) = backend.Uppaal(nIFTA)
+  def toUppaal(nIFTA: NIFTA, file:String) = {
     val bw = new BufferedWriter(new FileWriter(file))
-    bw.write(backend.Uppaal(iFTA))
+    bw.write(backend.Uppaal(nIFTA))
     bw.close()
   }
 

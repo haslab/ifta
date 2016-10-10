@@ -67,6 +67,8 @@
      IFTA(resLocs,resInit,resAct,resCl,resFeat,resEdges,resInv,resFm,resVars,resIn,resOut)
    }
 
+   lazy val interface:Set[String] = in ++ out
+
    /**
      * Checks if the IFTA is valid, i.e., if its feature model has solutions
      */
@@ -181,6 +183,24 @@
    def by(as:Iterable[String]) = Edge(from,cCons,as.toSet,cReset,fe,to)
    def cc(c:ClockCons) = Edge(from,c,act,cReset,fe,to)
    def when(f:FExp) = Edge(from,cCons,act,cReset,f,to)
+ }
+
+ /**
+   * Represents a network of IFTA
+   * @param iFTAs
+   */
+ case class NIFTA(iFTAs:Set[IFTA]) {
+
+   lazy val interfaces:Set[String] =
+     (for (iFTA <- iFTAs) yield iFTA.interface).flatten
+
+   // constructors
+//   def <<>>(i:IFTA):NIFTA = NIFTA(iFTAs++Set(i))
+//   def <<>>(i:IFTA*):NIFTA = {
+//     var res = this
+//     for (iFTA <- i) res = res<<>>iFTA
+//     res
+//   }
  }
 
 

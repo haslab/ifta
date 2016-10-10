@@ -9,39 +9,88 @@ import ifta.analyse.Simplify
   */
 object Uppaal {
 
-  def apply(i: IFTA):String = {
-    val iFTA = Simplify(i)
-    s"""<?xml version="1.0" encoding="utf-8"?>
-      |<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
-      |<nta>
-      |	<declaration>
-      | // Place global declarations here.
-      | </declaration>
-      |	<template>
-      |		<name x="5" y="5">IFTA${iFTA.act.mkString("_","_","")}</name>
-      |		<declaration>
-      |// Place local declarations 1 here.
-      |// clocks:
-      |${if (iFTA.clocks.nonEmpty) iFTA.clocks.mkString("clock ",",",";") else ""}
-      |// channels (actions)
-      |${if (iFTA.act.nonEmpty) iFTA.act.mkString("chan ",",",";") else ""}
-      |   </declaration>
-      |// Locations
-      |${iFTA.locs.map(loc=>mkLocation(loc,iFTA.cInv.getOrElse(loc,CTrue))).mkString("\n")}
-      |${iFTA.init.headOption match {case Some(h)=>"   <init ref=\"id"+h+"\"/>";case None =>""}}
-      |// Transitions
-      |${iFTA.edges.map(mkTransition(_,iFTA.in,iFTA.out)).mkString("\n")}
-      |	</template>
-      |	<system>// Place template instantiations here.
-      |Process = IFTA${iFTA.act.mkString("_","_","")}();
-      |// List one or more processes to be composed into a system.
-      |system Process;
-      |    </system>
-      |	<queries>
-      |	</queries>
-      |</nta>
-      |
-    """.stripMargin
+  def apply(n:NIFTA):String = {
+    val nIFTA = NIFTA((for (i <- n.iFTAs) yield Simplify(i)))
+    if (nIFTA.iFTAs.isEmpty) ""
+    else s"""<?xml version="1.0" encoding="utf-8"?>
+        |<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+        |<nta>
+        |	<declaration>
+        | // Place global declarations here.
+        |${if (nIFTA.interfaces.nonEmpty) nIFTA.interfaces.mkString("chan ",",",";") else ""}
+        | </declaration>
+        |${nIFTA.iFTAs.map(i => mkTemplate(i)).mkString("\n")}
+        |<system>// Place template instantiations here.
+        |${nIFTA.iFTAs.map(i => mkProcesses(i)).mkString("\n")}
+        |// List one or more processes to be composed into a system.
+        |system ${nIFTA.iFTAs.map(i => i.act.mkString("iFTA_","_","") ).mkString(" ",",",";")}
+        |</system>
+        |	<queries>
+        |	</queries>
+        |</nta>
+        |
+      """.stripMargin
+    }
+
+//  def apply(i: IFTA):String = {
+//    val iFTA = Simplify(i)
+//    s"""<?xml version="1.0" encoding="utf-8"?>
+//      |<!DOCTYPE nta PUBLIC '-//Uppaal Teaem//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+//      |<nta>
+//      |	<declaration>
+//      | // Place global declarations here.
+//      | </declaration>
+//      |	<template>
+//      |		<name x="5" y="5">IFTA${iFTA.act.mkString("_","_","")}</name>
+//      |		<declaration>
+//      |// Place local declarations 1 here.
+//      |// clocks:
+//      |${if (iFTA.clocks.nonEmpty) iFTA.clocks.mkString("clock ",",",";") else ""}
+//      |// channels (actions)
+//      |${if (iFTA.act.nonEmpty) iFTA.act.mkString("chan ",",",";") else ""}
+//      |   </declaration>
+//      |// Locations
+//      |${iFTA.locs.map(loc=>mkLocation(loc,iFTA.cInv.getOrElse(loc,CTrue))).mkString("\n")}
+//      |${iFTA.init.headOption match {case Some(h)=>"   <init ref=\"id"+h+"\"/>";case None =>""}}
+//      |// Transitions
+//      |${iFTA.edges.map(mkTransition(_,iFTA.in,iFTA.out)).mkString("\n")}
+//      |	</template>
+//      |	<system>// Place template instantiations here.
+//      |Process = IFTA${iFTA.act.mkString("_","_","")}();
+//      |// List one or more processes to be composed into a system.
+//      |system Process;
+//      |    </system>
+//      |	<queries>
+//      |	</queries>
+//      |</nta>
+//      |
+//    """.stripMargin
+//  }
+
+  /* e.g.
+    iFTA_a_b = IFTA_a_b();
+   */
+  def mkProcesses(iFTA: IFTA): String = {
+    s"""iFTA${iFTA.act.mkString("_", "_", "")} = IFTA${iFTA.act.mkString("_", "_", "")}();"""
+  }
+
+  def mkTemplate(iFTA:IFTA):String = {
+    s"""<template>
+        |		<name x="5" y="5">IFTA${iFTA.act.mkString("_", "_", "")}</name>
+        |		<declaration>
+        |// Place local declarations 1 here.
+        |// clocks:
+        |${if (iFTA.clocks.nonEmpty) iFTA.clocks.mkString("clock ", ",", ";") else ""}
+        |// channels (actions)
+        |${if (iFTA.act.nonEmpty) iFTA.act.mkString("chan ", ",", ";") else ""}
+        |   </declaration>
+        |// Locations
+        |${iFTA.locs.map(loc => mkLocation(loc, iFTA.cInv.getOrElse(loc, CTrue))).mkString("\n")}
+        |${iFTA.init.headOption match {case Some(h) => "   <init ref=\"id" + h + "\"/>"; case None => ""}}
+        |// Transitions
+        |${iFTA.edges.map(mkTransition(_, iFTA.in, iFTA.out)).mkString("\n")}
+        |	</template>
+     """.stripMargin
   }
 
   /* e.g.
