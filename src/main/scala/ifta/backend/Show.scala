@@ -30,4 +30,32 @@ object Show {
     case GE(c, n) => s"$c >= $n"
     case CAnd(cc1, cc2) => s"${apply(cc1)} & ${apply(cc2)}"
   }
+
+  def apply(iFTA: IFTA): String =
+    s"""IFTA [${iFTA.init}${(iFTA.locs-iFTA.init).mkString("|",",","")}] """+
+    (if (iFTA.act.isEmpty) "" else s"""${iFTA.act.mkString("[",",","]")} """)+
+    (if (iFTA.clocks.isEmpty) "" else s"""${iFTA.clocks.mkString("[",",","]")} """)+
+    (if (iFTA.feats.isEmpty) "" else s"""${iFTA.feats.mkString("[",",","]")} """)+
+    (if (iFTA.fm == FTrue) "" else s"""${Show(iFTA.fm)}""")+
+    iFTA.edges.map(x=>"\n  "+Show(x)).mkString("")
+
+  def apply(e:Edge): String =
+    s"""${e.from} --> ${e.to} ${mbAct(e.act)}${mbCC(e.cCons)}${mbFE(e.fe)}"""
+  private def mbAct(as:Set[String]) = if (as.isEmpty) "" else "by "+as.mkString(",")+" "
+  private def mbAct(a:String) = "by "+a+" "
+  private def mbCC(cc:ClockCons) = if (cc == CTrue) "" else "cc "+Show(cc)+" "
+  private def mbFE(fe:FExp) = if (fe == FTrue) "" else "when "+Show(fe)+" "
+
+
+  def apply(fTA: FTA): String =
+    s"""FTA [${fTA.init}${((fTA.locs--fTA.committed)-fTA.init).mkString("|",",","")}${(fTA.committed-fTA.init).mkString("|",",","")}] """+
+      (if (fTA.act.isEmpty) "" else s"""${fTA.act.mkString("[",",","]")} """)+
+      (if (fTA.clocks.isEmpty) "" else s"""${fTA.clocks.mkString("[",",","]")} """)+
+      (if (fTA.feats.isEmpty) "" else s"""${fTA.feats.mkString("[",",","]")} """)+
+      (if (fTA.fm == FTrue) "" else s"""${Show(fTA.fm)}""")+
+      fTA.edges.map(x=>"\n  "+Show(x)).mkString("")
+
+  def apply(e:FtaEdge): String =
+    s"""${e.from} --> ${e.to} ${mbAct(e.act)}${mbCC(e.cCons)}${mbFE(e.fe)}"""
+
 }

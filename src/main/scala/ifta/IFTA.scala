@@ -1,5 +1,7 @@
  package ifta
 
+ import ifta.backend.Show
+
  /**
    * Created by jose on 30/09/16.
    */
@@ -19,7 +21,7 @@
    * @param in input ports
    * @param out output ports
    */
- case class IFTA(locs:Set[Int], init:Set[Int], act:Set[String], clocks:Set[String]
+ case class IFTA(locs:Set[Int], init:Int, act:Set[String], clocks:Set[String]
                  , feats:Set[String], edges:Set[Edge], cInv:Map[Int,ClockCons], fm:FExp
                  , vars:Set[String], in:Set[String], out:Set[String]) {
 
@@ -41,8 +43,8 @@
      val shared = act intersect other.act
 
      val resLocs = (0 until (loc1.length * loc2.length)).toSet
-     val resInit = for (i <- init; j <- other.init)
-                      yield prod(i,j)
+     val resInit = prod(init,other.init)
+//       for (i <- init; j <- other.init) yield prod(i,j)
 
      val resAct = (act ++ other.act) -- shared
      val resCl  = clocks ++ other.clocks
@@ -87,7 +89,7 @@
            , cInv,FTrue
            ,(for ((s,b)<-sol; if b && (vars contains s)) yield s).toSet
            , in,out) // in out could be filtered to only valid ports?
-       case None => DSL.ifta
+       case None => DSL.newifta
      }
    }
    def instance(f:FExp):IFTA =
@@ -96,6 +98,7 @@
    /**
      * Feature expression of a port, defined as
      * OR of all fexp associated to edges (_,_,{_,port,_},_,_)
+ *
      * @param port
      * @return
      */
@@ -130,6 +133,7 @@
    def inv(l:Int,cc:ClockCons): IFTA =
      IFTA(locs,init,act,clocks,feats,edges,cInv+(l->cc),fm,vars,in,out)
 
+   override def toString = Show(this)
  }
 
  /**
@@ -187,6 +191,7 @@
 
  /**
    * Represents a network of IFTA
+ *
    * @param iFTAs
    */
  case class NIFTA(iFTAs:Set[IFTA]) {

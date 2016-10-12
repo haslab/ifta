@@ -86,12 +86,13 @@ object Uppaal {
         |   </declaration>
         |// Locations
         |${iFTA.locs.map(loc => mkLocation(loc, iFTA.cInv.getOrElse(loc, CTrue))).mkString("\n")}
-        |${iFTA.init.headOption match {case Some(h) => "   <init ref=\"id" + h + "\"/>"; case None => ""}}
+        |   <init ref="id${iFTA.init}"/>"
         |// Transitions
         |${iFTA.edges.map(mkTransition(_, iFTA.in, iFTA.out)).mkString("\n")}
         |	</template>
      """.stripMargin
   }
+//${iFTA.init.headOption match {case Some(h) => "   <init ref=\"id" + h + "\"/>"; case None => ""}}
 
   /* e.g.
   	<location id="id0" x="93" y="-8">

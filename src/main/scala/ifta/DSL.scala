@@ -2,6 +2,8 @@ package ifta
 
 import java.io.{FileWriter, BufferedWriter}
 
+import ifta.analyse.IFTA2FTA
+
 object DSL {
   // to help building clock constraints
   class CVar(n:String) {
@@ -25,15 +27,20 @@ object DSL {
   implicit def intToELoc(i:Int): ELoc = new ELoc(i)
 
   def not(fExp: FExp) = FNot(fExp)
-  val ifta = IFTA(Set(),Set(),Set(),Set(),Set(),Set(),Map(),true,Set(),Set(),Set())
+  val newifta = IFTA(Set(),0,Set(),Set(),Set(),Set(),Map(),true,Set(),Set(),Set())
 //  val nifta = NIFTA(Set())
 
+  val dot = ifta.backend.Dot
+//  def toDot(fTA: FTA) = backend.Dot(fTA)
 //  def toDot(iFTA: IFTA) = backend.Dot(iFTA)
-  //Perhaps add to Dot.scala a Dot(NIFTA)
-  def toDot(nIFTA:NIFTA):String = {
-    if (nIFTA.iFTAs.isEmpty) ""
-    else nIFTA.iFTAs.map(i => backend.Dot(i)).mkString("\n")
-  }
+//  //Perhaps add to Dot.scala a Dot(NIFTA)
+//  def toDot(nIFTA:NIFTA):String = {
+//    if (nIFTA.iFTAs.isEmpty) ""
+//    else nIFTA.iFTAs.map(i => backend.Dot(i)).mkString("\n")
+//  }
+
+  def toFTA(iFTA: IFTA): FTA = IFTA2FTA(iFTA)
+
   def toUppaal(nIFTA: NIFTA) = backend.Uppaal(nIFTA)
   def toUppaal(nIFTA: NIFTA, file:String) = {
     val bw = new BufferedWriter(new FileWriter(file))

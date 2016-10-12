@@ -13,16 +13,20 @@ object Simplify {
   def apply(f:FExp): FExp = f match {
     case FTrue => FTrue
     case _: Var => f
-    case FAnd(FTrue, e) => apply(e)
-    case FAnd(e,FTrue) => apply(e)
-    case FAnd(FNot(FTrue), e) => FNot(FTrue)
-    case FAnd(e,FNot(FTrue)) => FNot(FTrue)
-    case FAnd(e1, e2) => FAnd(apply(e1),apply(e2))
-    case FOr(FTrue, e) => FTrue
-    case FOr(e,FTrue) => FTrue
-    case FOr(FNot(FTrue), e) => apply(e)
-    case FOr(e,FNot(FTrue)) => apply(e)
-    case FOr(e1, e2) => FOr(apply(e1),apply(e2))
+    case FAnd(e1,e2) => (apply(e1),apply(e2)) match {
+      case (FTrue, e) => e
+      case (e,FTrue) => e
+      case (FNot(FTrue), _) => FNot(FTrue)
+      case (_,FNot(FTrue)) => FNot(FTrue)
+      case (e3, e4) => FAnd(e3,e4)
+    }
+    case FOr(e1,e2) => (apply(e1),apply(e2)) match {
+      case (FTrue, e) => FTrue
+      case (e, FTrue) => FTrue
+      case (FNot(FTrue), e) => e
+      case (e, FNot(FTrue)) => e
+      case (e1, e2) => FOr(e1, e2)
+    }
     case FNot(FNot(e)) => apply(e)
     case FNot(e) => FNot(apply(e))
   }
@@ -36,4 +40,7 @@ object Simplify {
 
   def apply(e:Edge):Edge =
     Edge(e.from,apply(e.cCons),e.act,e.cReset,apply(e.fe),e.to)
+
+  def apply(e:FtaEdge):FtaEdge =
+    FtaEdge(e.from,apply(e.cCons),e.act,e.cReset,apply(e.fe),e.to)
 }
