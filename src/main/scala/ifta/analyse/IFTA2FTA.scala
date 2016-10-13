@@ -1,11 +1,14 @@
 package ifta.analyse
 
-import ifta.{Edge, FTA, FtaEdge, IFTA}
+import ifta._
 
 /**
   * Created by jose on 11/10/16.
   */
 object IFTA2FTA {
+
+  def apply(nIFTA: NIFTA): NFTA = NFTA(nIFTA.iFTAs.map(apply))
+
   def apply(iFTA: IFTA): FTA = {
     var lastLoc = iFTA.locs.max
     var newLocs = iFTA.locs
@@ -13,7 +16,7 @@ object IFTA2FTA {
     var committed:Set[Int] = Set()
 
     for (e <- iFTA.edges)
-      genCommitLocs(e, lastLoc, newLocs, newEdges, committed) match {
+      genCommitLocs(e, lastLoc, newLocs, newEdges, committed,iFTA.in,iFTA.out) match {
         case (l,n,ed,c) =>
           lastLoc = l
           newLocs = n
@@ -26,9 +29,10 @@ object IFTA2FTA {
     FTA(newLocs,iFTA.init,committed,iFTA.act,iFTA.clocks,iFTA.feats,newEdges,iFTA.cInv,iFTA.fm)
   }
 
-  private def genCommitLocs(e:Edge, i:Int,locs:Set[Int],edges:Set[FtaEdge],comm:Set[Int]):
+  private def genCommitLocs(e:Edge, i:Int,locs:Set[Int],edges:Set[FtaEdge],comm:Set[Int],ins:Set[String],outs:Set[String]):
       (Int,Set[Int],Set[FtaEdge],Set[Int]) = {
-    if (e.act.size == 1) (i, locs, edges + FtaEdge(e.from, e.cCons, e.act.head, e.cReset, e.fe, e.to), comm)
+    if (e.act.size == 1)
+      (i, locs, edges + FtaEdge(e.from, e.cCons, mkAct(e.act.head,ins,outs), e.cReset, e.fe, e.to), comm)
     else {
       var lloc = i
       var nloc = locs
@@ -38,8 +42,8 @@ object IFTA2FTA {
         lloc += 1
         nloc += lloc
         co += lloc
-        es += FtaEdge(e.from, e.cCons, a, e.cReset, e.fe, lloc)
-        genCommitLocs(Edge(lloc,e.cCons,e.act - a,e.cReset,e.fe,e.to), lloc, nloc, es, co) match {
+        es += FtaEdge(e.from, e.cCons, mkAct(a,ins,outs), e.cReset, e.fe, lloc)
+        genCommitLocs(Edge(lloc,e.cCons,e.act - a,e.cReset,e.fe,e.to), lloc, nloc, es, co,ins,outs) match {
           case (x,y,w,z) => {lloc = x; nloc = y; es = w; co = z}
         }
 //        (lloc, nloc, es, co) = genCommitLocs(e by (e.act - a), lloc, nloc, es, co)
@@ -47,4 +51,7 @@ object IFTA2FTA {
       (lloc, nloc, es, co)
     }
   }
+
+  private def mkAct(a:String,ins:Set[String],outs:Set[String]) =
+    if (ins contains a) a+"?" else if (outs contains a) a+"!" else a
 }

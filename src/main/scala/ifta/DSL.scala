@@ -27,24 +27,18 @@ object DSL {
   implicit def intToELoc(i:Int): ELoc = new ELoc(i)
 
   def not(fExp: FExp) = FNot(fExp)
-  val newifta = IFTA(Set(),0,Set(),Set(),Set(),Set(),Map(),true,Set(),Set(),Set())
+  val newifta = IFTA(Set(),0,Set(),Set(),Set(),Set(),Map(),true,Set(),Set())
 //  val nifta = NIFTA(Set())
 
   val dot = ifta.backend.Dot
-//  def toDot(fTA: FTA) = backend.Dot(fTA)
-//  def toDot(iFTA: IFTA) = backend.Dot(iFTA)
-//  //Perhaps add to Dot.scala a Dot(NIFTA)
-//  def toDot(nIFTA:NIFTA):String = {
-//    if (nIFTA.iFTAs.isEmpty) ""
-//    else nIFTA.iFTAs.map(i => backend.Dot(i)).mkString("\n")
-//  }
 
-  def toFTA(iFTA: IFTA): FTA = IFTA2FTA(iFTA)
+  def toFTA = IFTA2FTA
 
-  def toUppaal(nIFTA: NIFTA) = backend.Uppaal(nIFTA)
+  // NIFTA -> NFTA -> UPPAAL
+  def toUppaal(nIFTA: NIFTA) = backend.Uppaal(IFTA2FTA(nIFTA))
   def toUppaal(nIFTA: NIFTA, file:String) = {
     val bw = new BufferedWriter(new FileWriter(file))
-    bw.write(backend.Uppaal(nIFTA))
+    bw.write(backend.Uppaal(IFTA2FTA(nIFTA))) // NIFTA -> NFTA -> UPPAAL
     bw.close()
   }
 

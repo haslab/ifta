@@ -9,7 +9,7 @@ import ifta.analyse.Simplify
 object Show {
   def apply(fExp: FExp): String = Simplify(fExp) match {
     case FTrue => "true"
-    case v: Var => v.name
+    case Feat(name) => name
 //    case FAnd(e1, e2@FAnd(_,_)) => parShow(e1)+" && "+Show(e2)
     case FAnd(FAnd(e1,e2), e3) => parShow(e1)+" && "+apply(FAnd(e2,e3))
     case FAnd(e1, e2) => parShow(e1)+" && "+parShow(e2)
@@ -18,7 +18,7 @@ object Show {
     case FNot(e) => "!"+parShow(e)
   }
   private def parShow(fExp: FExp): String = fExp match {
-    case FTrue | _:Var | FNot(_) => Show(fExp)
+    case FTrue | Feat(_) | FNot(_) => Show(fExp)
     case _ => "("+apply(fExp)+")"
   }
 
@@ -33,11 +33,13 @@ object Show {
 
   def apply(iFTA: IFTA): String =
     s"""IFTA [${iFTA.init}${(iFTA.locs-iFTA.init).mkString("|",",","")}] """+
-    (if (iFTA.act.isEmpty) "" else s"""${iFTA.act.mkString("[",",","]")} """)+
-    (if (iFTA.clocks.isEmpty) "" else s"""${iFTA.clocks.mkString("[",",","]")} """)+
-    (if (iFTA.feats.isEmpty) "" else s"""${iFTA.feats.mkString("[",",","]")} """)+
-    (if (iFTA.fm == FTrue) "" else s"""${Show(iFTA.fm)}""")+
-    iFTA.edges.map(x=>"\n  "+Show(x)).mkString("")
+      (if (iFTA.act.isEmpty) "" else s"""${iFTA.act.mkString("[",",","]")} """)+
+      (if (iFTA.clocks.isEmpty) "" else s"""${iFTA.clocks.mkString("[",",","]")} """)+
+      (if (iFTA.feats.isEmpty) "" else s"""${iFTA.feats.mkString("[",",","]")} """)+
+      (if (iFTA.in.isEmpty && iFTA.out.isEmpty) ""
+          else s"""${iFTA.in.mkString("[",",","]")}->${iFTA.out.mkString("[",",","]")} """)+
+      (if (iFTA.fm == FTrue) "" else s"\n  ${Show(iFTA.fm)}")+
+      iFTA.edges.map(x=>"\n  "+Show(x)).mkString("")
 
   def apply(e:Edge): String =
     s"""${e.from} --> ${e.to} ${mbAct(e.act)}${mbCC(e.cCons)}${mbFE(e.fe)}"""

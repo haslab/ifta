@@ -1,6 +1,7 @@
  package ifta
 
  import ifta.backend.Show
+ import org.scalatest.tools.ReporterConfigurations
 
  /**
    * Created by jose on 30/09/16.
@@ -17,16 +18,15 @@
    * @param edges edges
    * @param cInv invariants of locations
    * @param fm feature model
-   * @param vars variables (of feature expressions)
    * @param in input ports
    * @param out output ports
    */
  case class IFTA(locs:Set[Int], init:Int, act:Set[String], clocks:Set[String]
                  , feats:Set[String], edges:Set[Edge], cInv:Map[Int,ClockCons], fm:FExp
-                 , vars:Set[String], in:Set[String], out:Set[String]) {
+                 , in:Set[String], out:Set[String]) {
 
    /**
-     * compose 2 IFTAs with shared ports
+     * Product of 2 IFTAs synchronising shared ports
      *
      * @param other
      * @return
@@ -62,11 +62,10 @@
                                other.cInv.withDefaultValue(CTrue)(l2))).toMap[Int,ClockCons]
      val resFm = (fm && other.fm) &&
        (for (a <- shared) yield featExpPorts(a) <-> other.featExpPorts(a)).fold(FTrue)(_&&_)
-     val resVars = vars ++ other.vars
      val resIn = (in ++ other.in) -- shared
      val resOut = (out ++ other.out) -- shared
 
-     IFTA(resLocs,resInit,resAct,resCl,resFeat,resEdges,resInv,resFm,resVars,resIn,resOut)
+     IFTA(resLocs,resInit,resAct,resCl,resFeat,resEdges,resInv,resFm,resIn,resOut)
    }
 
    lazy val interface:Set[String] = in ++ out
@@ -87,13 +86,19 @@
            ,(for ((s,b)<-sol; if b && (feats contains s)) yield s).toSet
            , for (e <- edges; if e.fe.check(sol)) yield e when FTrue
            , cInv,FTrue
-           ,(for ((s,b)<-sol; if b && (vars contains s)) yield s).toSet
            , in,out) // in out could be filtered to only valid ports?
        case None => DSL.newifta
      }
    }
+
+   /**
+     * Finds a concrete instance of the IFTA given an extra restriction
+     *
+     * @param f New restriction to the IFTA (e.g., "f" must be present)
+     * @return concrete IFTA
+     */
    def instance(f:FExp):IFTA =
-     this when (this.fm && f)
+     (this when (this.fm && f)).instance
 
    /**
      * Feature expression of a port, defined as
@@ -103,7 +108,7 @@
      * @return
      */
    private def fEPort(port:String) :FExp =
-     (for ( e <- edges; if e.act contains port) yield e.fe).fold(FTrue)(_||_)
+     (for ( e <- edges; if e.act contains port) yield e.fe).fold(FNot(FTrue))(_||_)
    //  (for ( e <- edges; if e.act contains port) yield e.fe).reduce(_||_) // fails with empty list
    //  edges.filter(_.act contains port).map(_.act).fold(FTrue)(_||_) // alternative
 
@@ -114,24 +119,47 @@
    val featExpPorts:Map[String,FExp] =
      (act map {a => a -> fEPort(a) }).toMap
 
+   /**
+     * Synchronises 2 actions: replaces every action a1 and a2 by a1|a2.
+     *
+     * @param pair (a1,a2) of actions to be synchronised
+     * @return updated IFTA
+     */
+   def sync(pair:(String,String)): IFTA =
+     IFTA(locs,init,act.map(merge(_,pair._1,pair._2)),clocks,feats
+         ,edges.map(e => e by e.act.map(merge(_, pair._1, pair._2))),cInv
+         ,fm,in.map(merge(_,pair._1,pair._2)),out.map(merge(_,pair._1,pair._2)))
+
+   def sync(pair:(String,String)*): IFTA = syncA(pair.toSeq)
+   private def syncA(pair:Seq[(String,String)]): IFTA =
+     if (pair.isEmpty) this
+     else this.sync(pair.head).syncA(pair.tail)
+
+   private def merge(a:String,a1:String,a2:String): String =
+     if (a == a1 || a == a2) a1+"_"+a2 else a
+
    // constructors
    def ++(e: Edge): IFTA =
-     IFTA(locs+e.from+e.to,init,act++e.act,clocks++e.cCons.clocks,feats++e.fe.feats,edges+e,cInv,fm,vars,in,out)
+     IFTA(locs+e.from+e.to,init,act++e.act,clocks++e.cCons.clocks,feats++e.fe.feats,edges+e,cInv,fm,in,out)
    def +++(e:Edge*) = {
      var res = this
      for (ed <- e) res = res++ed
      res
    }
    def when(f:FExp): IFTA =
-     IFTA(locs,init,act,clocks,feats,edges,cInv,fm && f,vars,in,out)
+     IFTA(locs,init,act,clocks,feats,edges,cInv,fm && f,in,out)
    def get(p:String): IFTA =
-     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,vars,in+p,out)
+     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,in+p,out)
    def pub(p:String): IFTA =
-     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,vars,in,out+p)
+     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,in,out+p)
    def startWith(i:Int): IFTA =
-     IFTA(locs,init+i,act,clocks,feats,edges,cInv,fm,vars,in,out)
+     IFTA(locs,init+i,act,clocks,feats,edges,cInv,fm,in,out)
    def inv(l:Int,cc:ClockCons): IFTA =
-     IFTA(locs,init,act,clocks,feats,edges,cInv+(l->cc),fm,vars,in,out)
+     IFTA(locs,init,act,clocks,feats,edges,cInv+(l->cc),fm,in,out)
+
+   // build a NIFTA
+   def ||(i:IFTA):NIFTA = NIFTA(Set(this,i))
+   def ||(n:NIFTA):NIFTA = NIFTA(n.iFTAs+this)
 
    override def toString = Show(this)
  }
@@ -199,7 +227,27 @@
    lazy val interfaces:Set[String] =
      (for (iFTA <- iFTAs) yield iFTA.interface).flatten
 
+   /**
+     * Synchronises 2 actions: replaces every action a1 and a2 by a1|a2.
+     *
+     * @param pair (a1,a2) of actions to be synchronised
+     * @return updated IFTA
+     */
+   def sync(pair:(String,String)): NIFTA =
+    NIFTA(iFTAs.map(_.sync(pair)))
+
+   def sync(pair:(String,String)*): NIFTA = syncA(pair.toSeq)
+   private def syncA(pair:Seq[(String,String)]): NIFTA =
+     if (pair.isEmpty) this
+     else this.sync(pair.head).syncA(pair.tail)
+
+
    // constructors
+   def ||(i:IFTA):NIFTA = NIFTA(iFTAs+i)
+   def ||(n:NIFTA):NIFTA = NIFTA(iFTAs++n.iFTAs)
+
+   override def toString = iFTAs.map(Show.apply).mkString(" ||\n")
+
 //   def <<>>(i:IFTA):NIFTA = NIFTA(iFTAs++Set(i))
 //   def <<>>(i:IFTA*):NIFTA = {
 //     var res = this

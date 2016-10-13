@@ -59,7 +59,7 @@ object Dot {
     for (e <- edges) {
       var temp:List[String] = List()
       if (e.cCons != CTrue)  temp ::= Show(e.cCons)
-      if (e.act.nonEmpty)    temp ::= e.act.mkString("/")
+                             temp ::= e.act
       if (e.cReset.nonEmpty) temp ::= e.cReset.map(_ + ":=0").mkString(",")
       if (e.fe != FTrue)     temp ::= Show(e.fe)
       res append

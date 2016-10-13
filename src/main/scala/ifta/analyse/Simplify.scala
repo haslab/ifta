@@ -8,11 +8,14 @@ import ifta._
 object Simplify {
 
   def apply(i:IFTA): IFTA =
-    IFTA(i.locs,i.init,i.act,i.clocks,i.feats,i.edges.map(apply),i.cInv.mapValues(apply),apply(i.fm),i.vars,i.in,i.out)
+    IFTA(i.locs,i.init,i.act,i.clocks,i.feats,i.edges.map(apply),i.cInv.mapValues(apply),apply(i.fm),i.in,i.out)
+
+  def apply(i:FTA): FTA =
+    FTA(i.locs,i.init,i.committed,i.act,i.clocks,i.feats,i.edges.map(apply),i.cInv.mapValues(apply),apply(i.fm))
 
   def apply(f:FExp): FExp = f match {
     case FTrue => FTrue
-    case _: Var => f
+    case Feat(_)     => f
     case FAnd(e1,e2) => (apply(e1),apply(e2)) match {
       case (FTrue, e) => e
       case (e,FTrue) => e
@@ -25,7 +28,7 @@ object Simplify {
       case (e, FTrue) => FTrue
       case (FNot(FTrue), e) => e
       case (e, FNot(FTrue)) => e
-      case (e1, e2) => FOr(e1, e2)
+      case (e3, e4) => FOr(e3, e4)
     }
     case FNot(FNot(e)) => apply(e)
     case FNot(e) => FNot(apply(e))

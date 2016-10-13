@@ -4,6 +4,7 @@ import ifta._
 import org.sat4j.core.VecInt
 import org.sat4j.minisat.SolverFactory
 import org.sat4j.specs.{IProblem, ISolver}
+import org.sat4j.tools.ModelIterator
 
 /**
   * Created by jose on 03/10/16.
@@ -13,6 +14,7 @@ object Solver {
   /**
     * Solve a feature expression, by searching for a mapping
     * from features and variable names to booleans that satisfy "e"
+    *
     * @param e expression to be solved
     * @return [[None]] if there is no solution, or [[Some(sol)]] if a solution exists
     */
@@ -26,6 +28,13 @@ object Solver {
     sol.map(x=>rebuildSol(x.toSet))
   }
 
+  def all(e:FExp): List[Map[String,Boolean]] = {
+    resetVars()
+    val cnf = toCNF(e)
+    val sols = solveAll(cnf)
+    sols.map(x=>rebuildSol(x.toSet))
+  }
+
   private var vars:Map[String,Int] = Map()
   private var seed:Int = 1
   private def resetVars() = {vars = Map(); seed = 1}
@@ -35,14 +44,14 @@ object Solver {
 
   private def toCNF(e:FExp): List[List[Int]] = e match {
     case FTrue => List()
-    case v: Var => List(List(getVar(v.name)))
+    case Feat(name)   => List(List(getVar(name)))
     case FAnd(e1, e2) => toCNF(e1) ++ toCNF(e2)
     case FOr(e1, e2) =>
       for (c1 <- toCNF(e1); c2<-toCNF(e2))
         yield c1 ++ c2
     case FNot(ne) => ne match {
       case FTrue => List(List())
-      case v: Var => List(List(-getVar(v.name)))
+      case Feat(name)   => List(List(-getVar(name)))
       case FAnd(e1, e2) => toCNF(FOr(FNot(e1),FNot(e2)))
       case FOr(e1, e2) => toCNF(FAnd(FNot(e1),FNot(e2)))
       case FNot(nne) => toCNF(nne)
@@ -66,7 +75,37 @@ object Solver {
     else None
   }
 
-  // just to experiment with the constraint solver
+  private def solveAll(cnf:List[List[Int]]): List[Array[Int]] = {
+    val solver:ISolver = SolverFactory.newDefault()
+    val mi: ModelIterator = new ModelIterator(solver)
+    var res:List[Array[Int]] = List()
+    for (c <- cnf)
+      solver.addClause(new VecInt(c.toArray))
+    while(mi.isSatisfiable) {
+      val m = mi.model()
+      res ::= m
+    }
+    res
+  }
+
+//  ISolver solver = SolverFactory.newDefault();
+//  ModelIterator mi = new ModelIterator(solver);
+//  solver.setTimeout(3600); // 1 hour timeout
+//  Reader reader = new InstanceReader(mi);
+//
+//  // filename is given on the command line
+//  try {
+//    boolean unsat = true;
+//    IProblem problem = reader.parseInstance(args[0]);
+//    while (problem.isSatisfiable()) {
+//      unsat = false;
+//      int [] model = problem.model();
+//      // do something with each model
+//    }
+
+
+
+    // just to experiment with the constraint solver
   def main(args: Array[String]) {
     implicit def toFeat(s:String): Feat = Feat(s)
 

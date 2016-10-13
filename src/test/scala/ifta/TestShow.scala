@@ -14,12 +14,13 @@ class TestShow {
     0 --> 1 by "co" when "cf"&&"mk" reset "c",
     0 --> 1 by "ca" when "cf"       reset "c",
     1 --> 0 by "b" cc "c">=2
-    ) startWith 0 inv(1,"c"<=5) get "c" get "ca" pub "b"
+    ) startWith 0 inv(1,"c"<=5) get "c" get "ca" pub "b" when "mk"-->"cf"
 
   @Test def testShow(): Unit = {
     // IFTA
     assertEquals(cm.toString,
-      s"""IFTA [0|1] [co,ca,b] [c] [cf,mk]${" "}
+      s"""IFTA [0|1] [co,ca,b] [c] [cf,mk] [c,ca]->[b]${" "}
+        |  !mk || cf
         |  0 --> 1 by co when cf && mk${" "}
         |  0 --> 1 by ca when cf${" "}
         |  1 --> 0 by b cc c >= 2.0 """.stripMargin)
