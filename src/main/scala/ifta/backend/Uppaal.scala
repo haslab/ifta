@@ -24,14 +24,18 @@ object Uppaal {
     val sacts = acts.map(x => if (x.endsWith("!") || x.endsWith("?")) x.dropRight(1) else x)
     val feats = auts.flatMap(_.feats)
 //    val fms = auts.map(_.fm).fold(FTrue)(_&&_)
-    val fms = Simplify(auts.fold(FTA(Set(),0,Set(),Set(),Set(),Set(),Set(),Map(),FTrue))(_ mergeFM _).fm)
-    println("feature models: "+fms)
+//    println(s"auts ${auts.mkString("\n---\n")}")
+    val fms1 = Simplify(auts.fold(FTA(Set(),0,Set(),Set(),Set(),Set(),Set(),Map(),FTrue))(_ mergeFM _).fm)
+//    println(s"fms1: ${Show(fms1)}")
+    val fms = if (feats.isEmpty) fms1
+              else  fms1 && feats.foldLeft[FExp](FNot(FTrue))(_ || Feat(_)) // at least feat must hold in the uppaal model
+//    println(s"solving ${Show(fms)}")
     s"""<?xml version="1.0" encoding="utf-8"?>
              |<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
              |<nta>
              |	<declaration>// Place global declarations here.
              |// Channels (actions)
-             |${if (acts.isEmpty) "" else acts.mkString("chan ",",",";")}
+             |${if (sacts.isEmpty) "" else sacts.mkString("chan ",",",";")}
              |// Features (booleans)
              |${if (feats.isEmpty) "" else feats.mkString("bool ",",",";")}
              | </declaration>
@@ -54,22 +58,32 @@ object Uppaal {
 //    s"""fTA${fTA.act.mkString("_", "_", "")} = FTA${fTA.act.mkString("_", "_", "")}();"""
 //  }
 
-  // TODO
   def mkContext(acts:Set[String]) = {
     s"""<template>
         |		<name x="5" y="5">Context</name>
         |		<declaration>
         |// Place local declarations here.
         |   </declaration>
-        |// Locations
         |   <location id="id0" x="0" y="0"> </location>
         |   <init ref="id0"/>"
-        |// Transitions
-        |	</template>
+        |${(for ((a,i) <- acts.zipWithIndex) yield mkCtxTrs(a,i,acts.size,acts)).mkString("\n")}
+        |</template>
      """.stripMargin
   }
+  private def mkCtxTrs(a:String,i:Int,total:Int,acts:Set[String]): String =
+    if ((a.endsWith("!") && !acts.contains(a.dropRight(1)+"?"))
+      ||(a.endsWith("?") && !acts.contains(a.dropRight(1)+"!")))
+      s"""	<transition>
+        |			<source ref="id0"/>
+        |			<target ref="id0"/>
+        |   	<label kind="synchronisation" x="76" y="${i*30-8-((total-1)*15)}">${
+                if(a.endsWith("!")) a.dropRight(1)+"?" else a.dropRight(1)+"!"}</label>
+        |			<nail x="68" y="-51"/>
+        |			<nail x="68" y="42"/>
+        |	 </transition>
+      """.stripMargin
+    else ""
 
-  // TODO
   def mkFeatModel(fe:FExp) = {
     val sols = Solver.all(fe).zipWithIndex
     s"""<template>
@@ -78,7 +92,7 @@ object Uppaal {
         |// Place local declarations here.
         |   </declaration>
         |// Locations
-        |   <location id="id0" x="0" y="0"> </location>
+        |   <location id="id0" x="0" y="0"><committed/></location>
         |${(1 to sols.size).map(n =>
         "   <location id=\"id"+n+"\" x=\"100\" y=\""+place(n,sols.size)+"\"> </location>").mkString("\n")}
         |   <init ref="id0"/>"
@@ -103,7 +117,7 @@ object Uppaal {
         |${if (fTA.clocks.nonEmpty) fTA.clocks.mkString("clock ", ",", ";") else ""}
         |   </declaration>
         |// Locations
-        |${fTA.locs.map(loc => mkLocation(loc, fTA.cInv.getOrElse(loc, CTrue))).mkString("\n")}
+        |${fTA.locs.map(loc => mkLocation(loc, fTA.cInv.getOrElse(loc, CTrue),fTA.committed contains loc)).mkString("\n")}
         |   <init ref="id${fTA.init}"/>"
         |// Transitions
         |${fTA.edges.map(mkTransition).mkString("\n")}
@@ -116,10 +130,14 @@ object Uppaal {
         |  <source ref="id${e.from}"/>
         |  <target ref="id${e.to}"/>
         |  ${if (e.cCons==CTrue && e.fe==FTrue) "" else mkGuard(e.from,e.cCons,e.fe)}
-        |  <label kind="synchronisation" x="${e.from * 100 + 15}" y="-34">${e.act}</label>
+        |  ${mkSyncLabel(e)}
         |  ${if (e.cReset.isEmpty) "" else mkReset(e.from,e.cReset)}
         |</transition>""".stripMargin
   }
+  private def mkSyncLabel(e:FtaEdge): String =
+    if (e.act.endsWith("!") || e.act.endsWith("?"))
+      s"""<label kind="synchronisation" x="${e.from * 100 + 15}" y="-34">${e.act}</label>"""
+    else ""
 
   /* e.g.
   <location id="id0" x="93" y="-8">
@@ -128,10 +146,11 @@ object Uppaal {
     <committed/> ... NOT IN IFTA YET
   </location>
  */
-  private def mkLocation(loc:Int,cc:ClockCons): String = {
+  private def mkLocation(loc:Int,cc:ClockCons,comm:Boolean): String = {
     s"""<location id="id$loc" x="${loc*100}" y="0">
         |<name x="${loc*100-10}" y="-34">L$loc</name>
         |${if (cc==CTrue) "" else mkInvariant(loc*100-10,cc)}
+        |${if (comm) "<committed/>" else ""}
         |</location>""".stripMargin
   }
 

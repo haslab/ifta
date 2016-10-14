@@ -61,7 +61,7 @@
          yield prod(l1, l2) -> CAnd(cInv.withDefaultValue(CTrue)(l1),
                                other.cInv.withDefaultValue(CTrue)(l2))).toMap[Int,ClockCons]
      val resFm = (fm && other.fm) &&
-       (for (a <- shared) yield featExpPorts(a) <-> other.featExpPorts(a)).fold(FTrue)(_&&_)
+       (for (a <- shared) yield fEPort(a) <-> other.fEPort(a)).fold(FTrue)(_&&_)
      val resIn = (in ++ other.in) -- shared
      val resOut = (out ++ other.out) -- shared
 
@@ -116,8 +116,8 @@
      * Feature expression of each port
      * for now uses all actions, but it should only be define for ports
      */
-   val featExpPorts:Map[String,FExp] =
-     (act map {a => a -> fEPort(a) }).toMap
+//   val featExpPorts:Map[String,FExp] =
+//     (act map {a => a -> fEPort(a) }).toMap
 
    /**
      * Synchronises 2 actions: replaces every action a1 and a2 by a1|a2.
@@ -139,19 +139,19 @@
      if (a == a1 || a == a2) a1+"_"+a2 else a
 
    // constructors
-   def ++(e: Edge): IFTA =
+   private def link(e: Edge): IFTA =
      IFTA(locs+e.from+e.to,init,act++e.act,clocks++e.cCons.clocks,feats++e.fe.feats,edges+e,cInv,fm,in,out)
-   def +++(e:Edge*) = {
+   def ++(e:Edge*) = {
      var res = this
-     for (ed <- e) res = res++ed
+     for (ed <- e) res = res link ed
      res
    }
    def when(f:FExp): IFTA =
-     IFTA(locs,init,act,clocks,feats,edges,cInv,fm && f,in,out)
+     IFTA(locs,init,act,clocks,feats++f.feats,edges,cInv,fm && f,in,out)
    def get(p:String): IFTA =
-     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,in+p,out)
+     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,in++p.split(","),out)
    def pub(p:String): IFTA =
-     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,in,out+p)
+     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,in,out++p.split(","))
    def startWith(i:Int): IFTA =
      IFTA(locs,init+i,act,clocks,feats,edges,cInv,fm,in,out)
    def inv(l:Int,cc:ClockCons): IFTA =
@@ -211,7 +211,7 @@
    // constructors (replace parameters)
    def reset(c:String) = Edge(from,cCons,act,Set(c),fe,to)
    def reset(c:Iterable[String]) = Edge(from,cCons,act,c.toSet,fe,to)
-   def by(a:String) = Edge(from,cCons,Set(a),cReset,fe,to)
+   def by(a:String) = Edge(from,cCons,a.split(",").toSet,cReset,fe,to)
    def by(as:Iterable[String]) = Edge(from,cCons,as.toSet,cReset,fe,to)
    def cc(c:ClockCons) = Edge(from,c,act,cReset,fe,to)
    def when(f:FExp) = Edge(from,cCons,act,cReset,f,to)

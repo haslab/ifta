@@ -27,17 +27,17 @@ class TestIFTA extends JUnitSuite {
     Set("c","ca"),
     Set("b"))
 
-  val cm2 = newifta +++ (
+  val cm2 = newifta ++ (
       0 --> 1 by "c",
       0 --> 1 by "ca",
       1 --> 0 by "b"
     ) startWith 0 get "c" get "ca" pub "b"
 
-  val cm3 = newifta +++ (
-    0 --> 1 by "b|c",
+  val cm3 = newifta ++ (
+    0 --> 1 by "b_c",
     0 --> 1 by "ca",
-    1 --> 0 by "b|c"
-    ) startWith 0 get "b|c" get "ca" pub "b|c"
+    1 --> 0 by "b_c"
+    ) startWith 0 get "b_c" get "ca" pub "b_c"
 
   val router =
     IFTA(

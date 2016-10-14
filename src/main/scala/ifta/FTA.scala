@@ -10,7 +10,7 @@ case class FTA(locs:Set[Int], init:Int, committed:Set[Int], act:Set[String], clo
   override def toString = Show(this)
 
   /**
-    * returns a new FTA that properly merges the feature models and actions, nothing else.
+    * returns a new FTA that properly merges the features, feature models, and actions, nothing else.
     * @param other
     * @return
     */
@@ -18,7 +18,7 @@ case class FTA(locs:Set[Int], init:Int, committed:Set[Int], act:Set[String], clo
     val shared = act.map(dropSuf) intersect other.act.map(dropSuf)
     val resFM: FExp = (fm && other.fm) &&
       (for (a <- shared) yield fPort(a) <-> other.fPort(a)).fold(FTrue)(_&&_)
-    FTA(Set(),0,Set(),act++other.act,Set(),Set(),Set(),Map(),resFM)
+    FTA(Set(),0,Set(),act++other.act,Set(),feats++other.feats,edges++other.edges,Map(),resFM)
   }
 
   def fPort(a:String): FExp =

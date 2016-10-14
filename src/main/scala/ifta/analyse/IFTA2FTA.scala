@@ -26,7 +26,7 @@ object IFTA2FTA {
 //      (lastLoc, newLocs, newEdges, committed) = genCommitLocs(e, lastLoc, newLocs, newEdges, committed)
 
 
-    FTA(newLocs,iFTA.init,committed,iFTA.act,iFTA.clocks,iFTA.feats,newEdges,iFTA.cInv,iFTA.fm)
+    FTA(newLocs,iFTA.init,committed,iFTA.act.map(mkAct(_,iFTA.in,iFTA.out)),iFTA.clocks,iFTA.feats,newEdges,iFTA.cInv,iFTA.fm)
   }
 
   private def genCommitLocs(e:Edge, i:Int,locs:Set[Int],edges:Set[FtaEdge],comm:Set[Int],ins:Set[String],outs:Set[String]):

@@ -7,10 +7,10 @@ import ifta.analyse.IFTA2FTA
 object DSL {
   // to help building clock constraints
   class CVar(n:String) {
-    def <(f:Float): ClockCons = LT(n,f)
-    def >(f:Float): ClockCons = GT(n,f)
-    def <=(f:Float): ClockCons = LE(n,f)
-    def >=(f:Float): ClockCons = GE(n,f)
+    def <(f:Int): ClockCons = LT(n,f)
+    def >(f:Int): ClockCons = GT(n,f)
+    def <=(f:Int): ClockCons = LE(n,f)
+    def >=(f:Int): ClockCons = GE(n,f)
   }
 
   class ELoc(i:Int) {
@@ -30,7 +30,7 @@ object DSL {
   val newifta = IFTA(Set(),0,Set(),Set(),Set(),Set(),Map(),true,Set(),Set())
 //  val nifta = NIFTA(Set())
 
-  val dot = ifta.backend.Dot
+  val toDot = ifta.backend.Dot
 
   def toFTA = IFTA2FTA
 
