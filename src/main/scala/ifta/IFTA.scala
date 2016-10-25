@@ -107,7 +107,7 @@
      * @param port
      * @return
      */
-   private def fEPort(port:String) :FExp =
+   def fEPort(port:String) :FExp =
      (for ( e <- edges; if e.act contains port) yield e.fe).fold(FNot(FTrue))(_||_)
    //  (for ( e <- edges; if e.act contains port) yield e.fe).reduce(_||_) // fails with empty list
    //  edges.filter(_.act contains port).map(_.act).fold(FTrue)(_||_) // alternative
