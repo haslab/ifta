@@ -9,6 +9,27 @@ import ifta.{Edge, FTrue, IFTA}
   */
 object LicensingServices {
 
+  ////////////////////////
+  // Application Module //
+  ////////////////////////
+
+  val application = newifta ++ (
+    0 --> 1 by "apply",
+    1 --> 2 by "submitDocs",
+    2 --> 3 by "payapp",
+    3 --> 4 by "paidapp",
+    3 --> 0 by "cancelpay",
+    4 --> 5 by "submit",
+    5 --> 0 by "accept",
+    5 --> 0 by "incomplete",
+    5 --> 6 by "reject" when "apl" reset "tapl",
+    5 --> 0 by "reject" when not("apl"),
+    6 --> 7 by "appeal" when "apl" cc "tapl"<31,
+    7 --> 0 by "reject" when "apl",
+    7 --> 0 by "accept" when "apl",
+    6 --> 0 by "cancelapp" when "apl" cc "tapl"<32
+    ) get "paidapp,cancelpay,accept,reject,incomplete" pub "submit,payapp,appeal" inv(6,"tapl"<32)
+
   /////////////////////
   //  Payment Module //
   /////////////////////
@@ -39,44 +60,64 @@ object LicensingServices {
     5 --> 0 by "paidpp" when "pp"
     ) startWith 0 get "paypp" pub "cancelpp,paidpp"
 
-  val payment = (
-    router("payapp", "paycc", "paypp")
-    * paypal
-    * creditcard
-    * merger("canelcc", "cancelpp", "cancelpay")
-    * merger("paidcc", "paidpp", "paidapp")
-    )  
+  val payment = (router("payapp", "paycc", "paypp") ||
+    paypal ||
+    creditcard ||
+    merger("cancelcc", "cancelpp", "cancelpay") ||
+    merger("paidcc", "paidpp", "paidapp") || (newifta when ("pp" || "cc")))
 
   ///////////////////////////////////
   // Processing Application Module //
   ///////////////////////////////////
 
   val handleappeal = newifta ++ (
-    0 --> 1 by "getapl" when "apl",
+    0 --> 1 by "appeal" when "apl",
     1 --> 0 by "assess" when "apl"
-    ) startWith 0 get "getapl" pub "assess"
+    ) startWith 0 get "appeal" pub "assess"
+
+//  val assessment = newifta ++ (
+//    0 --> 1 by "assess",
+//    1 --> 2 by "consultext" when ("tax" || "cr"),
+//    1 --> 3 by "decide",
+//    2 --> 4 by "waitext" when ("tax" || "cr"),
+//    4 --> 3 by "decide" when ("tax" || "cr"),
+//    3 --> 0 by "accept",
+//    3 --> 0 by "reject"
+//    ) startWith 0 get "assess,waitext" pub "consultext,accept,reject"
 
   val assessment = newifta ++ (
     0 --> 1 by "assess",
-    1 --> 2 by "consultext" when ("tax" || "cr"),
-    1 --> 3 by "decide",
-    2 --> 4 by "waitext" when ("tax" || "cr"),
-    4 --> 3 by "decide" when ("tax" || "cr"),
-    3 --> 0 by "accept",
-    3 --> 0 by "reject"
-    ) startWith 0 get "assess,waitext" pub "consultext,accept,reject"
+    1 --> 2 by "decide",
+    2 --> 0 by "accept",
+    2 --> 0 by "reject"
+    ) startWith 0 get "assess" pub "accept,reject"
 
   val preassesment = newifta ++ (
-    0 --> 1 by "getapp",
+    0 --> 1 by "submit" reset "ts",
     1 --> 2 by "checkcompl",
-    2 --> 3 by "incomplete",
-    2 --> 4 by "complete",
-    3 --> 0 by "reject",
-    4 --> 0 by "assess"
-    ) startWith 0 get "getapp" pub "reject,assess" 
+    2 --> 0 by "incomplete",
+    2 --> 3 by "complete",
+    // 3 --> 0 by "reject",
+    3 --> 0 by "assess"
+    ) inv(1,"ts"<21) startWith 0 get "submit" pub "incomplete,assess"
 
-  val processing = preassesment * assessment * handleappeal
-  
+  val processing = preassesment || assessment || handleappeal
+
+
+  ////////////////////////////
+  // Licensing Services SPL //
+  ////////////////////////////
+
+  val spl = application || processing || payment
+
+  /**
+    * Properties checked:
+    * A[] not deadlock: ok
+    * A<> FTA_0.L3 imply (FTA_4.L1 or FTA_7.L1): ok ( If payapp in appplication then eventually ( paypal.paypp or creditcard.paycc))
+    * A<> FTA_0.L5 imply FTA_0.L0: of (if appplication.submit then eventually I receive some answer and I'm able to start a new submision again)
+    * A<> FTA_0.L0 and FTA_5.L0: ok (if a can start an application then it is awalys the case that there is no processing in process)
+    */
+
   ////////////////////////////////////
   // Consulting External DBs Module //
   ////////////////////////////////////

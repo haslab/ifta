@@ -13,10 +13,12 @@ object Dot {
     */
   def apply(aut: IFTA): String = {
     val edges = toDotEdges(aut.edges.map(Simplify(_)))
+    val invs = aut.locs.map(l => if (aut.cInv.get(l).nonEmpty) s"""{ node [xlabel="${Show(aut.cInv.getOrElse(l,CTrue))}"] $l }""" else "" )
     "digraph G {\n  rankdir=LR;\n  node [margin=0 width=0.3 height=0.2]\n"+
       "  edge [arrowsize=0.7]\n"+
       s"{ rank=min;\n  node [style=filled,shape=doublecircle] ${aut.init} }\n"+
       s"""  label=<<I>fm = ${Show(aut.fm).replaceAll("&","&amp;")}</I>>\n"""+ // feature model
+      invs.mkString("\n") + "\n\n" + // invariant labels
       s"$edges}"
   }
 
@@ -47,12 +49,14 @@ object Dot {
   def apply(aut: FTA): String = {
     val edges = toDotFtaEdges(aut.edges.map(Simplify(_)))
     val comms: String = aut.committed.mkString(",")
+    val invs = aut.locs.map(l => if (aut.cInv.get(l).nonEmpty) s"""{ node [xlabel="${Show(aut.cInv.getOrElse(l,CTrue))}"] $l }""" else "" )
     "digraph G {\n  rankdir=LR;\n  node [margin=0 width=0.3 height=0.2]\n"+
       "  edge [arrowsize=0.7]\n"+
       s"{ rank=min;\n  node [style=filled,shape=doublecircle] ${aut.init} }\n"+ // initial state
       s"{ node [style=filled,shape=square]\n  $comms\n}\n"+ // committed states
-//      s"""{ node [shape=none]\n  "${Show(aut.fm)}"\n}\n"""+ // feature model
       s"""  label=<<I>fm = ${Show(aut.fm).replaceAll("&","&amp;")}</I>>\n"""+ // feature model
+      invs.mkString("\n") + "\n\n" + // invariant labels
+//      s"""{ node [shape=none]\n  "${Show(aut.fm)}"\n}\n"""+ // feature model
       s"$edges}"
   }
 
