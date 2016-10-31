@@ -44,10 +44,11 @@ object Show {
       iFTA.edges.map(x=>"\n  "+Show(x)).mkString("")
 
   def apply(e:Edge): String =
-    s"""${e.from} --> ${e.to} ${mbAct(e.act)}${mbCC(e.cCons)}${mbFE(e.fe)}"""
+    s"""${e.from} --> ${e.to} ${mbAct(e.act)}${mbCC(e.cCons)}${mbCReset(e.cReset)}${mbFE(e.fe)}"""
   private def mbAct(as:Set[String]) = if (as.isEmpty) "" else "by "+as.mkString(",")+" "
   private def mbAct(a:String) = "by "+a+" "
   private def mbCC(cc:ClockCons) = if (cc == CTrue) "" else "cc "+Show(cc)+" "
+  private def mbCReset(res:Set[String]) = if (res.isEmpty) "" else "reset "+res.mkString(",")+" "
   private def mbFE(fe:FExp) = if (fe == FTrue) "" else "when "+Show(fe)+" "
 
 

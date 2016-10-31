@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="147pt" height="167pt" viewBox="0.00 0.00 146.51 166.56">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 162.559)">
+<title>G</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-162.559 142.513,-162.559 142.513,4 -4,4"></polygon>
+<text text-anchor="start" x="8" y="-9.2" font-family="Times,serif" font-style="italic" font-size="14.00">fm = !(vo1 || vo2) || vi</text>
+<!-- 0 -->
+<g id="node1" class="node"><title>0</title>
+<ellipse fill="lightgrey" stroke="black" cx="69.2563" cy="-40.6794" rx="11.7898" ry="11.7898"></ellipse>
+<ellipse fill="none" stroke="black" cx="69.2563" cy="-40.6794" rx="15.7597" ry="15.7597"></ellipse>
+<text text-anchor="middle" x="69.2563" y="-36.4794" font-family="Times,serif" font-size="14.00">0</text>
+</g>
+<!-- 0&#45;&gt;0 -->
+<g id="edge1" class="edge"><title>0-&gt;0</title>
+<path fill="none" stroke="black" d="M67.4843,-56.7131C67.1227,-65.9552 67.7133,-74.5588 69.2563,-74.5588 70.3894,-74.5588 71.009,-69.9188 71.1149,-63.7935"></path>
+<polygon fill="black" stroke="black" points="73.5638,-63.6826 71.0283,-56.7131 68.6642,-63.7426 73.5638,-63.6826"></polygon>
+<text text-anchor="middle" x="69.2563" y="-78.7588" font-family="Times,serif" font-size="14.00">i/o1,vi &amp;&amp; vo1</text>
+</g>
+<!-- 0&#45;&gt;0 -->
+<g id="edge2" class="edge"><title>0-&gt;0</title>
+<path fill="none" stroke="black" d="M66.4147,-56.3473C64.5786,-73.3061 65.5258,-92.5588 69.2563,-92.5588 72.4622,-92.5588 73.6125,-78.3402 72.7073,-63.578"></path>
+<polygon fill="black" stroke="black" points="75.1272,-63.1167 72.0979,-56.3473 70.2446,-63.5283 75.1272,-63.1167"></polygon>
+<text text-anchor="middle" x="69.2563" y="-96.7588" font-family="Times,serif" font-size="14.00">i/o2,vi &amp;&amp; vo2</text>
+</g>
+<!-- 0&#45;&gt;0 -->
+<g id="edge3" class="edge"><title>0-&gt;0</title>
+<path fill="none" stroke="black" d="M65.7201,-56.4728C62.0424,-80.3932 63.2211,-110.559 69.2563,-110.559 74.7021,-110.559 76.1937,-85.9972 73.731,-63.6255"></path>
+<polygon fill="black" stroke="black" points="76.1324,-63.0945 72.7925,-56.4728 71.2741,-63.732 76.1324,-63.0945"></polygon>
+<text text-anchor="middle" x="69.2563" y="-114.759" font-family="Times,serif" font-size="14.00">i,vi &amp;&amp; !(vo1 || vo2)</text>
+</g>
+</g>
+</svg>
