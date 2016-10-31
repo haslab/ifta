@@ -19,16 +19,16 @@ object LicensingServices {
     2 --> 3 by "payapp",
     3 --> 4 by "paidapp",
     3 --> 0 by "cancelpay",
-    4 --> 5 by "submit" reset "ts",
+    4 --> 5 by "submit",
     5 --> 0 by "accept",
-    5 --> 0 by "incomplete" reset "ts",
-    5 --> 6 by "reject" when "apl",
+    5 --> 0 by "incomplete",
+    5 --> 6 by "reject" when "apl" reset "tapl",
     5 --> 0 by "reject" when not("apl"),
-    6 --> 7 by "appeal" when "apl" cc "tapl"<31 reset "tapl",
+    6 --> 7 by "appeal" when "apl" cc "tapl"<31,
     7 --> 0 by "reject" when "apl",
     7 --> 0 by "accept" when "apl",
     6 --> 0 by "cancelapp" when "apl" cc "tapl"<32
-    ) get "paidapp,cancelpay,accept,reject" pub "submit,payapp,appeal" inv(6,"tapl"<32)
+    ) get "paidapp,cancelpay,accept,reject,incomplete" pub "submit,payapp,appeal" inv(6,"tapl"<32)
 
   /////////////////////
   //  Payment Module //
@@ -89,11 +89,11 @@ object LicensingServices {
     0 --> 1 by "assess",
     1 --> 2 by "decide",
     2 --> 0 by "accept",
-    2 --> 0 by "reject" reset "tapl"
+    2 --> 0 by "reject"
     ) startWith 0 get "assess" pub "accept,reject"
 
   val preassesment = newifta ++ (
-    0 --> 1 by "submit",
+    0 --> 1 by "submit" reset "ts",
     1 --> 2 by "checkcompl",
     2 --> 0 by "incomplete",
     2 --> 3 by "complete",
@@ -110,6 +110,13 @@ object LicensingServices {
 
   val spl = application || processing || payment
 
+  /**
+    * Properties checked:
+    * A[] not deadlock: ok
+    * A<> FTA_0.L3 imply (FTA_4.L1 or FTA_7.L1): ok ( If payapp in appplication then eventually ( paypal.paypp or creditcard.paycc))
+    * A<> FTA_0.L5 imply FTA_0.L0: of (if appplication.submit then eventually I receive some answer and I'm able to start a new submision again)
+    * A<> FTA_0.L0 and FTA_5.L0: ok (if a can start an application then it is awalys the case that there is no processing in process)
+    */
 
   ////////////////////////////////////
   // Consulting External DBs Module //
