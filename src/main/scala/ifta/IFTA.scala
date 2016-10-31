@@ -68,6 +68,10 @@
      IFTA(resLocs,resInit,resAct,resCl,resFeat,resEdges,resInv,resFm,resIn,resOut)
    }
 
+   // todo - fix!
+   def *(other:IFTA,pair:(String,String)): IFTA =
+    this.sync(pair) * other.sync(pair)
+
    lazy val interface:Set[String] = in ++ out
 
    /**
@@ -125,15 +129,15 @@
      * @param pair (a1,a2) of actions to be synchronised
      * @return updated IFTA
      */
-   def sync(pair:(String,String)): IFTA =
+   private def syncOnce(pair:(String,String)): IFTA =
      IFTA(locs,init,act.map(merge(_,pair._1,pair._2)),clocks,feats
          ,edges.map(e => e by e.act.map(merge(_, pair._1, pair._2))),cInv
          ,fm,in.map(merge(_,pair._1,pair._2)),out.map(merge(_,pair._1,pair._2)))
 
-   def sync(pair:(String,String)*): IFTA = syncA(pair.toSeq)
-   private def syncA(pair:Seq[(String,String)]): IFTA =
+   def sync(pair:(String,String)*): IFTA = sync(pair.toSeq)
+   def sync(pair:Iterable[(String,String)]): IFTA =
      if (pair.isEmpty) this
-     else this.sync(pair.head).syncA(pair.tail)
+     else this.syncOnce(pair.head).sync(pair.tail)
 
    private def merge(a:String,a1:String,a2:String): String =
      if (a == a1 || a == a2) a1+"_"+a2 else a
@@ -233,13 +237,14 @@
      * @param pair (a1,a2) of actions to be synchronised
      * @return updated IFTA
      */
-   def sync(pair:(String,String)): NIFTA =
-    NIFTA(iFTAs.map(_.sync(pair)))
+//   def sync(pair:(String,String)): NIFTA =
+//    NIFTA(iFTAs.map(_.sync(pair)))
 
-   def sync(pair:(String,String)*): NIFTA = syncA(pair.toSeq)
-   private def syncA(pair:Seq[(String,String)]): NIFTA =
+   def sync(pair:(String,String)*): NIFTA = sync(pair.toSeq)
+
+   def sync(pair:Iterable[(String,String)]): NIFTA =
      if (pair.isEmpty) this
-     else this.sync(pair.head).syncA(pair.tail)
+     else NIFTA(iFTAs.map(_.sync(pair.head))).sync(pair.tail)
 
 
    // constructors

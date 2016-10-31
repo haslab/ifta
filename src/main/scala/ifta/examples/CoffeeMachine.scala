@@ -23,4 +23,10 @@ object CoffeeMachine {
 
   val network = cm || routerCoCa
 
+
+  // now without shared names
+
+  val myRouter = router("i","o1","o2")
+  val net2 = (cm || myRouter) sync ("o1"->"ca","o2"->"co")
+  val aut2 = (cm * myRouter)  sync ("o1"->"ca","o2"->"co")
 }
