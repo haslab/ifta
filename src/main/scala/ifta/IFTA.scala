@@ -155,7 +155,7 @@
    def startWith(i:Int): IFTA =
      IFTA(locs,init+i,act,clocks,feats,edges,cInv,fm,in,out)
    def inv(l:Int,cc:ClockCons): IFTA =
-     IFTA(locs,init,act,clocks,feats,edges,cInv+(l->cc),fm,in,out)
+     IFTA(locs,init,act,clocks++cc.clocks,feats,edges,cInv+(l->cc),fm,in,out)
 
    // build a NIFTA
    def ||(i:IFTA):NIFTA = NIFTA(Set(this,i))
