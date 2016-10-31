@@ -295,19 +295,19 @@ object LicensingServices {
     1 --> 0 by "readyext"
     ) startWith 0 get "readyext" pub "consultext"
 
-  val syncmergernetwork = (
+  val syncmergernetwork =
     repl1 || repl2 || repl3 || repl4 || repl5 || repl6 || repl7 || repl8 || repl9 ||
     router1 || router2 || router3 ||
     fifo1 || fifo2 || fifo3 || fifo4 || fifo5 || fifo6 || fifo7 ||
     sdrain1 || sdrain2 || sdrain3 || sdrain4 || sdrain5 || sdrain6 ||
     merger1 || merger2 || merger3 || merger4 ||
-    nvtax || nvcriminalrecord)
-
-  val syncmerger = (
+    nvtax || nvcriminalrecord
+  
+  val syncmerger =
     repl1 * repl2 * repl3 * repl4 * repl5 * repl6 * repl7 * repl8 * repl9 *
     router1 * router2 * router3 *
     fifo1 * fifo2 * fifo3 * fifo4 * fifo5 * fifo6 * fifo7 *
     sdrain1 * sdrain2 * sdrain3 * sdrain4 * sdrain5 * sdrain6 *
     merger1 * merger2 * merger3 * merger4 *
-    nvtax * nvcriminalrecord)
+    nvtax * nvcriminalrecord
 }
