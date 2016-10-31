@@ -37,10 +37,9 @@ object Dot {
   /**
     * Convert NIFTA into a dot (graphviz) graph
     */
-  def toDot(nIFTA: NIFTA) =
+  def apply(nIFTA: NIFTA): String =
     if (nIFTA.iFTAs.isEmpty) ""
     else nIFTA.iFTAs.map(i => Dot(i)).mkString("\n")
-
 
   /**
     * Convert FTA into a dot (graphviz) graph
@@ -69,4 +68,12 @@ object Dot {
     }
     res.toString()
   }
+
+  /**
+    * Convert NFTA into a dot (graphviz) graph
+    */
+  def apply(nFTA:NFTA): String =
+    if (nFTA.fTAs.isEmpty) ""
+    else nFTA.fTAs.map(i => Dot(i)).mkString("\n")
+
 }

@@ -35,4 +35,6 @@ case class NFTA(fTAs:Set[FTA]) {
   // constructors
   def ||(i:FTA):NFTA = NFTA(fTAs+i)
   def ||(n:NFTA):NFTA = NFTA(fTAs++n.fTAs)
+
+  override def toString = fTAs.map(Show.apply).mkString(" ||\n")
 }
