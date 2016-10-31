@@ -48,12 +48,11 @@ The `dot` output is handy to quickly visualise a connector with an intuitive lay
 Note that the `Uppaal` model was extended to annotations to make `a` an input channel and `b` and `c` output channels, represented as `a?`, `b!`, and `c!` in the Uppaal model.
 
 Screenshots of the `dot` and `Uppaal` outputs follow bellow.
-Observe that Uppaal does not support multiple actions per transition - these are rewritten as an interleaving of all combinations, imposing that inputs come before outputs (to reduce the state space.)
+Observe that Uppaal does not support multiple actions per transition - these are rewritten as an interleaving of all combinations, imposing that inputs come before outputs (to reduce the state space).
 
-<img src="https://cdn.rawgit.com/joseproenca/ifta/master/images/myAut.svg">
-
-<img src="https://cdn.rawgit.com/joseproenca/ifta/master/images/myAutUpp.svg">
-
+<div style="text-align: center;" markdown="1">
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/images/myAut.svg "Automata example in Dot")   ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/images/myAutUpp.svg "Automata example in Uppaal")
+</div>
 
 ## Time extension
 
@@ -99,9 +98,7 @@ val prodComp = (cm  sync link) *  (rtr sync link)
 The automata of `cm`, `rtr`, and the product `prodComp` are depicted below, respectively.
 Observe that both compositions `netComp` and `prodComp` can be exported to Uppaal: the former using a network of automata, and the latter producing a single automaton.
 
-<img src="https://cdn.rawgit.com/joseproenca/ifta/master/images/cm.svg">
-
-<img src="https://cdn.rawgit.com/joseproenca/ifta/master/images/router.svg">
-
-<img src="https://cdn.rawgit.com/joseproenca/ifta/master/images/cm-router.svg">
+<div style="text-align: center;" markdown="1">
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/images/cm.svg "Coffee Machine automaton in Dot") ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/images/router.svg "Router automaton in Dot") ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/images/cm-router.svg "Product of cm and rtr in Dot")
+</div>
 
