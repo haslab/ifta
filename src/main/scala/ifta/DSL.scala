@@ -95,7 +95,7 @@ object DSL {
 //    0 --> 0 by s"$i" when v(i) && not(v(i2)) && not(v(o)) // can behave as asyncdrain if only one input is present
 //    ) get i get i2 pub o  when v(o) --> (v(i) || v(i2))
 
-  def join1(i:String,i2:String,inOrO:String,rest:String*) = {
+  def join(i:String,i2:String,inOrO:String,rest:String*) = {
     val o = if (rest.isEmpty) inOrO else rest.last
     var ifta = newifta
     val ins = if (!rest.isEmpty) Set(i,i2,inOrO) ++ (rest.toSet - o) else Set(i,i2)

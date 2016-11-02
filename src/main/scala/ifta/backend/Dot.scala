@@ -11,8 +11,10 @@ object Dot {
   /**
     * Convert IFTA into a dot (graphviz) graph
     */
-  def apply(aut: IFTA): String = {
-    val edges = toDotEdges(aut.edges.map(Simplify(_)))
+  def apply(iFTA: IFTA): String = {
+    val aut = Simplify(iFTA)
+//    val edges = toDotEdges(aut.edges.map(Simplify(_)))
+    val edges = aut.edges
     val invs = aut.locs.map(l => if (aut.cInv.get(l).nonEmpty) s"""{ node [xlabel="${Show(aut.cInv.getOrElse(l,CTrue))}"] $l }""" else "" )
     "digraph G {\n  rankdir=LR;\n  node [margin=0 width=0.3 height=0.2]\n"+
       "  edge [arrowsize=0.7]\n"+
@@ -46,8 +48,10 @@ object Dot {
   /**
     * Convert FTA into a dot (graphviz) graph
     */
-  def apply(aut: FTA): String = {
-    val edges = toDotFtaEdges(aut.edges.map(Simplify(_)))
+  def apply(fTA: FTA): String = {
+    val aut = Simplify(fTA)
+//    val edges = toDotFtaEdges(aut.edges.map(Simplify(_)))
+    val edges = aut.edges
     val comms: String = aut.committed.mkString(",")
     val invs = aut.locs.map(l => if (aut.cInv.get(l).nonEmpty) s"""{ node [xlabel="${Show(aut.cInv.getOrElse(l,CTrue))}"] $l }""" else "" )
     "digraph G {\n  rankdir=LR;\n  node [margin=0 width=0.3 height=0.2]\n"+

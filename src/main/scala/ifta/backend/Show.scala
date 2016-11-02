@@ -33,15 +33,18 @@ object Show {
     case CAnd(cc1, cc2) => s"${showCC(cc1)} & ${showCC(cc2)}"
   }
 
-  def apply(iFTA: IFTA): String =
-    s"""IFTA [${iFTA.init}${(iFTA.locs-iFTA.init).mkString("|",",","")}] """+
-      (if (iFTA.act.isEmpty) "" else s"""${iFTA.act.mkString("[",",","]")} """)+
-      (if (iFTA.clocks.isEmpty) "" else s"""${iFTA.clocks.mkString("[",",","]")} """)+
-      (if (iFTA.feats.isEmpty) "" else s"""${iFTA.feats.mkString("[",",","]")} """)+
+  def apply(i: IFTA): String = {
+    val iFTA = Simplify.remUnreach(i)
+    s"""IFTA [${iFTA.init}${(iFTA.locs - iFTA.init).mkString("|", ",", "")}] """ +
+      (if (iFTA.act.isEmpty) "" else s"""${iFTA.act.mkString("[", ",", "]")} """) +
+      (if (iFTA.clocks.isEmpty) "" else s"""${iFTA.clocks.mkString("[", ",", "]")} """) +
+      (if (iFTA.feats.isEmpty) "" else s"""${iFTA.feats.mkString("[", ",", "]")} """) +
       (if (iFTA.in.isEmpty && iFTA.out.isEmpty) ""
-          else s"""${iFTA.in.mkString("[",",","]")}->${iFTA.out.mkString("[",",","]")} """)+
-      (if (Simplify(iFTA.fm) == FTrue) "" else s"\n  ${Show(iFTA.fm)}")+
-      iFTA.edges.map(x=>"\n  "+Show(x)).mkString("")
+      else
+        s"""${iFTA.in.mkString("[", ",", "]")}->${iFTA.out.mkString("[", ",", "]")} """) +
+      (if (Simplify(iFTA.fm) == FTrue) "" else s"\n  ${Show(iFTA.fm)}") +
+      iFTA.edges.map(x => "\n  " + Show(x)).mkString("")
+  }
 
   def apply(e:Edge): String =
     s"""${e.from} --> ${e.to} ${mbAct(e.act)}${mbCC(e.cCons)}${mbCReset(e.cReset)}${mbFE(e.fe)}"""

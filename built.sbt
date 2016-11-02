@@ -12,8 +12,3 @@ libraryDependencies ++= Seq(
     //"org.sat4j" % "org.sat4j.pb" % "2.3.1",
     //"org.sat4j" % "org.sat4j.core" % "2.3.1"
 )
-
-fork in run := true
-
-javaOptions in run += "-Xmx4G"
-
