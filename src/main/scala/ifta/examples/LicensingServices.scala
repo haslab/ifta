@@ -60,11 +60,18 @@ object LicensingServices {
     5 --> 0 by "paidpp" when "pp"
     ) startWith 0 get "paypp" pub "cancelpp,paidpp"
 
-  val payment = (router("payapp", "paycc", "paypp") ||
+  val paymentnet = (router("payapp", "paycc", "paypp") ||
     paypal ||
     creditcard ||
     merger("cancelcc", "cancelpp", "cancelpay") ||
     merger("paidcc", "paidpp", "paidapp") || (newifta when ("pp" || "cc")))
+
+  val payment = (router("payapp", "paycc", "paypp") *
+    paypal *
+    creditcard *
+    merger("cancelcc", "cancelpp", "cancelpay") *
+    merger("paidcc", "paidpp", "paidapp") 
+    ) when ("pp" || "cc")
 
   ///////////////////////////////////
   // Processing Application Module //
@@ -92,7 +99,7 @@ object LicensingServices {
     2 --> 0 by "reject"
     ) startWith 0 get "assess" pub "accept,reject"
 
-  val preassesment = newifta ++ (
+  val preassessment = newifta ++ (
     0 --> 1 by "submit" reset "ts",
     1 --> 2 by "checkcompl",
     2 --> 0 by "incomplete",
@@ -101,14 +108,18 @@ object LicensingServices {
     3 --> 0 by "assess"
     ) inv(1,"ts"<21) startWith 0 get "submit" pub "incomplete,assess"
 
-  val processing = preassesment || assessment || handleappeal
+  val processingnet = preassessment || assessment || handleappeal
+
+  val processing = preassessment * assessment * handleappeal
 
 
   ////////////////////////////
   // Licensing Services SPL //
   ////////////////////////////
 
-  val spl = application || processing || payment
+  val splnet = application || processing || payment
+
+  val spl = application * processing * payment
 
   /**
     * Properties checked:
@@ -291,7 +302,7 @@ object LicensingServices {
     sdrain1 || sdrain2 || sdrain3 || sdrain4 || sdrain5 || sdrain6 ||
     merger1 || merger2 || merger3 || merger4 ||
     nvtax || nvcriminalrecord
-
+  
   val syncmerger =
     repl1 * repl2 * repl3 * repl4 * repl5 * repl6 * repl7 * repl8 * repl9 *
     router1 * router2 * router3 *

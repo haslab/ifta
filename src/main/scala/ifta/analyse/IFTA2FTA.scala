@@ -9,7 +9,8 @@ object IFTA2FTA {
 
   def apply(nIFTA: NIFTA): NFTA = NFTA(nIFTA.iFTAs.map(apply))
 
-  def apply(iFTA: IFTA): FTA = {
+  def apply(ifta: IFTA): FTA = {
+    val iFTA = remUnreach(ifta)
     var lastLoc = iFTA.locs.max
     var newLocs = iFTA.locs
     var newEdges: Set[FtaEdge] = Set()
@@ -27,6 +28,49 @@ object IFTA2FTA {
 
 
     FTA(newLocs,iFTA.init,committed,iFTA.act.map(mkAct(_,iFTA.in,iFTA.out)),iFTA.clocks,iFTA.feats,newEdges,iFTA.cInv,iFTA.fm)
+  }
+
+  /**
+    * Removes unreachable locations and edges
+    * @param ifta
+    * @return new IFTA without unreachable locations and edges
+    */
+  def remUnreach(ifta: IFTA):IFTA = {
+    var visited:Set[Int] = Set(ifta.init)
+    var newedges:Set[Edge] = Set()
+
+    for (e <- ifta.edges.filter(_.from == ifta.init)) {
+      newedges += e
+      if (!(visited contains e.to)) {
+        visit(ifta,e.to,visited,newedges) match {
+          case (v,ne) => {visited = v + e.to; newedges = ne}
+        }
+      }
+    }
+    IFTA(visited,ifta.init,ifta.act,ifta.clocks,ifta.feats,newedges,ifta.cInv,ifta.fm,ifta.in, ifta.out)
+  }
+
+  /**
+    * Visits all reachable locations from a given location and a IFTA
+    * updating the set of visited locations and reachable edges
+    * @param ifta
+    * @param loc location to visit
+    * @param v visited locations
+    * @param ne reachable edges
+    * @return tuple: new visited locations, new reachable edges
+    */
+  private def visit(ifta: IFTA,loc:Int,v:Set[Int],ne:Set[Edge]):
+      (Set[Int],Set[Edge]) = {
+    var visited = v + loc
+    var newedges = ne
+    for (e <- ifta.edges.filter(_.from == loc)) {
+      newedges += e
+      if (!(visited contains e.to))
+        visit(ifta,e.to,visited,newedges) match {
+          case (ved,nes) => {visited = ved; newedges = nes}
+      }
+    }
+    (visited, newedges)
   }
 
   /**
