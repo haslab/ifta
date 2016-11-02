@@ -32,6 +32,18 @@ object Simplify {
     }
     case FNot(FNot(e)) => apply(e)
     case FNot(e) => FNot(apply(e))
+    case FImp(e1,e2) => (apply(e1), apply(e2)) match {
+      case (FNot(FTrue),_) => FNot(FTrue)
+      case (_,FTrue) => FTrue
+      case (e3,e4) => FImp(e3,e4)
+    }
+    case FEq(e1,e2) => (apply(e1), apply(e2)) match {
+      case (FTrue,e3) => e3
+      case (e3,FTrue) => e3
+      case (FNot(FTrue),e3) => FNot(e3)
+      case (e3,FNot(FTrue)) => FNot(e3)
+      case (e3,e4) => if (e3==e4) FTrue else FEq(e3,e4)
+    }
   }
 
   def apply(cc:ClockCons): ClockCons = cc match {
