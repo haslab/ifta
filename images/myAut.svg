@@ -2,7 +2,7 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 68.9446)">
 <title>G</title>
 <polygon fill="white" stroke="none" points="-4,4 -4,-68.9446 119.025,-68.9446 119.025,4 -4,4"></polygon>
-<text text-anchor="start" x="27.8302" y="-9.2" font-family="Times,serif" font-style="italic" font-size="14.00">fm = !g || f</text>
+<text text-anchor="start" x="27.7091" y="-9.2" font-family="Times,serif" font-style="italic" font-size="14.00">fm = g → f</text>
 <!-- 0 -->
 <g id="node1" class="node"><title>0</title>
 <ellipse fill="lightgrey" stroke="black" cx="15.8794" cy="-48.1446" rx="11.7898" ry="11.7898"></ellipse>

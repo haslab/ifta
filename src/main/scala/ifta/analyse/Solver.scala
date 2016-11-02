@@ -55,8 +55,17 @@ object Solver {
       case FAnd(e1, e2) => toCNF(FOr(FNot(e1),FNot(e2)))
       case FOr(e1, e2) => toCNF(FAnd(FNot(e1),FNot(e2)))
       case FNot(nne) => toCNF(nne)
+      case FImp(e1,e2) => toCNF(FNot(FNot(e1) || e2))
+      case FEq(e1,e2) => toCNF(FNot((e1-->e2) && (e2-->e1)))
     }
+    // removing syntactic sugar
+    case FImp(e1,e2) => toCNF(FNot(e1) || e2)
+    case FEq(e1,e2) => toCNF((e1-->e2) && (e2-->e1))
   }
+
+  //  def -->(other:FExp) = FImp(this,other) //FNot(this) || other
+//  def <->(other:FExp) = FEq(this,other)  //(this --> other) && (other --> this)
+
 
   private def rebuildSol(sol:Set[Int]): Map[String,Boolean] = {
     var res: Map[String,Boolean] = Map()

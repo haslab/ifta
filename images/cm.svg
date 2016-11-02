@@ -2,7 +2,7 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 111.63)">
 <title>G</title>
 <polygon fill="white" stroke="none" points="-4,4 -4,-111.63 196.52,-111.63 196.52,4 -4,4"></polygon>
-<text text-anchor="start" x="58.0254" y="-9.2" font-family="Times,serif" font-style="italic" font-size="14.00">fm = !mk || cf</text>
+<text text-anchor="start" x="57.9043" y="-9.2" font-family="Times,serif" font-style="italic" font-size="14.00">fm = mk → cf</text>
 <!-- 0 -->
 <g id="node1" class="node"><title>0</title>
 <ellipse fill="lightgrey" stroke="black" cx="15.8794" cy="-63.8298" rx="11.7898" ry="11.7898"></ellipse>
@@ -13,6 +13,7 @@
 <g id="node2" class="node"><title>1</title>
 <ellipse fill="none" stroke="black" cx="181.52" cy="-63.8298" rx="11" ry="11.76"></ellipse>
 <text text-anchor="middle" x="181.52" y="-59.6298" font-family="Times,serif" font-size="14.00">1</text>
+<text text-anchor="middle" x="152.518" y="-39.3504" font-family="Times,serif" font-size="14.00">c &lt;= 5</text>
 </g>
 <!-- 0&#45;&gt;1 -->
 <g id="edge1" class="edge"><title>0-&gt;1</title>

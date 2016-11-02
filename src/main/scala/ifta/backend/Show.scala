@@ -17,6 +17,8 @@ object Show {
     case FOr(FOr(e1,e2), e3) => parShow(e1)+" || "+showFExp(FOr(e2,e3))
     case FOr(e1, e2) => parShow(e1)+" || "+parShow(e2)
     case FNot(e) => "!"+parShow(e)
+    case FImp(e1, e2) => parShow(e1)+" --> "+parShow(e2)
+    case FEq(e1, e2) => parShow(e1)+" <-> "+parShow(e2)
   }
   private def parShow(fExp: FExp): String = fExp match {
     case FTrue | Feat(_) | FNot(_) => showFExp(fExp)

@@ -19,7 +19,10 @@ object Dot {
     "digraph G {\n  rankdir=LR;\n  node [margin=0 width=0.3 height=0.2]\n"+
       "  edge [arrowsize=0.7]\n"+
       s"{ rank=min;\n  node [style=filled,shape=doublecircle] ${aut.init} }\n"+
-      s"""  label=<<I>fm = ${Show(aut.fm).replaceAll("&","&amp;")}</I>>\n"""+ // feature model
+      s"""  label=<<I>fm = ${Show(aut.fm).
+                              replaceAll("&","&amp;").
+                              replaceAll("-->","&#8594;").
+                              replaceAll("<->","&#8596;")}</I>>\n"""+ // feature model
       invs.mkString("\n") + "\n\n" + // invariant labels
       s"$edges}"
   }
@@ -58,7 +61,10 @@ object Dot {
       "  edge [arrowsize=0.7]\n"+
       s"{ rank=min;\n  node [style=filled,shape=doublecircle] ${aut.init} }\n"+ // initial state
       s"{ node [style=filled,shape=square]\n  $comms\n}\n"+ // committed states
-      s"""  label=<<I>fm = ${Show(aut.fm).replaceAll("&","&amp;")}</I>>\n"""+ // feature model
+      s"""  label=<<I>fm = ${Show(aut.fm).
+                              replaceAll("&","&amp;").
+                              replaceAll("-->","&#8594;").
+                              replaceAll("<->","&#8596;")}</I>>\n"""+ // feature model
       invs.mkString("\n") + "\n\n" + // invariant labels
 //      s"""{ node [shape=none]\n  "${Show(aut.fm)}"\n}\n"""+ // feature model
       s"$edges}"
