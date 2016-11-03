@@ -130,14 +130,21 @@ object Uppaal {
         |  <source ref="id${e.from}"/>
         |  <target ref="id${e.to}"/>
         |  ${if (e.cCons==CTrue && e.fe==FTrue) "" else mkGuard(e.from,e.cCons,e.fe)}
-        |  ${mkSyncLabel(e)}
+        | ${mkActLabel(e)}
         |  ${if (e.cReset.isEmpty) "" else mkReset(e.from,e.cReset)}
         |</transition>""".stripMargin
   }
-  private def mkSyncLabel(e:FtaEdge): String =
+
+  private def mkActLabel(e:FtaEdge):String = {
     if (e.act.endsWith("!") || e.act.endsWith("?"))
       s"""<label kind="synchronisation" x="${e.from * 100 + 15}" y="-34">${e.act}</label>"""
-    else ""
+    else s"""<label kind="comments" x="${e.from * 100 + 15}" y="-34">${e.act}</label>"""
+  }
+
+//  private def mkSyncLabel(e:FtaEdge): String =
+//    if (e.act.endsWith("!") || e.act.endsWith("?"))
+//      s"""<label kind="synchronisation" x="${e.from * 100 + 15}" y="-34">${e.act}</label>"""
+//    else ""
 
   /* e.g.
   <location id="id0" x="93" y="-8">
