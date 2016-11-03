@@ -32,6 +32,7 @@ object DSL {
 //  val nifta = NIFTA(Set())
 
   val toDot = ifta.backend.Dot
+  def con2dot(nIFTA: NIFTA) = ifta.backend.Dot.connector(nIFTA)
 
   def toFTA = IFTA2FTA
 

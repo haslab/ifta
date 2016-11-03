@@ -20,10 +20,10 @@ class TestShow {
     // IFTA
     assertEquals(cm.toString,
       s"""IFTA [0|1] [co,ca,b] [c] [cf,mk] [c,ca]->[b]${" "}
-        |  !mk || cf
-        |  0 --> 1 by co when cf && mk${" "}
-        |  0 --> 1 by ca when cf${" "}
-        |  1 --> 0 by b cc c >= 2 """.stripMargin)
+         |  mk --> cf
+         |  0 --> 1 by co reset c when cf && mk${" "}
+         |  1 --> 0 by b cc c >= 2${" "}
+         |  0 --> 1 by ca reset c when cf """.stripMargin)
     // FExp
     assertEquals(Show(("a" || "b") && FNot("a") && FNot("b")), "(a || b) && !a && !b" )
     // ClockCons

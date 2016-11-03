@@ -170,6 +170,8 @@ object Uppaal {
     case FAnd(e1, e2) => mkFE(e1)+" &amp;&amp; "+mkFE(e2)
     case FOr(e1, e2) => mkFE(e1)+" || "+mkFE(e2)
     case FNot(e) => "not ("+mkFE(e)+")"
+    case FImp(e1, e2) => mkFE(e1)+" &#8594; "+mkFE(e2)
+    case FEq(e1, e2) => mkFE(e1)+" &#8596; "+mkFE(e2)
   }
 
   // e.g. <label kind="guard" x="18" y="-38">c &gt;= 5</label>

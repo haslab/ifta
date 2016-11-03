@@ -91,4 +91,33 @@ object Dot {
     if (nFTA.fTAs.isEmpty) ""
     else nFTA.fTAs.map(i => Dot(i)).mkString("\n")
 
+
+  def connector(nIFTA: NIFTA): String = {
+    s"""digraph G {
+      |  rankdir=LR;
+      |  node [margin=0.1 width=0.3 height=0.2 shape=rectangle]
+      |  edge [arrowsize=0.7]
+      |  ${getConnEdges(nIFTA,0,Map())}}
+      |}
+    """.stripMargin
+    }
+
+  def getConnEdges(nIFTA: NIFTA,i:Int,mm:Map[String,Int]) = {
+    var res = ""
+    var l = i
+    var m = mm
+    for (ifta <- nIFTA.iFTAs) {
+      res += s"""\n  $l [label="${(ifta.in++ifta.out).mkString("-")}"]"""
+      for (in <- ifta.in) {
+        if (m contains in) res += s"""\n  ${m(in)} -> $l [label="$in"]"""
+        else m += (in->l)
+      }
+      for (out <- ifta.out) {
+        if (m contains out) res += s"""\n  $l -> ${m(out)}  [label="$out"]"""
+        else m += (out->l)
+      }
+      l = l+1
+    }
+    res
+  }
 }
