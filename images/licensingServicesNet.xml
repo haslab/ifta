@@ -1,0 +1,688 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+	<declaration>// Place global declarations here.
+// Channels (actions)
+chan cancelpay,okdcc,accept,incomplete,submitDocs,decide,paypp,oklgpp,detailscc,cancelcc,appeal,submit,payapp,errorpcc,reject,paidapp,loginpp,paycc,paidcc,okpp,confcc,complete,apply,errorlgpp,assess,okcc,checkcompl,errorppp,paidpp,errordcc,cancelpp,confpp,cancelapp;
+// Features (booleans)
+bool vcancelpay,apl,pa,vcancelcc,vpaycc,vpaidpp,vpaypp,vcancelpp,cc,pp,vpaidapp,vpayapp,vpaidcc;
+ </declaration>
+	<template>
+		<name x="5" y="5">FTA_9</name>
+		<declaration>
+// Place local declarations 1 here.
+// clocks:
+clock ts;
+   </declaration>
+		<location id="id0" x="-144" y="0">
+			<name x="-154" y="-34">L0</name>
+		</location>
+		<location id="id1" x="263" y="-144">
+			<name x="253" y="-178">L2</name>
+			<label kind="invariant" x="280" y="-153">ts&lt;=20</label>
+		</location>
+		<init ref="id0"/>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="204" y="-68">assess!</label>
+			<nail x="153" y="8"/>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="synchronisation" x="-25" y="-170">submit?</label>
+			<label kind="assignment" x="-34" y="-153">ts:=0</label>
+			<nail x="42" y="-170"/>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="42" y="-119">incomplete!</label>
+		</transition>
+	</template>
+	<template>
+		<name x="5" y="5">FTA_4</name>
+		<declaration>
+// Place local declarations 1 here.
+// clocks:
+
+   </declaration>
+		<location id="id2" x="0" y="0">
+			<name x="-10" y="-34">L0</name>
+		</location>
+		<init ref="id2"/>
+	</template>
+	<template>
+		<name x="5" y="5">FTA_3</name>
+		<declaration>
+// Place local declarations 1 here.
+// clocks:
+
+clock tas;
+
+   </declaration>
+		<location id="id3" x="-153" y="0">
+			<name x="-163" y="-34">L0</name>
+		</location>
+		<location id="id4" x="100" y="0">
+			<name x="90" y="-34">L1</name>
+			<label kind="invariant" x="127" y="-8">tas &lt;=20</label>
+		</location>
+		<init ref="id3"/>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id4"/>
+			<label kind="guard" x="-8" y="25">apl</label>
+			<label kind="synchronisation" x="-34" y="8">appeal?</label>
+			<label kind="assignment" x="34" y="25">tas:=0</label>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id3"/>
+			<label kind="guard" x="-59" y="-119">apl</label>
+			<label kind="synchronisation" x="-85" y="-127">assess!</label>
+			<nail x="-51" y="-93"/>
+		</transition>
+	</template>
+	<template>
+		<name x="5" y="5">FTA_1</name>
+		<declaration>
+// Place local declarations 1 here.
+// clocks:
+
+   </declaration>
+		<location id="id5" x="-170" y="0">
+			<name x="-180" y="-34">L0</name>
+		</location>
+		<location id="id6" x="102" y="-238">
+			<name x="92" y="-272">L1</name>
+			<committed/>
+		</location>
+		<location id="id7" x="200" y="0">
+			<name x="190" y="-34">L2</name>
+			<committed/>
+		</location>
+		<init ref="id5"/>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id5"/>
+			<label kind="guard" x="-340" y="-170">vpaidcc &amp;&amp; not (vpaidapp)</label>
+			<label kind="synchronisation" x="-221" y="-195">paidcc?</label>
+			<nail x="-200" y="-30"/>
+			<nail x="-153" y="-153"/>
+		</transition>
+		<transition>
+			<source ref="id6"/>
+			<target ref="id5"/>
+			<label kind="guard" x="170" y="-221">vpaidcc &amp;&amp; vpaidapp</label>
+			<label kind="synchronisation" x="161" y="-204">paidapp!</label>
+			<nail x="229" y="-119"/>
+		</transition>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id6"/>
+			<label kind="guard" x="-76" y="-238">vpaidcc &amp;&amp; vpaidapp</label>
+			<label kind="synchronisation" x="8" y="-212">paidcc?</label>
+		</transition>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id5"/>
+			<label kind="guard" x="-34" y="17">vpaidpp &amp;&amp; vpaidapp</label>
+			<label kind="synchronisation" x="25" y="0">paidapp!</label>
+		</transition>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id5"/>
+			<label kind="guard" x="-408" y="25">vpaidpp &amp;&amp; not (vpaidapp)</label>
+			<label kind="synchronisation" x="-289" y="8">paidpp?</label>
+			<nail x="-238" y="-25"/>
+			<nail x="-212" y="59"/>
+		</transition>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id7"/>
+			<label kind="guard" x="144" y="76">vpaidpp &amp;&amp; vpaidapp</label>
+			<label kind="synchronisation" x="153" y="59">paidpp?</label>
+			<nail x="25" y="204"/>
+		</transition>
+	</template>
+	<template>
+		<name x="5" y="5">FTA_5</name>
+		<declaration>
+// Place local declarations 1 here.
+// clocks:
+clock tapl;
+   </declaration>
+		<location id="id8" x="136" y="-34">
+			<name x="102" y="-51">L3</name>
+		</location>
+		<location id="id9" x="416" y="-51">
+			<name x="406" y="-85">L5</name>
+		</location>
+		<location id="id10" x="654" y="110">
+			<name x="644" y="76">L6</name>
+			<label kind="invariant" x="671" y="110">tapl&lt;=31</label>
+		</location>
+		<location id="id11" x="0" y="255">
+			<name x="-10" y="221">L0</name>
+		</location>
+		<location id="id12" x="620" y="246">
+			<name x="610" y="212">L7</name>
+		</location>
+		<location id="id13" x="68" y="-187">
+			<name x="58" y="-221">L2</name>
+		</location>
+		<location id="id14" x="280" y="-42">
+			<name x="270" y="-76">L4</name>
+		</location>
+		<location id="id15" x="42" y="-17">
+			<name x="17" y="-42">L1</name>
+		</location>
+		<init ref="id11"/>
+		<transition>
+			<source ref="id10"/>
+			<target ref="id11"/>
+			<label kind="guard" x="433" y="161">tapl&lt;=31 &amp;&amp; apl</label>
+		</transition>
+		<transition>
+			<source ref="id13"/>
+			<target ref="id8"/>
+			<label kind="guard" x="153" y="-102">pa</label>
+			<label kind="synchronisation" x="153" y="-85">payapp!</label>
+		</transition>
+		<transition>
+			<source ref="id9"/>
+			<target ref="id10"/>
+			<label kind="guard" x="569" y="34">apl</label>
+			<label kind="synchronisation" x="544" y="17">reject?</label>
+			<label kind="assignment" x="578" y="59">tapl:=0</label>
+		</transition>
+		<transition>
+			<source ref="id9"/>
+			<target ref="id11"/>
+			<label kind="synchronisation" x="374" y="51">accept?</label>
+			<nail x="408" y="34"/>
+		</transition>
+		<transition>
+			<source ref="id8"/>
+			<target ref="id11"/>
+			<label kind="guard" x="85" y="25">pa</label>
+			<label kind="synchronisation" x="102" y="51">cancelpay?</label>
+		</transition>
+		<transition>
+			<source ref="id15"/>
+			<target ref="id13"/>
+		</transition>
+		<transition>
+			<source ref="id9"/>
+			<target ref="id11"/>
+			<label kind="guard" x="238" y="42">not (apl)</label>
+			<label kind="synchronisation" x="229" y="59">reject?</label>
+		</transition>
+		<transition>
+			<source ref="id12"/>
+			<target ref="id11"/>
+			<label kind="guard" x="484" y="221">apl</label>
+			<label kind="synchronisation" x="433" y="221">accept?</label>
+		</transition>
+		<transition>
+			<source ref="id11"/>
+			<target ref="id15"/>
+		</transition>
+		<transition>
+			<source ref="id8"/>
+			<target ref="id14"/>
+			<label kind="guard" x="178" y="-42">pa</label>
+			<label kind="synchronisation" x="187" y="-8">paidapp?</label>
+		</transition>
+		<transition>
+			<source ref="id12"/>
+			<target ref="id11"/>
+			<label kind="guard" x="501" y="306">apl</label>
+			<label kind="synchronisation" x="501" y="289">reject?</label>
+			<nail x="348" y="331"/>
+		</transition>
+		<transition>
+			<source ref="id10"/>
+			<target ref="id12"/>
+			<label kind="guard" x="646" y="161">tapl&lt;=30 &amp;&amp; apl</label>
+			<label kind="synchronisation" x="646" y="144">appeal!</label>
+		</transition>
+		<transition>
+			<source ref="id13"/>
+			<target ref="id9"/>
+			<label kind="guard" x="263" y="-127">not (pa)</label>
+			<label kind="synchronisation" x="229" y="-144">submit!</label>
+		</transition>
+		<transition>
+			<source ref="id9"/>
+			<target ref="id11"/>
+			<label kind="synchronisation" x="391" y="85">incomplete?</label>
+			<nail x="501" y="93"/>
+		</transition>
+		<transition>
+			<source ref="id14"/>
+			<target ref="id9"/>
+			<label kind="guard" x="314" y="-25">pa</label>
+			<label kind="synchronisation" x="289" y="-59">submit!</label>
+		</transition>
+	</template>
+	<template>
+		<name x="5" y="5">FTA_7</name>
+		<declaration>
+// Place local declarations 1 here.
+// clocks:
+
+clock tpay;</declaration>
+		<location id="id16" x="289" y="0">
+			<name x="279" y="-34">L3</name>
+			<label kind="invariant" x="238" y="-51">tpay&lt;=2</label>
+		</location>
+		<location id="id17" x="289" y="263">
+			<name x="279" y="229">L0</name>
+		</location>
+		<location id="id18" x="450" y="0">
+			<name x="440" y="-34">L4</name>
+			<label kind="invariant" x="467" y="-17">tpay&lt;=2</label>
+		</location>
+		<location id="id19" x="-17" y="0">
+			<name x="-27" y="-34">L1</name>
+			<label kind="invariant" x="-93" y="-25">tpay&lt;=2</label>
+		</location>
+		<init ref="id17"/>
+		<transition>
+			<source ref="id18"/>
+			<target ref="id17"/>
+			<label kind="guard" x="357" y="119">cc &amp;&amp; tpay&gt;1</label>
+			<label kind="synchronisation" x="374" y="85">cancelcc!</label>
+			<nail x="374" y="127"/>
+		</transition>
+		<transition>
+			<source ref="id18"/>
+			<target ref="id17"/>
+			<label kind="guard" x="527" y="110">cc &amp;&amp; tpay&lt;=1</label>
+			<label kind="synchronisation" x="510" y="127">paidcc!</label>
+			<nail x="527" y="110"/>
+		</transition>
+		<transition>
+			<source ref="id19"/>
+			<target ref="id16"/>
+			<label kind="guard" x="68" y="0">cc &amp;&amp; tpay&lt;=1</label>
+			<label kind="assignment" x="178" y="0">tpay:=0</label>
+			<label kind="comments" x="68" y="-25">ccdetails</label>
+			<nail x="76" y="0"/>
+		</transition>
+		<transition>
+			<source ref="id19"/>
+			<target ref="id17"/>
+			<label kind="guard" x="119" y="85">cc</label>
+			<label kind="synchronisation" x="85" y="68">cancelcc!</label>
+		</transition>
+		<transition>
+			<source ref="id16"/>
+			<target ref="id18"/>
+			<label kind="guard" x="314" y="-17">cc &amp;&amp; tpay&lt;=1</label>
+			<label kind="assignment" x="340" y="0">tpay:=0</label>
+			<label kind="comments" x="331" y="-34">confirm</label>
+		</transition>
+		<transition>
+			<source ref="id16"/>
+			<target ref="id17"/>
+			<label kind="guard" x="289" y="42">cc</label>
+			<label kind="synchronisation" x="289" y="59">cancelcc!</label>
+		</transition>
+		<transition>
+			<source ref="id17"/>
+			<target ref="id19"/>
+			<label kind="guard" x="-17" y="76">cc</label>
+			<label kind="synchronisation" x="-17" y="102">paycc?</label>
+			<label kind="assignment" x="17" y="127">tpay:=0</label>
+			<nail x="-25" y="136"/>
+		</transition>
+	</template>
+	<template>
+		<name x="5" y="5">FTA_6</name>
+		<declaration>
+// Place local declarations 1 here.
+// clocks:
+
+   </declaration>
+		<location id="id20" x="127" y="178">
+			<name x="117" y="144">L0</name>
+		</location>
+		<location id="id21" x="17" y="-119">
+			<name x="7" y="-153">L1</name>
+			<committed/>
+		</location>
+		<location id="id22" x="314" y="-102">
+			<name x="304" y="-136">L2</name>
+			<committed/>
+		</location>
+		<init ref="id20"/>
+		<transition>
+			<source ref="id20"/>
+			<target ref="id22"/>
+			<label kind="guard" x="153" y="25">vcancelpp &amp;&amp; vcancelpay</label>
+			<label kind="synchronisation" x="204" y="0">cancelpp?</label>
+			<nail x="187" y="34"/>
+		</transition>
+		<transition>
+			<source ref="id20"/>
+			<target ref="id21"/>
+			<label kind="guard" x="42" y="-93">vcancelcc &amp;&amp; vcancelpay</label>
+			<label kind="synchronisation" x="59" y="-76">cancelcc?</label>
+			<nail x="102" y="25"/>
+		</transition>
+		<transition>
+			<source ref="id20"/>
+			<target ref="id20"/>
+			<label kind="guard" x="-187" y="170">vcancelcc &amp;&amp; not (vcancelpay)</label>
+			<label kind="synchronisation" x="-127" y="144">cancelcc?</label>
+			<nail x="-51" y="161"/>
+			<nail x="-42" y="136"/>
+		</transition>
+		<transition>
+			<source ref="id22"/>
+			<target ref="id20"/>
+			<label kind="guard" x="357" y="-25">vcancelpp &amp;&amp; vcancelpay</label>
+			<label kind="synchronisation" x="357" y="0">cancelpay!</label>
+			<nail x="357" y="93"/>
+		</transition>
+		<transition>
+			<source ref="id20"/>
+			<target ref="id20"/>
+			<label kind="guard" x="178" y="221">vcancelpp &amp;&amp; not (vcancelpay)</label>
+			<label kind="synchronisation" x="178" y="204">cancelpp?</label>
+			<nail x="102" y="221"/>
+			<nail x="161" y="255"/>
+		</transition>
+		<transition>
+			<source ref="id21"/>
+			<target ref="id20"/>
+			<label kind="guard" x="-187" y="-76">vcancelcc &amp;&amp; vcancelpay</label>
+			<label kind="synchronisation" x="-102" y="-51">cancelpay!</label>
+			<nail x="-51" y="17"/>
+		</transition>
+	</template>
+	<template>
+		<name x="5" y="5">FTA_8</name>
+		<declaration>
+// Place local declarations 1 here.
+// clocks:
+clock tp;</declaration>
+		<location id="id23" x="-170" y="0">
+			<name x="-180" y="-34">L0</name>
+		</location>
+		<location id="id24" x="280" y="8">
+			<name x="270" y="-26">L2</name>
+			<label kind="invariant" x="272" y="25">tp&lt;=90</label>
+		</location>
+		<init ref="id23"/>
+		<transition>
+			<source ref="id23"/>
+			<target ref="id24"/>
+			<label kind="synchronisation" x="59" y="-127">assess?</label>
+			<label kind="assignment" x="85" y="-110">tp:=0</label>
+			<nail x="68" y="-102"/>
+		</transition>
+		<transition>
+			<source ref="id24"/>
+			<target ref="id23"/>
+			<label kind="synchronisation" x="144" y="85">accept!</label>
+			<nail x="42" y="119"/>
+		</transition>
+		<transition>
+			<source ref="id24"/>
+			<target ref="id23"/>
+			<label kind="synchronisation" x="68" y="-17">reject!</label>
+			<nail x="51" y="0"/>
+		</transition>
+	</template>
+	<template>
+		<name x="5" y="5">FTA_2</name>
+		<declaration>
+// Place local declarations 1 here.
+// clocks:
+
+   
+clock tpay;</declaration>
+		<location id="id25" x="331" y="-68">
+			<name x="321" y="-102">L3</name>
+			<label kind="invariant" x="357" y="-76">tpay&lt;=2</label>
+		</location>
+		<location id="id26" x="-144" y="-59">
+			<name x="-154" y="-93">L0</name>
+		</location>
+		<location id="id27" x="212" y="51">
+			<name x="202" y="17">L4</name>
+			<label kind="invariant" x="178" y="68">tpay&lt;=2</label>
+		</location>
+		<location id="id28" x="76" y="-144">
+			<name x="66" y="-178">L1</name>
+			<label kind="invariant" x="42" y="-204">tpay&lt;=2</label>
+		</location>
+		<init ref="id26"/>
+		<transition>
+			<source ref="id27"/>
+			<target ref="id26"/>
+			<label kind="guard" x="-126" y="-38">pp &amp;&amp; tpay&gt;1</label>
+			<label kind="synchronisation" x="-126" y="-21">cancelpp!</label>
+		</transition>
+		<transition>
+			<source ref="id27"/>
+			<target ref="id26"/>
+			<label kind="guard" x="-42" y="102">pp &amp;&amp; tpay&lt;=1</label>
+			<label kind="synchronisation" x="-42" y="127">paidpp!</label>
+			<nail x="-17" y="102"/>
+		</transition>
+		<transition>
+			<source ref="id28"/>
+			<target ref="id25"/>
+			<label kind="guard" x="136" y="-153">pp &amp;&amp; tpay &lt;=1</label>
+			<label kind="assignment" x="246" y="-119">tpay:=0</label>
+			<label kind="comments" x="195" y="-127">login</label>
+		</transition>
+		<transition>
+			<source ref="id28"/>
+			<target ref="id26"/>
+			<label kind="guard" x="-17" y="-102">pp</label>
+			<label kind="synchronisation" x="0" y="-119">cancelpp!</label>
+		</transition>
+		<transition>
+			<source ref="id26"/>
+			<target ref="id28"/>
+			<label kind="guard" x="-68" y="-187">pp</label>
+			<label kind="synchronisation" x="-68" y="-170">paypp?</label>
+			<label kind="assignment" x="-68" y="-144">tpay:=0</label>
+			<nail x="-68" y="-144"/>
+		</transition>
+		<transition>
+			<source ref="id25"/>
+			<target ref="id26"/>
+			<label kind="guard" x="221" y="-51">pp</label>
+			<label kind="synchronisation" x="170" y="-68">cancelpp!</label>
+		</transition>
+		<transition>
+			<source ref="id25"/>
+			<target ref="id27"/>
+			<label kind="guard" x="272" y="0">pp &amp;&amp; tpay &lt;=1</label>
+			<label kind="assignment" x="246" y="17">tpay:=0</label>
+			<label kind="comments" x="289" y="-17">confirm</label>
+			<nail x="272" y="-8"/>
+		</transition>
+	</template>
+	<template>
+		<name x="5" y="5">FTA_0</name>
+		<declaration>
+// Place local declarations 1 here.
+// clocks:</declaration>
+		<location id="id29" x="-144" y="0">
+			<name x="-154" y="-34">L0</name>
+		</location>
+		<location id="id30" x="195" y="-204">
+			<name x="185" y="-238">L1</name>
+			<committed/>
+		</location>
+		<location id="id31" x="204" y="170">
+			<name x="194" y="136">L2</name>
+			<committed/>
+		</location>
+		<init ref="id29"/>
+		<transition>
+			<source ref="id29"/>
+			<target ref="id30"/>
+			<label kind="guard" x="127" y="-153">vpayapp &amp;&amp; vpaycc</label>
+			<label kind="synchronisation" x="15" y="-34">payapp?</label>
+		</transition>
+		<transition>
+			<source ref="id31"/>
+			<target ref="id29"/>
+			<label kind="guard" x="-59" y="195">vpayapp &amp;&amp; vpaypp</label>
+			<label kind="synchronisation" x="25" y="178">paypp!</label>
+			<nail x="-42" y="178"/>
+		</transition>
+		<transition>
+			<source ref="id29"/>
+			<target ref="id29"/>
+			<label kind="guard" x="-442" y="-25">vpayapp &amp;&amp; not (vpaycc || vpaypp)</label>
+			<label kind="synchronisation" x="-263" y="-51">payapp?</label>
+			<nail x="-187" y="17"/>
+			<nail x="-195" y="-34"/>
+		</transition>
+		<transition>
+			<source ref="id29"/>
+			<target ref="id31"/>
+			<label kind="guard" x="59" y="76">vpayapp &amp;&amp; vpaypp</label>
+			<label kind="synchronisation" x="15" y="-34">payapp?</label>
+		</transition>
+		<transition>
+			<source ref="id30"/>
+			<target ref="id29"/>
+			<label kind="guard" x="-17" y="-263">vpayapp &amp;&amp; vpaycc</label>
+			<label kind="synchronisation" x="68" y="-280">paycc!</label>
+			<nail x="-17" y="-238"/>
+		</transition>
+	</template>
+	<template>
+		<name x="5" y="5">Context</name>
+		<declaration>
+// Place local declarations here.
+   </declaration>
+		<location id="id32" x="0" y="0">
+		</location>
+		<init ref="id32"/>
+	</template>
+	<template>
+		<name x="5" y="5">FeatModel</name>
+		<declaration>
+// Place local declarations here.
+   </declaration>
+		<location id="id33" x="0" y="0">
+			<committed/>
+		</location>
+		<location id="id34" x="100" y="-50">
+		</location>
+		<location id="id35" x="100" y="0">
+		</location>
+		<location id="id36" x="100" y="50">
+		</location>
+		<location id="id37" x="100" y="100">
+		</location>
+		<init ref="id33"/>
+		<transition>
+			<source ref="id33"/>
+			<target ref="id34"/>
+			<label kind="assignment" x="130" y="-50">vcancelpay=true,apl=true,pa=true,vcancelcc=true,vpaycc=true,cc=true,vpaidapp=true,vpayapp=true,vpaidcc=true</label>
+		</transition>
+		<transition>
+			<source ref="id33"/>
+			<target ref="id35"/>
+			<label kind="assignment" x="130" y="0">vcancelpay=true,apl=true,pa=true,vcancelcc=true,vpaycc=true,vpaidpp=true,vpaypp=true,vcancelpp=true,cc=true,pp=true,vpaidapp=true,vpayapp=true,vpaidcc=true</label>
+		</transition>
+		<transition>
+			<source ref="id33"/>
+			<target ref="id36"/>
+			<label kind="assignment" x="130" y="50">vcancelpay=true,apl=true,pa=true,vpaidpp=true,vpaypp=true,vcancelpp=true,pp=true,vpaidapp=true,vpayapp=true</label>
+		</transition>
+		<transition>
+			<source ref="id33"/>
+			<target ref="id37"/>
+			<label kind="assignment" x="130" y="100">apl=true</label>
+		</transition>
+	</template>
+	<system>// Place template instantiations here.
+//(no intantiation needed)
+// List one or more processes to be composed into a system.
+system FTA_0,FTA_1,FTA_2,FTA_3,FTA_4,FTA_5,FTA_6,FTA_7,FTA_8,FTA_9,
+  Context, FeatModel;
+</system>
+	<queries>
+		<query>
+			<formula>(FTA_5.L5 &amp;&amp; apl) --&gt; (FTA_5.L0 &amp;&amp;  FTA_9.ts &lt;=20) || (FTA_5.L0 &amp;&amp; FTA_8.tp&lt;=90) || (FTA_5.L0 &amp;&amp; FTA_8.tp&lt;=90+31) 
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>(FTA_5.L5 &amp;&amp; !apl) --&gt; (FTA_5.L0 &amp;&amp;  FTA_9.ts &lt;=20) || (FTA_5.L0 &amp;&amp; FTA_8.tp&lt;=90)
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>FTA_5.L6 --&gt; (FTA_5.L0 &amp;&amp; FTA_5.tapl&lt;=31) || (FTA_5.L7 &amp;&amp; FTA_5.tapl&lt;=30)
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>FTA_5.L7 --&gt; (FTA_5.L0)
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>FTA_5.L6 --&gt; (FTA_5.L7 || FTA_5.L0)
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>FTA_5.L6 --&gt; FTA_5.L0
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>FTA_5.L5 --&gt; FTA_5.L0
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>FTA_5.L3 --&gt; (FTA_5.L0 || FTA_5.L4)
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>A&lt;&gt; FTA_5.L5 imply FTA_5.L0
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>A&lt;&gt; FTA_5.L3 imply (FTA_2.L1 or FTA_7.L1)
+			</formula>
+			<comment>
+			</comment>
+		</query>
+		<query>
+			<formula>A[] not deadlock
+			</formula>
+			<comment>
+			</comment>
+		</query>
+	</queries>
+</nta>
