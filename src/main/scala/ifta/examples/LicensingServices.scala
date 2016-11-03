@@ -16,7 +16,7 @@ object LicensingServices {
   val application = newifta ++ (
     0 --> 1 by "apply",
     1 --> 2 by "submitDocs",
-    2 --> 5 by "submit" when not("pa") reset "tp",
+    2 --> 5 by "submit" when not("pa"),
     2 --> 3 by "payapp" when "pa",
     3 --> 4 by "paidapp" when "pa",
     3 --> 0 by "cancelpay" when "pa",
@@ -49,7 +49,7 @@ object LicensingServices {
 
   val creditcard = newifta ++ (
     0 --> 1 by "paycc" when "cc" reset "tpay",
-    1 --> 2 by "detailscc" when "cc" cc "tpay"<=1 reset "tapy",
+    1 --> 2 by "detailscc" when "cc" cc "tpay"<=1 reset "tpay",
     1 --> 0 by "cancelcc" when "cc",
     2 --> 3 by "confcc" when "cc" cc "tpay"<=1 reset "tpay",
     2 --> 0 by "cancelcc" when "cc",
@@ -86,8 +86,8 @@ object LicensingServices {
 
   val handleappeal = newifta ++ (
     0 --> 1 by "appeal" when "apl" reset "tas",
-    1 --> 0 by "assess" when "apl"
-    ) startWith 0 get "appeal" pub "assess" inv(1,"tas"<=20)
+    1 --> 0 by "assessapl" when "apl"
+    ) startWith 0 get "appeal" pub "assessapl" inv(1,"tas"<=20)
 
 //  val assessment = newifta ++ (
 //    0 --> 1 by "assess",
@@ -108,12 +108,12 @@ object LicensingServices {
   val preassessment = newifta ++ (
     0 --> 1 by "submit" reset "ts",
     1 --> 0 by "incomplete",
-    1 --> 0 by "assess"
-    ) inv(1,"ts"<=20) startWith 0 get "submit" pub "incomplete,assess"
+    1 --> 0 by "assessapp"
+    ) inv(1,"ts"<=20) startWith 0 get "submit" pub "incomplete,assessapp"
 
-  val processingnet = preassessment || assessment || handleappeal
+  val processingnet = preassessment || assessment || handleappeal || merger("assessapl","assessapp","assess")
 
-  val processing = preassessment * assessment * handleappeal
+  val processing = preassessment * assessment * handleappeal * merger("assessapl","assessapp","assess")
 
 
   ////////////////////////////
@@ -124,13 +124,8 @@ object LicensingServices {
 
   val spl = (application * processing * payment) when "pa" <-> ("pp" || "cc")
 
-  /**
-    * Properties checked:
-    * A[] not deadlock: ok
-    * A<> FTA_5.L3 imply (FTA_2.L1 or FTA_7.L1): ok ( If payapp in appplication then eventually ( paypal.paypp or creditcard.paycc))
-    * A<> FTA_0.L5 imply FTA_0.L0: of (if appplication.submit then eventually I receive some answer and I'm able to start a new submision again)
-    * A<> FTA_0.L0 and FTA_5.L0: ok (if a can start an application then it is awalys the case that there is no processing in process)
-    */
+  val splFM = IFTA(spl.locs,spl.init,spl.act,spl.clocks, spl.feats,spl.edges,spl.cInv,true,spl.in,spl.out)
+
 
   ////////////////////////////////////
   // Consulting External DBs Module //
