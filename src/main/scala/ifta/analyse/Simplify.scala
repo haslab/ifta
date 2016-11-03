@@ -23,14 +23,18 @@ object Simplify {
       case (e,FTrue) => e
       case (FNot(FTrue), _) => FNot(FTrue)
       case (_,FNot(FTrue)) => FNot(FTrue)
-      case (e3, e4) => FAnd(e3,e4)
+      case (FNot(e3),e4) => if (e3 == e4) FNot(FTrue) else FAnd(FNot(e3),e4)
+      case (e3,FNot(e4)) => if (e3 == e4) FNot(FTrue) else FAnd(e3,FNot(e4))
+      case (e3, e4) => if (e3 == e4) e3 else FAnd(e3,e4)
     }
     case FOr(e1,e2) => (apply(e1),apply(e2)) match {
-      case (FTrue, e) => FTrue
+      case (FTrue, eSolver) => FTrue
       case (e, FTrue) => FTrue
       case (FNot(FTrue), e) => e
       case (e, FNot(FTrue)) => e
-      case (e3, e4) => FOr(e3, e4)
+      case (FNot(e3),e4) => if (e3 == e4) FTrue else FOr(FNot(e3),e4)
+      case (e3,FNot(e4)) => if (e3 == e4) FTrue else FOr(e3,FNot(e4))
+      case (e3, e4) => if (e3 == e4) e3 else FOr(e3, e4)
     }
     case FNot(FNot(e)) => apply(e)
     case FNot(e) => FNot(apply(e))
