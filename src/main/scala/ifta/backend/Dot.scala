@@ -102,21 +102,33 @@ object Dot {
     """.stripMargin
     }
 
-  def getConnEdges(nIFTA: NIFTA,i:Int,mm:Map[String,Int]) = {
+  def getConnEdges(nIFTA: NIFTA,i:Int,mm:Map[String,(Int,Boolean)]) = {
     var res = ""
     var l = i
     var m = mm
     for (ifta <- nIFTA.iFTAs) {
-      res += s"""\n  $l [label="${(ifta.in++ifta.out).mkString("-")}"]"""
+      if (ifta.in.nonEmpty || ifta.out.nonEmpty)
+        res += s"""\n  $l [label="${(ifta.in++ifta.out).mkString("-")}"]"""
       for (in <- ifta.in) {
-        if (m contains in) res += s"""\n  ${m(in)} -> $l [label="$in"]"""
-        else m += (in->l)
+        if (m contains in) {
+          res += s"""\n  ${m(in)._1} -> $l [label="$in"]"""
+          m -= in
+        }
+        else m += (in->(l,true))
       }
       for (out <- ifta.out) {
-        if (m contains out) res += s"""\n  $l -> ${m(out)}  [label="$out"]"""
-        else m += (out->l)
+        if (m contains out) {
+          res += s"""\n  $l -> ${m(out)._1}  [label="$out"]"""
+          m -= out
+        }
+        else m += (out->(l,false))
       }
       l = l+1
+    }
+    for ((k,(l,b)) <- m) {
+      res += s"""\n  { node [shape=circle]  $k }"""
+      if(b) res += s"""\n  "$k" -> $l"""
+      else  res += s"""\n  $l -> "$k""""
     }
     res
   }
