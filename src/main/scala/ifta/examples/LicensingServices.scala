@@ -78,7 +78,7 @@ object LicensingServices {
     creditcard *
     merger("cancelcc", "cancelpp", "cancelpay") *
     merger("paidcc", "paidpp", "paidapp") 
-    ) when ("pp" || "cc")
+    ) //when ("pp" || "cc")
 
   ///////////////////////////////////
   // Processing Application Module //
@@ -122,9 +122,7 @@ object LicensingServices {
 
   val splnet = application || processingnet || paymentnet || (newifta when "pa" <-> ("pp" || "cc"))
 
-  val spl = (application * processing * payment) when "pa" <-> ("pp" || "cc")
-
-  val splFM = IFTA(spl.locs,spl.init,spl.act,spl.clocks, spl.feats,spl.edges,spl.cInv,true,spl.in,spl.out)
+  val spl = application * processing * payment when "pa" <-> ("pp" || "cc")
 
 
   ////////////////////////////////////

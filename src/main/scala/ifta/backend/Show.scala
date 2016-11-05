@@ -36,7 +36,7 @@ object Show {
   }
 
   def apply(i: IFTA): String = {
-    val iFTA = Simplify.remUnreach(i)
+    val iFTA = Simplify.removeUnreach(i)
     s"""IFTA [${iFTA.init}${(iFTA.locs - iFTA.init).mkString("|", ",", "")}] """ +
       (if (iFTA.act.isEmpty) "" else s"""${iFTA.act.mkString("[", ",", "]")} """) +
       (if (iFTA.clocks.isEmpty) "" else s"""${iFTA.clocks.mkString("[", ",", "]")} """) +
