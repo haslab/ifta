@@ -23,7 +23,7 @@
    */
  case class IFTA(locs:Set[Int], init:Int, act:Set[String], clocks:Set[String]
                  , feats:Set[String], edges:Set[Edge], cInv:Map[Int,ClockCons], fm:FExp
-                 , in:Set[String], out:Set[String]) {
+                 , in:Set[String], out:Set[String],shortname:String="") {
 
    /**
      * Product of 2 IFTAs synchronising shared ports
@@ -64,8 +64,12 @@
        (for (a <- shared) yield fEPort(a) <-> other.fEPort(a)).fold(FTrue)(_&&_)
      val resIn = (in ++ other.in) -- shared
      val resOut = (out ++ other.out) -- shared
+     val nm =
+       if (this.shortname=="" || other.shortname=="") this.shortname+other.shortname
+       else  this.shortname+"*"+other.shortname
 
-     IFTA(resLocs,resInit,resAct,resCl,resFeat,resEdges,resInv,resFm,resIn,resOut)
+
+     IFTA(resLocs,resInit,resAct,resCl,resFeat,resEdges,resInv,resFm,resIn,resOut,nm)
    }
 
    // todo - fix!
@@ -132,7 +136,7 @@
    private def syncOnce(pair:(String,String)): IFTA =
      IFTA(locs,init,act.map(merge(_,pair._1,pair._2)),clocks,feats
          ,edges.map(e => e by e.act.map(merge(_, pair._1, pair._2))),cInv
-         ,fm,in.map(merge(_,pair._1,pair._2)),out.map(merge(_,pair._1,pair._2)))
+         ,fm,in.map(merge(_,pair._1,pair._2)),out.map(merge(_,pair._1,pair._2)),shortname=this.shortname)
 
    def sync(pair:(String,String)*): IFTA = sync(pair.toSeq)
    def sync(pair:Iterable[(String,String)]): IFTA =
@@ -144,22 +148,24 @@
 
    // constructors
    private def link(e: Edge): IFTA =
-     IFTA(locs+e.from+e.to,init,act++e.act,clocks++e.cCons.clocks,feats++e.fe.feats,edges+e,cInv,fm,in,out)
+     IFTA(locs+e.from+e.to,init,act++e.act,clocks++e.cCons.clocks,feats++e.fe.feats,edges+e,cInv,fm,in,out,shortname)
    def ++(e:Edge*) = {
      var res = this
      for (ed <- e) res = res link ed
      res
    }
    def when(f:FExp): IFTA =
-     IFTA(locs,init,act,clocks,feats++f.feats,edges,cInv,fm && f,in,out)
+     IFTA(locs,init,act,clocks,feats++f.feats,edges,cInv,fm && f,in,out,shortname)
    def get(p:String): IFTA =
-     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,in++p.split(","),out)
+     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,in++p.split(","),out,shortname)
    def pub(p:String): IFTA =
-     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,in,out++p.split(","))
+     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,in,out++p.split(","),shortname)
    def startWith(i:Int): IFTA =
-     IFTA(locs,init+i,act,clocks,feats,edges,cInv,fm,in,out)
+     IFTA(locs,init+i,act,clocks,feats,edges,cInv,fm,in,out,shortname)
    def inv(l:Int,cc:ClockCons): IFTA =
-     IFTA(locs,init,act,clocks++cc.clocks,feats,edges,cInv+(l->cc),fm,in,out)
+     IFTA(locs,init,act,clocks++cc.clocks,feats,edges,cInv+(l->cc),fm,in,out,shortname)
+   def name(n:String): IFTA =
+     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,in,out,shortname=n)
 
    // build a NIFTA
    def ||(i:IFTA):NIFTA = NIFTA(Set(this,i))
@@ -245,6 +251,21 @@
    def sync(pair:Iterable[(String,String)]): NIFTA =
      if (pair.isEmpty) this
      else NIFTA(iFTAs.map(_.sync(pair.head))).sync(pair.tail)
+
+   /**
+     * Flattens a network of IFTAS into a single (product) IFTA, after linking ports that need to be combined.
+     * In practice, it uses "sync" followed by a fold of i1*i2.
+     * @param pair Nodes
+     * @return
+     */
+   def product(pair:(String,String)*): IFTA = product(pair.toSeq)
+   def product(pair:Iterable[(String,String)]): IFTA = {
+     val synched = this.sync(pair)
+     synched.iFTAs.headOption match {
+       case Some(x) => synched.iFTAs.tail.fold(x)(_*_)
+       case None => DSL.newifta
+     }
+   }
 
 
    // constructors

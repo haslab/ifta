@@ -89,8 +89,10 @@ val rtr = newifta ++ (
 
 val link = List("o1"->"ca","o2"->"co")
 
-val netComp  = (cm  sync link) || (rtr sync link)
-val prodComp = (cm  sync link) *  (rtr sync link)
+// network of 2 automata (communicating over link)
+val netComp  = (cm || rtr) sync    link
+// flattened of the same 2 automata (communicating over link)
+val prodComp = (cm || rtr) product link
 ```
 
 The automata of `cm`, `rtr`, and the product `prodComp` are depicted below, respectively.
@@ -98,3 +100,10 @@ Observe that both compositions `netComp` and `prodComp` can be exported to Uppaa
 
 ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/images/cm.svg "Coffee Machine automaton in Dot") ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/images/router.svg "Router automaton in Dot") ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/images/cm-router.svg "Product of cm and rtr in Dot")
 
+In larger examples it is often necessary to visualise the composition of automata. This can be done, for example, as follows.
+
+```scala
+con2dot( ((cm name "CM") || (rtr name "Rt")) sync link )
+```
+
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/images/cm-router-conn.svg "Depicting the connector composing the coffee machine and the router")

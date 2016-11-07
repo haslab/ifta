@@ -29,7 +29,7 @@ object LicensingServices {
     7 --> 0 by "reject" when "apl",
     7 --> 0 by "accept" when "apl",
     6 --> 0 by "cancelapp" when "apl" cc "tapl"<=31
-    ) get "paidapp,cancelpay,accept,reject,incomplete" pub "submit,payapp,appeal" inv(6,"tapl"<=31)
+    ) get "paidapp,cancelpay,accept,reject,incomplete" pub "submit,payapp,appeal" inv(6,"tapl"<=31) name "App"
 
   // Things to check:
   // if submit then eventually I get an answer (go back to 0)
@@ -55,7 +55,7 @@ object LicensingServices {
     2 --> 0 by "cancelcc" when "cc",
     3 --> 0 by "paidcc" when "cc" cc "tpay"<=1,
     3 --> 0 by "cancelcc" when "cc" cc "tpay">1
-    ) startWith 0 get "paycc" pub "cancelcc,paidcc" inv(1,"tpay"<=2) inv(2,"tpay"<=2) inv(3,"tpay"<=2)
+    ) startWith 0 get "paycc" pub "cancelcc,paidcc" inv(1,"tpay"<=2) inv(2,"tpay"<=2) inv(3,"tpay"<=2) name "CC"
 
   val paypal = newifta ++ (
     0 --> 1 by "paypp" when "pp" reset "tpay",
@@ -65,7 +65,7 @@ object LicensingServices {
     2 --> 0 by "cancelpp" when "pp",
     3 --> 0 by "paidpp" when "pp" cc "tpay"<=1,
     3 --> 0 by "cancelpp" when "pp" cc "tpay">1
-    ) startWith 0 get "paypp" pub "cancelpp,paidpp" inv(1,"tpay"<=2) inv(2,"tpay"<=2) inv(3,"tpay"<=2)
+    ) startWith 0 get "paypp" pub "cancelpp,paidpp" inv(1,"tpay"<=2) inv(2,"tpay"<=2) inv(3,"tpay"<=2) name "PP"
 
   val paymentnet = (router("payapp", "paycc", "paypp") ||
     paypal ||
@@ -80,6 +80,7 @@ object LicensingServices {
     merger("paidcc", "paidpp", "paidapp") 
     ) //when ("pp" || "cc")
 
+
   ///////////////////////////////////
   // Processing Application Module //
   ///////////////////////////////////
@@ -87,7 +88,7 @@ object LicensingServices {
   val handleappeal = newifta ++ (
     0 --> 1 by "appeal" when "apl" reset "tas",
     1 --> 0 by "assessapl" when "apl"
-    ) startWith 0 get "appeal" pub "assessapl" inv(1,"tas"<=20)
+    ) startWith 0 get "appeal" pub "assessapl" inv(1,"tas"<=20) name "handleApp"
 
 //  val assessment = newifta ++ (
 //    0 --> 1 by "assess",
@@ -103,13 +104,13 @@ object LicensingServices {
     0 --> 1 by "assess" reset "tp",
     1 --> 0 by "accept",
     1 --> 0 by "reject"
-    ) startWith 0 get "assess" pub "accept,reject" inv(1,"tp"<=90)
+    ) startWith 0 get "assess" pub "accept,reject" inv(1,"tp"<=90) name "assess"
 
   val preassessment = newifta ++ (
     0 --> 1 by "submit" reset "ts",
     1 --> 0 by "incomplete",
     1 --> 0 by "assessapp"
-    ) inv(1,"ts"<=20) startWith 0 get "submit" pub "incomplete,assessapp"
+    ) inv(1,"ts"<=20) startWith 0 get "submit" pub "incomplete,assessapp" name "preassess"
 
   val processingnet = preassessment || assessment || handleappeal || merger("assessapl","assessapp","assess")
 

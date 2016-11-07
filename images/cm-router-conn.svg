@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="259pt" height="49pt" viewBox="0.00 0.00 259.22 48.84">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 44.8448)">
+<title>G</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-44.8448 255.223,-44.8448 255.223,4 -4,4"></polygon>
+<!-- 0 -->
+<g id="node1" class="node"><title>0</title>
+<polygon fill="none" stroke="black" points="192.114,-39.3455 156.551,-39.3455 156.551,-8.74419 192.114,-8.74419 192.114,-39.3455"></polygon>
+<text text-anchor="middle" x="174.332" y="-19.8448" font-family="Times,serif" font-size="14.00">CM</text>
+</g>
+<!-- b -->
+<g id="node3" class="node"><title>b</title>
+<ellipse fill="none" stroke="black" cx="240.223" cy="-24.0448" rx="11" ry="11.76"></ellipse>
+<text text-anchor="middle" x="240.223" y="-19.8448" font-family="Times,serif" font-size="14.00">b</text>
+</g>
+<!-- 0&#45;&gt;b -->
+<g id="edge3" class="edge"><title>0-&gt;b</title>
+<path fill="none" stroke="black" d="M192.119,-24.0448C201.246,-24.0448 212.523,-24.0448 221.755,-24.0448"></path>
+<polygon fill="black" stroke="black" points="221.936,-26.4949 228.936,-24.0448 221.936,-21.5949 221.936,-26.4949"></polygon>
+</g>
+<!-- 1 -->
+<g id="node2" class="node"><title>1</title>
+<polygon fill="none" stroke="black" points="86.3418,-39.3455 58.8854,-39.3455 58.8854,-8.74419 86.3418,-8.74419 86.3418,-39.3455"></polygon>
+<text text-anchor="middle" x="72.6136" y="-19.8448" font-family="Times,serif" font-size="14.00">Rt</text>
+</g>
+<!-- 1&#45;&gt;0 -->
+<g id="edge1" class="edge"><title>1-&gt;0</title>
+<path fill="none" stroke="black" d="M86.2431,-24.0448C102.043,-24.0448 129.432,-24.0448 149.284,-24.0448"></path>
+<polygon fill="black" stroke="black" points="149.483,-26.4949 156.483,-24.0448 149.483,-21.5949 149.483,-26.4949"></polygon>
+<text text-anchor="middle" x="121.334" y="-28.2448" font-family="Times,serif" font-size="14.00">o1_ca</text>
+</g>
+<!-- 1&#45;&gt;0 -->
+<g id="edge2" class="edge"><title>1-&gt;0</title>
+<path fill="none" stroke="black" d="M86.4197,-12.8319C91.5899,-9.01061 97.8399,-5.20943 104.227,-3.24484 118.762,1.22567 123.781,0.793496 138.442,-3.24484 142.449,-4.34862 146.46,-6.04664 150.261,-8.00677"></path>
+<polygon fill="black" stroke="black" points="149.124,-10.1781 156.423,-11.4944 151.538,-5.91387 149.124,-10.1781"></polygon>
+<text text-anchor="middle" x="121.334" y="-8.24484" font-family="Times,serif" font-size="14.00">o2_co</text>
+</g>
+<!-- i -->
+<g id="node4" class="node"><title>i</title>
+<ellipse fill="none" stroke="black" cx="11" cy="-24.0448" rx="11" ry="11.76"></ellipse>
+<text text-anchor="middle" x="11" y="-19.8448" font-family="Times,serif" font-size="14.00">i</text>
+</g>
+<!-- i&#45;&gt;1 -->
+<g id="edge4" class="edge"><title>i-&gt;1</title>
+<path fill="none" stroke="black" d="M22.1126,-24.0448C30.1599,-24.0448 41.6737,-24.0448 51.5722,-24.0448"></path>
+<polygon fill="black" stroke="black" points="51.7426,-26.4949 58.7426,-24.0448 51.7425,-21.5949 51.7426,-26.4949"></polygon>
+</g>
+</g>
+</svg>

@@ -27,6 +27,10 @@ object CoffeeMachine {
   // now without shared names
 
   val myRouter = router("i","o1","o2")
-  val net2 = (cm || myRouter) sync ("o1"->"ca","o2"->"co")
-  val aut2 = (cm * myRouter)  sync ("o1"->"ca","o2"->"co")
+  val link = List("o1"->"ca","o2"->"co")
+  val net2 = (cm || myRouter) sync link
+  // alternative (and equivalent) ways to calculate the product
+  val aut2a = (cm sync link) * (myRouter sync link)
+  val aut2b = (cm || myRouter) product link
+  val aut2c = net2 product ()
 }

@@ -107,8 +107,11 @@ object Dot {
     var l = i
     var m = mm
     for (ifta <- nIFTA.iFTAs) {
-      if (ifta.in.nonEmpty || ifta.out.nonEmpty)
-        res += s"""\n  $l [label="${(ifta.in++ifta.out).mkString("-")}"]"""
+      if (ifta.shortname!="")
+        res += s"""\n  $l [label="${ifta.shortname}"]"""
+      else if (ifta.in.nonEmpty || ifta.out.nonEmpty)
+          res += s"""\n  $l [label="${(ifta.in++ifta.out).mkString("-")}"]"""
+
       for (in <- ifta.in) {
         if (m contains in) {
           res += s"""\n  ${m(in)._1} -> $l [label="$in"]"""
@@ -126,7 +129,7 @@ object Dot {
       l = l+1
     }
     for ((k,(l,b)) <- m) {
-      res += s"""\n  { node [shape=circle]  $k }"""
+      res += s"""\n  { node [shape=ellipse,margin=0]  $k }"""
       if(b) res += s"""\n  "$k" -> $l"""
       else  res += s"""\n  $l -> "$k""""
     }
