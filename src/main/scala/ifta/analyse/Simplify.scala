@@ -9,11 +9,11 @@ object Simplify {
 
   def apply(iFTA:IFTA): IFTA = {
     val i = removeUnreach(iFTA)
-    IFTA(i.locs, i.init, i.act, i.clocks, i.feats, i.edges.map(apply), i.cInv.mapValues(apply), apply(i.fm), i.in, i.out)
+    IFTA(i.locs, i.init, i.act, i.clocks, i.feats, i.edges.map(apply), i.cInv.mapValues(apply), apply(i.fm), i.in, i.out,i.aps)
   }
 
   def apply(i:FTA): FTA =
-    FTA(i.locs,i.init,i.committed,i.act,i.clocks,i.feats,i.edges.map(apply),i.cInv.mapValues(apply),apply(i.fm))
+    FTA(i.locs,i.init,i.committed,i.act,i.clocks,i.feats,i.edges.map(apply),i.cInv.mapValues(apply),apply(i.fm),i.aps)
 
   def apply(f:FExp): FExp = f match {
     case FTrue => FTrue
@@ -96,7 +96,7 @@ object Simplify {
         }
       }
     }
-    IFTA(visited,ifta.init,ifta.act,ifta.clocks,ifta.feats,newedges,ifta.cInv,ifta.fm,ifta.in, ifta.out)
+    IFTA(visited,ifta.init,ifta.act,ifta.clocks,ifta.feats,newedges,ifta.cInv,ifta.fm,ifta.in, ifta.out,ifta.aps.filter(n => ifta.locs contains n._1))
   }
 
   /**

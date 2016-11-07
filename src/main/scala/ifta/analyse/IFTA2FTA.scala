@@ -27,7 +27,7 @@ object IFTA2FTA {
 //      (lastLoc, newLocs, newEdges, committed) = genCommitLocs(e, lastLoc, newLocs, newEdges, committed)
 
 
-    FTA(newLocs,iFTA.init,committed,iFTA.act.map(mkAct(_,iFTA.in,iFTA.out)),iFTA.clocks,iFTA.feats,newEdges,iFTA.cInv,iFTA.fm)
+    FTA(newLocs,iFTA.init,committed,iFTA.act.map(mkAct(_,iFTA.in,iFTA.out)),iFTA.clocks,iFTA.feats,newEdges,iFTA.cInv,iFTA.fm,iFTA.aps)
   }
 
 //  /**

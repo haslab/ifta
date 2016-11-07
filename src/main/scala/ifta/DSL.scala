@@ -28,7 +28,7 @@ object DSL {
   implicit def intToELoc(i:Int): ELoc = new ELoc(i)
 
   def not(fExp: FExp) = FNot(fExp)
-  val newifta = IFTA(Set(0),0,Set(),Set(),Set(),Set(),Map(),true,Set(),Set())
+  val newifta = IFTA(Set(0),0,Set(),Set(),Set(),Set(),Map(),true,Set(),Set(),Map())
 //  val nifta = NIFTA(Set())
 
   val toDot = ifta.backend.Dot

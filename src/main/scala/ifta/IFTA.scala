@@ -24,7 +24,7 @@
    */
  case class IFTA(locs:Set[Int], init:Int, act:Set[String], clocks:Set[String]
                  , feats:Set[String], edges:Set[Edge], cInv:Map[Int,ClockCons], fm:FExp
-                 , in:Set[String], out:Set[String],shortname:String="") {
+                 , in:Set[String], out:Set[String], aps:Map[Int,String], shortname:String="") {
 
    /**
      * Product of 2 IFTAs synchronising shared ports
@@ -69,8 +69,15 @@
        if (this.shortname=="" || other.shortname=="") this.shortname+other.shortname
        else  this.shortname+"*"+other.shortname
 
+     var index:Int = 1
+     // TODO: improve naive approach to avoid name conflict between in Uppaal locations
+     val resAps:Map[Int,String]= (for (l1<-loc1;l2<-loc2; if aps.contains(l1) || other.aps.contains(l2))
+       yield prod(l1,l2) -> (
+         if (aps.contains(l1) && other.aps.contains(l2)) {index+=1; aps.getOrElse(l1,"")+(index-1)+"_"+aps.get(l2)+(index-1)}
+         else if (aps.contains(l1)) {index+=1; aps.getOrElse(l1,"")+(index-1)}
+         else {index +=1; other.aps.getOrElse(l2,"")+(index-1)})).toMap[Int,String]
 
-     Simplify.removeUnreach(IFTA(resLocs,resInit,resAct,resCl,resFeat,resEdges,resInv,resFm,resIn,resOut,nm))
+     Simplify.removeUnreach(IFTA(resLocs,resInit,resAct,resCl,resFeat,resEdges,resInv,resFm,resIn,resOut,resAps,nm))
    }
 
    // todo - fix!
@@ -95,7 +102,7 @@
            ,(for ((s,b)<-sol; if b && (feats contains s)) yield s).toSet
            , for (e <- edges; if e.fe.check(sol)) yield e when FTrue
            , cInv,FTrue
-           , in,out) // in out could be filtered to only valid ports?
+           , in,out,aps) // in out could be filtered to only valid ports?
        case None => DSL.newifta
      }
    }
@@ -137,7 +144,7 @@
    private def syncOnce(pair:(String,String)): IFTA =
      IFTA(locs,init,act.map(merge(_,pair._1,pair._2)),clocks,feats
          ,edges.map(e => e by e.act.map(merge(_, pair._1, pair._2))),cInv
-         ,fm,in.map(merge(_,pair._1,pair._2)),out.map(merge(_,pair._1,pair._2)),shortname=this.shortname)
+         ,fm,in.map(merge(_,pair._1,pair._2)),out.map(merge(_,pair._1,pair._2)),aps,shortname=this.shortname)
 
    def sync(pair:(String,String)*): IFTA = sync(pair.toSeq)
    def sync(pair:Iterable[(String,String)]): IFTA =
@@ -149,24 +156,28 @@
 
    // constructors
    private def link(e: Edge): IFTA =
-     IFTA(locs+e.from+e.to,init,act++e.act,clocks++e.cCons.clocks,feats++e.fe.feats,edges+e,cInv,fm,in,out,shortname)
+     IFTA(locs+e.from+e.to,init,act++e.act,clocks++e.cCons.clocks,feats++e.fe.feats,edges+e,cInv,fm,in,out,aps,shortname)
    def ++(e:Edge*) = {
      var res = this
      for (ed <- e) res = res link ed
      res
    }
    def when(f:FExp): IFTA =
-     IFTA(locs,init,act,clocks,feats++f.feats,edges,cInv,fm && f,in,out,shortname)
+     IFTA(locs,init,act,clocks,feats++f.feats,edges,cInv,fm && f,in,out,aps,shortname)
    def get(p:String): IFTA =
-     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,in++p.split(","),out,shortname)
+     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,in++p.split(","),out,aps,shortname)
    def pub(p:String): IFTA =
-     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,in,out++p.split(","),shortname)
+     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,in,out++p.split(","),aps,shortname)
    def startWith(i:Int): IFTA =
-     IFTA(locs,init+i,act,clocks,feats,edges,cInv,fm,in,out,shortname)
+     IFTA(locs,init+i,act,clocks,feats,edges,cInv,fm,in,out,aps,shortname)
    def inv(l:Int,cc:ClockCons): IFTA =
-     IFTA(locs,init,act,clocks++cc.clocks,feats,edges,cInv+(l->cc),fm,in,out,shortname)
+     IFTA(locs,init,act,clocks++cc.clocks,feats,edges,cInv+(l->cc),fm,in,out,aps,shortname)
    def name(n:String): IFTA =
-     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,in,out,shortname=n)
+     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,in,out,aps,shortname=n)
+   def ap(l:Int,n:String):IFTA =
+     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,in,out,aps+(l->n),shortname)
+   def ap(map:(Int,String)*):IFTA =
+     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,in,out,aps++map.toMap,shortname)
 
    // build a NIFTA
    def ||(i:IFTA):NIFTA = NIFTA(Set(this,i))

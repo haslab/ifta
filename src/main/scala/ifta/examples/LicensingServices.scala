@@ -29,7 +29,8 @@ object LicensingServices {
     7 --> 0 by "reject" when "apl",
     7 --> 0 by "accept" when "apl",
     6 --> 0 by "cancelapp" when "apl" cc "tapl"<=31
-    ) get "paidapp,cancelpay,accept,reject,incomplete" pub "submit,payapp,appeal" inv(6,"tapl"<=31) name "App"
+    ) get "paidapp,cancelpay,accept,reject,incomplete" pub "submit,payapp,appeal" inv(6,"tapl"<=31) name "App" ap (
+    (5,"submitted"),(7,"appealed"),(4,"paid"),(6,"canAppeal"))
 
   // Things to check:
   // if submit then eventually I get an answer (go back to 0)
@@ -120,7 +121,7 @@ object LicensingServices {
     0 --> 1 by "assess" reset "tp",
     1 --> 0 by "accept",
     1 --> 0 by "reject"
-    ) startWith 0 get "assess" pub "accept,reject" inv(1,"tp"<=90) name "assess"
+    ) startWith 0 get "assess" pub "accept,reject" inv(1,"tp"<=90) name "assess" ap(1,"assessing")
 
   val preassessment = newifta ++ (
     0 --> 1 by "submit" reset "ts",

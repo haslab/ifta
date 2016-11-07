@@ -25,7 +25,7 @@ object Uppaal {
     val feats = auts.flatMap(_.feats)
 //    val fms = auts.map(_.fm).fold(FTrue)(_&&_)
 //    println(s"auts ${auts.mkString("\n---\n")}")
-    val fms1 = Simplify(auts.fold(FTA(Set(),0,Set(),Set(),Set(),Set(),Set(),Map(),FTrue))(_ mergeFM _).fm)
+    val fms1 = Simplify(auts.fold(FTA(Set(),0,Set(),Set(),Set(),Set(),Set(),Map(),FTrue,Map()))(_ mergeFM _).fm)
 //    println(s"fms1: ${Show(fms1)}")
     val fms = if (feats.isEmpty) fms1
               else  fms1 && feats.foldLeft[FExp](FNot(FTrue))(_ || Feat(_)) // at least feat must hold in the uppaal model
@@ -117,7 +117,7 @@ object Uppaal {
         |${if (fTA.clocks.nonEmpty) fTA.clocks.mkString("clock ", ",", ";") else ""}
         |   </declaration>
         |// Locations
-        |${fTA.locs.map(loc => mkLocation(loc, fTA.cInv.getOrElse(loc, CTrue),fTA.committed contains loc)).mkString("\n")}
+        |${fTA.locs.map(loc => mkLocation(loc, fTA.cInv.getOrElse(loc, CTrue),fTA.committed contains loc,fTA.aps.getOrElse(loc,""))).mkString("\n")}
         |   <init ref="id${fTA.init}"/>"
         |// Transitions
         |${fTA.edges.map(mkTransition).mkString("\n")}
@@ -153,9 +153,9 @@ object Uppaal {
     <committed/> ... NOT IN IFTA YET
   </location>
  */
-  private def mkLocation(loc:Int,cc:ClockCons,comm:Boolean): String = {
+  private def mkLocation(loc:Int,cc:ClockCons,comm:Boolean,ap:String): String = {
     s"""<location id="id$loc" x="${loc*100}" y="0">
-        |<name x="${loc*100-10}" y="-34">L$loc</name>
+        |<name x="${loc*100-10}" y="-34">${if (ap=="") "L"+loc else ap}</name>
         |${if (cc==CTrue) "" else mkInvariant(loc*100-10,cc)}
         |${if (comm) "<committed/>" else ""}
         |</location>""".stripMargin
