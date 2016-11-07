@@ -1,6 +1,7 @@
  package ifta
 
  import ifta.backend.Show
+ import ifta.analyse.Simplify
  import org.scalatest.tools.ReporterConfigurations
 
  /**
@@ -69,7 +70,7 @@
        else  this.shortname+"*"+other.shortname
 
 
-     IFTA(resLocs,resInit,resAct,resCl,resFeat,resEdges,resInv,resFm,resIn,resOut,nm)
+     Simplify.removeUnreach(IFTA(resLocs,resInit,resAct,resCl,resFeat,resEdges,resInv,resFm,resIn,resOut,nm))
    }
 
    // todo - fix!
@@ -219,11 +220,11 @@
      else          Edge(prod(loc,from), cCons, act,cReset,fe, prod(loc,to))
 
    // constructors (replace parameters)
-   def reset(c:String) = Edge(from,cCons,act,Set(c),fe,to)
+   def reset(c:String) = Edge(from,cCons,act,c.split(",").toSet,fe,to)
    def reset(c:Iterable[String]) = Edge(from,cCons,act,c.toSet,fe,to)
    def by(a:String) = Edge(from,cCons,a.split(",").toSet,cReset,fe,to)
    def by(as:Iterable[String]) = Edge(from,cCons,as.toSet,cReset,fe,to)
-   def cc(c:ClockCons) = Edge(from,c,act,cReset,fe,to)
+   def cc(c:ClockCons) = Edge(from,CAnd(cCons,c),act,cReset,fe,to)
    def when(f:FExp) = Edge(from,cCons,act,cReset,f,to)
  }
 

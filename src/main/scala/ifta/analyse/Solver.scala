@@ -40,7 +40,7 @@ object Solver {
           if (sol contains i) res += f -> true
           else if (sol contains (-i)) res += f -> false
         }
-        case _ => res
+        case _ =>
       }
     }
     res

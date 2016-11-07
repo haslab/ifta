@@ -47,25 +47,41 @@ object LicensingServices {
   //  Payment Module //
   /////////////////////
 
+//  val creditcard = newifta ++ (
+//    0 --> 1 by "paycc" when "cc" reset "tpay",
+//    1 --> 2 by "detailscc" when "cc" cc "tpay"<=1 reset "tpay",
+//    1 --> 0 by "cancelcc" when "cc",
+//    2 --> 3 by "confcc" when "cc" cc "tpay"<=1 reset "tpay",
+//    2 --> 0 by "cancelcc" when "cc",
+//    3 --> 0 by "paidcc" when "cc" cc "tpay"<=1,
+//    3 --> 0 by "cancelcc" when "cc" cc "tpay">1
+//    ) startWith 0 get "paycc" pub "cancelcc,paidcc" inv(1,"tpay"<=2) inv(2,"tpay"<=2) inv(3,"tpay"<=2) name "CC"
+
+//  val paypal = newifta ++ (
+//    0 --> 1 by "paypp" when "pp" reset "tpay",
+//    1 --> 2 by "loginpp" when "pp" reset "tpay" cc "tpay"<=1,
+//    1 --> 0 by "cancelpp" when "pp",
+//    2 --> 3 by "confpp" when "pp" cc "tpay"<=1 reset "tpay",
+//    2 --> 0 by "cancelpp" when "pp",
+//    3 --> 0 by "paidpp" when "pp" cc "tpay"<=1,
+//    3 --> 0 by "cancelpp" when "pp" cc "tpay">1
+//    ) startWith 0 get "paypp" pub "cancelpp,paidpp" inv(1,"tpay"<=2) inv(2,"tpay"<=2) inv(3,"tpay"<=2) name "PP"
+
   val creditcard = newifta ++ (
-    0 --> 1 by "paycc" when "cc" reset "tpay",
-    1 --> 2 by "detailscc" when "cc" cc "tpay"<=1 reset "tpay",
+    0 --> 1 by "paycc" when "cc" reset "toutcc,tstepcc",
+    1 --> 2 by "detailscc" when "cc" cc "tstepcc">1 cc "tstepcc"<=5 reset "tstepcc",
     1 --> 0 by "cancelcc" when "cc",
-    2 --> 3 by "confcc" when "cc" cc "tpay"<=1 reset "tpay",
     2 --> 0 by "cancelcc" when "cc",
-    3 --> 0 by "paidcc" when "cc" cc "tpay"<=1,
-    3 --> 0 by "cancelcc" when "cc" cc "tpay">1
-    ) startWith 0 get "paycc" pub "cancelcc,paidcc" inv(1,"tpay"<=2) inv(2,"tpay"<=2) inv(3,"tpay"<=2) name "CC"
+    2 --> 0 by "paidcc" when "cc" cc "tstepcc">1 cc "tstepcc"<=5
+    ) startWith 0 get "paycc" pub "cancelcc,paidcc" inv(1,"toutcc"<=15) inv(2,"toutcc"<=15) name "CC"
 
   val paypal = newifta ++ (
-    0 --> 1 by "paypp" when "pp" reset "tpay",
-    1 --> 2 by "loginpp" when "pp" reset "tpay" cc "tpay"<=1,
+    0 --> 1 by "paypp" when "pp" reset "tsteppp,toutpp",
+    1 --> 2 by "loginpp" when "pp" cc "tsteppp">1 cc "tsteppp"<=5 reset "tsteppp" ,
     1 --> 0 by "cancelpp" when "pp",
-    2 --> 3 by "confpp" when "pp" cc "tpay"<=1 reset "tpay",
     2 --> 0 by "cancelpp" when "pp",
-    3 --> 0 by "paidpp" when "pp" cc "tpay"<=1,
-    3 --> 0 by "cancelpp" when "pp" cc "tpay">1
-    ) startWith 0 get "paypp" pub "cancelpp,paidpp" inv(1,"tpay"<=2) inv(2,"tpay"<=2) inv(3,"tpay"<=2) name "PP"
+    2 --> 0 by "paidpp" when "pp" cc "tsteppp">1 cc "tsteppp"<=5
+    ) startWith 0 get "paypp" pub "cancelpp,paidpp" inv(1,"toutpp"<=15) inv(2,"toutpp"<=15) name "PP"
 
   val paymentnet = (router("payapp", "paycc", "paypp") ||
     paypal ||
