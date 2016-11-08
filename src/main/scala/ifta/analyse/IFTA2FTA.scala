@@ -105,7 +105,8 @@ object IFTA2FTA {
         nloc += lloc
         co += lloc
         es += FtaEdge(e.from, e.cCons, mkAct(a,ins,outs), e.cReset, e.fe, lloc)
-        genCommitLocs(Edge(lloc,e.cCons,e.act - a,e.cReset,e.fe,e.to), lloc, nloc, es, co,ins,outs) match {
+//        genCommitLocs(Edge(lloc,e.cCons,e.act - a,e.cReset,e.fe,e.to), lloc, nloc, es, co,ins,outs) match {
+        genCommitLocs(Edge(lloc,CTrue,e.act - a,Set(),FTrue,e.to), lloc, nloc, es, co,ins,outs) match {
           case (x,y,w,z) => {lloc = x; nloc = y; es = w; co = z}
         }
 //        (lloc, nloc, es, co) = genCommitLocs(e by (e.act - a), lloc, nloc, es, co)

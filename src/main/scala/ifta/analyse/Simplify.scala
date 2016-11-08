@@ -96,7 +96,7 @@ object Simplify {
         }
       }
     }
-    IFTA(visited,ifta.init,ifta.act,ifta.clocks,ifta.feats,newedges,ifta.cInv,ifta.fm,ifta.in, ifta.out)
+    IFTA(visited,ifta.init,ifta.act,ifta.clocks,ifta.feats,newedges,ifta.cInv.filterKeys(visited contains),ifta.fm,ifta.in, ifta.out)
   }
 
   /**

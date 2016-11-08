@@ -158,13 +158,13 @@
    def when(f:FExp): IFTA =
      IFTA(locs,init,act,clocks,feats++f.feats,edges,cInv,fm && f,in,out,shortname)
    def get(p:String): IFTA =
-     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,in++p.split(","),out,shortname)
+     IFTA(locs,init,act++p.split(","),clocks,feats,edges,cInv,fm,in++p.split(","),out,shortname)
    def pub(p:String): IFTA =
-     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,in,out++p.split(","),shortname)
+     IFTA(locs,init,act++p.split(","),clocks,feats,edges,cInv,fm,in,out++p.split(","),shortname)
    def startWith(i:Int): IFTA =
      IFTA(locs,init+i,act,clocks,feats,edges,cInv,fm,in,out,shortname)
    def inv(l:Int,cc:ClockCons): IFTA =
-     IFTA(locs,init,act,clocks++cc.clocks,feats,edges,cInv+(l->cc),fm,in,out,shortname)
+     IFTA(locs+l,init,act,clocks++cc.clocks,feats,edges,cInv+(l->cc),fm,in,out,shortname)
    def name(n:String): IFTA =
      IFTA(locs,init,act,clocks,feats,edges,cInv,fm,in,out,shortname=n)
 
