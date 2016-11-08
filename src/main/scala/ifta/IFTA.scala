@@ -73,7 +73,7 @@
      // TODO: improve naive approach to avoid name conflict between in Uppaal locations
      val resAps:Map[Int,String]= (for (l1<-loc1;l2<-loc2; if aps.contains(l1) || other.aps.contains(l2))
        yield prod(l1,l2) -> (
-         if (aps.contains(l1) && other.aps.contains(l2)) {index+=1; aps.getOrElse(l1,"")+(index-1)+"_"+aps.get(l2)+(index-1)}
+         if (aps.contains(l1) && other.aps.contains(l2)) {index+=1; aps.getOrElse(l1,"")+(index-1)+"_"+aps.getOrElse(l2,"")+(index-1)}
          else if (aps.contains(l1)) {index+=1; aps.getOrElse(l1,"")+(index-1)}
          else {index +=1; other.aps.getOrElse(l2,"")+(index-1)})).toMap[Int,String]
 
