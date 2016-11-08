@@ -6,7 +6,7 @@ import ifta.backend.Show
   * Created by jose on 11/10/16.
   */
 case class FTA(locs:Set[Int], init:Int, committed:Set[Int], act:Set[String], clocks:Set[String]
-               , feats:Set[String], edges:Set[FtaEdge], cInv:Map[Int,ClockCons], fm:FExp) {
+               , feats:Set[String], edges:Set[FtaEdge], cInv:Map[Int,ClockCons], fm:FExp, aps:Map[Int,String]) {
   override def toString = Show(this)
 
   /**
@@ -18,7 +18,7 @@ case class FTA(locs:Set[Int], init:Int, committed:Set[Int], act:Set[String], clo
     val shared = act.map(dropSuf) intersect other.act.map(dropSuf)
     val resFM: FExp = (fm && other.fm) &&
       (for (a <- shared) yield fPort(a) <-> other.fPort(a)).fold(FTrue)(_&&_)
-    FTA(Set(),0,Set(),act++other.act,Set(),feats++other.feats,edges++other.edges,Map(),resFM)
+    FTA(Set(),0,Set(),act++other.act,Set(),feats++other.feats,edges++other.edges,Map(),resFM,Map())
   }
 
   def fPort(a:String): FExp =
