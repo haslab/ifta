@@ -44,6 +44,8 @@ object Show {
       (if (iFTA.in.isEmpty && iFTA.out.isEmpty) ""
       else
         s"""${iFTA.in.mkString("[", ",", "]")}->${iFTA.out.mkString("[", ",", "]")} """) +
+      (if (iFTA.cInv.isEmpty) "" else
+        s"""${iFTA.cInv.toList.map(x => if (Simplify(x._2)==CTrue) "" else s"\n  inv(${x._1}): ${Show(x._2)}").sorted.mkString("")}""")+
       (if (Simplify(iFTA.fm) == FTrue) "" else s"\n  ${Show(iFTA.fm)}") +
       iFTA.edges.map(x => "\n  " + Show(x)).mkString("")
   }
@@ -62,7 +64,9 @@ object Show {
       (if (fTA.act.isEmpty) "" else s"""${fTA.act.mkString("[",",","]")} """)+
       (if (fTA.clocks.isEmpty) "" else s"""${fTA.clocks.mkString("[",",","]")} """)+
       (if (fTA.feats.isEmpty) "" else s"""${fTA.feats.mkString("[",",","]")} """)+
-      (if (Simplify(fTA.fm) == FTrue) "" else s"""${Show(fTA.fm)}""")+
+      (if (fTA.cInv.isEmpty) "" else
+          s"""${fTA.cInv.toList.map(x => if (Simplify(x._2)==CTrue) "" else s"\n  inv(${x._1}): ${Show(x._2)}").sorted.mkString("")}""")+
+      (if (Simplify(fTA.fm) == FTrue) "" else s"""\n  fm = ${Show(fTA.fm)}""")+
       fTA.edges.map(x=>"\n  "+Show(x)).mkString("")
 
   def apply(e:FtaEdge): String =
