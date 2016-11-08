@@ -76,6 +76,7 @@ object IFTA2FTA {
   /**
     * Expand an edge with multiple actions into multiple single-action edges with committed locations.
     * Generates the intermediate (committed) locations using a maximum nr of a known location ID.
+    *
     * @param e edge to be expanded
     * @param i first fresh location (maximum)
     * @param locs  all known locations
@@ -117,4 +118,16 @@ object IFTA2FTA {
 
   private def mkAct(a:String,ins:Set[String],outs:Set[String]) =
     if (ins contains a) a+"?" else if (outs contains a) a+"!" else a
+
+
+  ///////
+  // FLATTEN edge names of an ITFA to single actions in an FTA
+  /////
+  def flatten(i: IFTA): FTA = {
+    def mkFtaEdge(e:Edge):FtaEdge = e match {
+      case Edge(f,cc,act,r,ex,t) => FtaEdge(f,cc,act.toList.sorted.mkString("_"),r,ex,t)
+    }
+    val newEdges = i.edges.map(mkFtaEdge)
+    FTA(i.locs, i.init, Set(), newEdges.map(_.act), i.clocks, i.feats, newEdges, i.cInv, i.fm, i.aps)
+  }
 }
