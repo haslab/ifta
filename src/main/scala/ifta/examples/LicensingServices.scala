@@ -102,7 +102,7 @@ object LicensingServices {
     paypal *
     creditcard *
     merger("cancelcc", "cancelpp", "cancelpay") *
-    merger("paidcc", "paidpp", "paidapp") 
+    merger("paidcc", "paidpp", "paidapp")
     ) //when ("pp" || "cc")
 
 
@@ -139,7 +139,7 @@ object LicensingServices {
 
   val processingnet = preassessment || assessment || handleappeal || merger("assessapl","assessapp","assess")
 
-  val processing = preassessment * assessment * handleappeal * merger("assessapl","assessapp","assess")
+    val processing = preassessment * assessment * handleappeal * merger("assessapl","assessapp","assess")
 
 
   ////////////////////////////
@@ -268,7 +268,7 @@ object LicensingServices {
   //////////////////////////////
 
    def v(s:String) = "v"+s
-  
+
   def nvrouter(i:String,o1:String,o2:String) = newifta ++ (
     0 --> 0 by s"$i,$o1",
     0 --> 0 by s"$i,$o2"

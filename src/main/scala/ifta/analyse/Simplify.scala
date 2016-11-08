@@ -9,11 +9,11 @@ object Simplify {
 
   def apply(iFTA:IFTA): IFTA = {
     val i = removeUnreach(iFTA)
-    IFTA(i.locs, i.init, i.act, i.clocks, i.feats, i.edges.map(apply), i.cInv.mapValues(apply), apply(i.fm), i.in, i.out,i.aps)
+    IFTA(i.locs, i.init, i.act, i.clocks, i.feats, i.edges.map(apply), i.cInv.mapValues(apply), apply(i.fm), i.in, i.out,i.aps,i.shortname)
   }
 
   def apply(i:FTA): FTA =
-    FTA(i.locs,i.init,i.committed,i.act,i.clocks,i.feats,i.edges.map(apply),i.cInv.mapValues(apply),apply(i.fm),i.aps)
+    FTA(i.locs,i.init,i.committed,i.act,i.clocks,i.feats,i.edges.map(apply),i.cInv.mapValues(apply),apply(i.fm),i.aps,i.shortname)
 
   def apply(f:FExp): FExp = f match {
     case FTrue => FTrue
@@ -96,7 +96,7 @@ object Simplify {
         }
       }
     }
-    IFTA(visited,ifta.init,ifta.act,ifta.clocks,ifta.feats,newedges,ifta.cInv.filter(i=> visited contains i._1),ifta.fm,ifta.in, ifta.out,ifta.aps.filter(n => visited contains n._1))
+    IFTA(visited,ifta.init,ifta.act,ifta.clocks,ifta.feats,newedges,ifta.cInv.filter(i=> visited contains i._1),ifta.fm,ifta.in, ifta.out,ifta.aps.filter(n => visited contains n._1),ifta.shortname)
   }
 
   /**
