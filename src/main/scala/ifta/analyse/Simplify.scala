@@ -96,7 +96,7 @@ object Simplify {
         }
       }
     }
-    IFTA(visited,ifta.init,ifta.act,ifta.clocks,ifta.feats,newedges,ifta.cInv,ifta.fm,ifta.in, ifta.out,ifta.aps.filter(n => ifta.locs contains n._1))
+    IFTA(visited,ifta.init,ifta.act,ifta.clocks,ifta.feats,newedges,ifta.cInv.filter(i=> ifta.locs contains i._1),ifta.fm,ifta.in, ifta.out,ifta.aps.filter(n => ifta.locs contains n._1))
   }
 
   /**
