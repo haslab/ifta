@@ -16,18 +16,18 @@ object LicensingServices {
   val application = newifta ++ (
     0 --> 1 by "apply",
     1 --> 2 by "submitDocs",
-    2 --> 5 by "submit" when not("pa"),
-    2 --> 3 by "payapp" when "pa",
-    3 --> 4 by "paidapp" when "pa",
-    3 --> 0 by "cancelpay" when "pa",
-    4 --> 5 by "submit" when "pa",
-    5 --> 0 by "accept",
-    5 --> 0 by "incomplete",
-    5 --> 0 by "reject" when not("apl"),
-    5 --> 6 by "reject" when "apl" reset "tapl",
-    6 --> 7 by "appeal" when "apl" cc "tapl"<=30,
-    7 --> 0 by "reject" when "apl",
-    7 --> 0 by "accept" when "apl",
+    2 --> 5 by "submit" when not("pa") reset "tsub",
+    2 --> 3 by "payapp" when "pa" reset "tpay",
+    3 --> 4 by "paidapp" when "pa" reset "tpay",
+    3 --> 0 by "cancelpay" when "pa" reset "tpay",
+    4 --> 5 by "submit" when "pa" reset "tsub",
+    5 --> 0 by "accept" reset "tsub",
+    5 --> 0 by "incomplete"reset "tsub",
+    5 --> 0 by "reject" when not("apl") reset "tsub",
+    5 --> 6 by "reject" when "apl" reset "tapl,tsub",
+    6 --> 7 by "appeal" when "apl" cc "tapl"<=30 reset "tapl",
+    7 --> 0 by "reject" when "apl" reset "tapl",
+    7 --> 0 by "accept" when "apl" reset "tapl",
     6 --> 0 by "cancelapp" when "apl" //cc "tapl"<=31
     ) get "paidapp,cancelpay,accept,reject,incomplete" pub "submit,payapp,appeal" inv(6,"tapl"<=31) name "App" ap (
     (2,"docs"),(3,"paying"),(5,"submitted"),(7,"appealed"),(4,"paid"),(6,"canAppeal"))
@@ -113,7 +113,7 @@ object LicensingServices {
   val handleappeal = newifta ++ (
     0 --> 1 by "appeal" when "apl" reset "tas",
     1 --> 0 by "assessapl" when "apl"
-    ) startWith 0 get "appeal" pub "assessapl" inv(1,"tas"<=20) name "handleApp"
+    ) startWith 0 get "appeal" pub "assessapl" inv(1,"tas"<=20) name "HandleApp"
 
 //  val assessment = newifta ++ (
 //    0 --> 1 by "assess",
@@ -129,13 +129,13 @@ object LicensingServices {
     0 --> 1 by "assess" reset "tp",
     1 --> 0 by "accept",
     1 --> 0 by "reject"
-    ) startWith 0 get "assess" pub "accept,reject" inv(1,"tp"<=90) name "assess" ap(1,"assessing")
+    ) startWith 0 get "assess" pub "accept,reject" inv(1,"tp"<=90) name "Assess" ap(1,"assessing")
 
   val preassessment = newifta ++ (
     0 --> 1 by "submit" reset "ts",
     1 --> 0 by "incomplete",
     1 --> 0 by "assessapp"
-    ) inv(1,"ts"<=20) startWith 0 get "submit" pub "incomplete,assessapp" name "preassess" ap (1,"checkingDocs")
+    ) inv(1,"ts"<=20) startWith 0 get "submit" pub "incomplete,assessapp" name "Preassess" ap (1,"checkingDocs")
 
   val processingnet = preassessment || assessment || handleappeal || merger("assessapl","assessapp","assess")
 
@@ -158,11 +158,12 @@ object LicensingServices {
     * App.appealed --> App.L0 ---- (if I appealed, eventually I get an answer and can submit again) Is it redundant?
     * App.paying --> (App.paid || App.L0) ---- (if paying, eventually paid or canceled (back to cero))
     * Reachability:
-    *
+    * E<>App.submitted
     * Safety:
     * A[] App.paying imply App.tpay <=1 (It can no take longer than 1 day to pay or cancel)
     * A[] App.submitted imply App.tsub <=110 if submitted then I get an aswer in less than 110 days.
     * A[] App.appealed imply App.tapl <= 110 if appealed then I get an aswer in less than 110 days.
+    *
     */
 
 
@@ -271,64 +272,64 @@ object LicensingServices {
   def nvrouter(i:String,o1:String,o2:String) = newifta ++ (
     0 --> 0 by s"$i,$o1",
     0 --> 0 by s"$i,$o2"
-    ) get i pub s"$o1,$o2" when v(i) && v(o1) && v(o2)
+    ) get i pub s"$o1,$o2"// when v(i) && v(o1) && v(o2)
 
   def nvroutern3(i:String,o1:String,o2:String,o3:String) = newifta ++ (
    0 --> 0 by s"$i,$o1",
      0 --> 0 by s"$i,$o2",
      0 --> 0 by s"$i,$o3"
-     ) get i pub s"$o1,$o2,$o3" when v(i) && v(o1) && v(o2) && v(o3)
+     ) get i pub s"$o1,$o2,$o3"// when v(i) && v(o1) && v(o2) && v(o3)
 
    def nvfifo(i:String,o:String) = newifta ++ (
      0 --> 1 by s"$i",
      1 --> 0 by s"$o"
-     ) get i pub o when v(i) && v(o)
+     ) get i pub o //when v(i) && v(o)
 
     def nvjoin(i:String,i2:String,o:String) = newifta ++ (
      0 --> 0 by s"$i,$i2,$o"
-     ) get i get i2 pub o when v(i) && v(i2) && v(o)
+     ) get i get i2 pub o //when v(i) && v(i2) && v(o)
 
    def nvjoinn3(i:String,i2:String,i3:String,o:String) = newifta ++ (
      0 --> 0 by s"$i,$i2,$i3,$o"
-     ) get i get i2 get i3 pub o when v(i) && v(i2) && v(i3) && v(o)
+     ) get i get i2 get i3 pub o //when v(i) && v(i2) && v(i3) && v(o)
 
    def nvjoinn4(i:String,i2:String,i3:String,i4:String,o:String) = newifta ++ (
      0 --> 0 by s"$i,$i2,$i3,$i4,$o"
-     ) get i get i2 get i3 get i4 pub o  when v(i) && v(i2) && v(i3) && v(i4) && v(o)
+     ) get i get i2 get i3 get i4 pub o  //when v(i) && v(i2) && v(i3) && v(i4) && v(o)
 
    def nvmerger(i:String, i2:String, o:String) = newifta ++ (
      0 --> 0 by s"$i,$o",
      0 --> 0 by s"$i2,$o"
-     ) get i get i2 pub o when v(i) && v(i2) && v(o)
+     ) get i get i2 pub o //when v(i) && v(i2) && v(o)
 
    def nvmergern3(i:String, i2:String,i3:String, o:String) = newifta ++ (
      0 --> 0 by s"$i,$o",
      0 --> 0 by s"$i2,$o",
      0 --> 0 by s"$i3,$o"
-     ) get i get i2 get i3 pub o when v(i) && v(i2) && v(i3) && v(o)
+     ) get i get i2 get i3 pub o //when v(i) && v(i2) && v(i3) && v(o)
 
    def nvmergern4(i:String, i2:String,i3:String,i4:String,o:String) = newifta ++ (
      0 --> 0 by s"$i,$o",
      0 --> 0 by s"$i2,$o",
      0 --> 0 by s"$i3,$o",
      0 --> 0 by s"$i4,$o"
-     ) get i get i2 get i3 get i4 pub o when v(i) && v(i2) && v(i3) && v(i4) && v(o)
+     ) get i get i2 get i3 get i4 pub o //when v(i) && v(i2) && v(i3) && v(i4) && v(o)
 
    def nvrepl(i:String,o1:String,o2:String) = newifta ++ (
      0 --> 0 by s"$i,$o1,$o2"
-     ) get i pub o1 pub o2 when v(i) && v(o1) && v(o2)
+     ) get i pub o1 pub o2 //when v(i) && v(o1) && v(o2)
 
    def nvrepln3(i:String,o1:String,o2:String,o3:String) = newifta ++ (
      0 --> 0 by s"$i,$o1,$o2,$o3"
-     ) get i pub o1 pub o2 pub o3 when v(i) && v(o1) && v(o2) && v(o3)
+     ) get i pub o1 pub o2 pub o3// when v(i) && v(o1) && v(o2) && v(o3)
 
    def nvrepln4(i:String,o1:String,o2:String,o3:String,o4:String) = newifta ++ (
      0 --> 0 by s"$i,$o1,$o2,$o3,$o4"
-     ) get i pub o1 pub o2 pub o3 pub o4 when v(i) && v(o1) && v(o2) && v(o3) && v(o4)
+     ) get i pub o1 pub o2 pub o3 pub o4 //when v(i) && v(o1) && v(o2) && v(o3) && v(o4)
 
    def nvsdrain(i:String,i2:String) = newifta ++ (
      0 --> 0 by s"$i,$i2" when v(i) && v(i2)
-     ) get i get i2 when v(i) && v(i2)
+     ) get i get i2 //when v(i) && v(i2)
 
    val nvtax = newifta ++ (
      0 --> 1 by "checktax",
