@@ -28,9 +28,9 @@ object LicensingServices {
     6 --> 7 by "appeal" when "apl" cc "tapl"<=30,
     7 --> 0 by "reject" when "apl",
     7 --> 0 by "accept" when "apl",
-    6 --> 0 by "cancelapp" when "apl" cc "tapl"<=31
+    6 --> 0 by "cancelapp" when "apl" //cc "tapl"<=31
     ) get "paidapp,cancelpay,accept,reject,incomplete" pub "submit,payapp,appeal" inv(6,"tapl"<=31) name "App" ap (
-    (5,"submitted"),(7,"appealed"),(4,"paid"),(6,"canAppeal"))
+    (2,"docs"),(3,"paying"),(5,"submitted"),(7,"appealed"),(4,"paid"),(6,"canAppeal"))
 
   // Things to check:
   // if submit then eventually I get an answer (go back to 0)
@@ -38,11 +38,7 @@ object LicensingServices {
   // If payapp then eventually paidapp or cancelpay
   // if I submitt I should be back to 0 with processing time <= x
   // if appeal then I should b back to 0 with processing time <= x
-  //(FTA_5.L5 && apl) --> (FTA_5.L0 &&  FTA_9.ts <=20) || (FTA_5.L0 && FTA_8.tp<=90) || (FTA_5.L0 && FTA_8.tp<=90+31)
-  //(FTA_5.L5 && !apl) --> (FTA_5.L0 &&  FTA_9.ts <=20) || (FTA_5.L0 && FTA_8.tp<=90)
-  //FTA_5.L6 --> (FTA_5.L0 && FTA_5.tapl<=31) || (FTA_5.L7 && FTA_5.tapl<=30)
-  //FTA_5.L7 --> (FTA_5.L0)
-  //FTA_5.L6 --> (FTA_5.L7 || FTA_5.L0)
+
 
   /////////////////////
   //  Payment Module //
@@ -68,7 +64,7 @@ object LicensingServices {
 //    3 --> 0 by "cancelpp" when "pp" cc "tpay">1
 //    ) startWith 0 get "paypp" pub "cancelpp,paidpp" inv(1,"tpay"<=2) inv(2,"tpay"<=2) inv(3,"tpay"<=2) name "PP"
 
-  val creditcard = newifta ++ (
+  val creditcardDetailed = newifta ++ (
     0 --> 1 by "paycc" when "cc" reset "toutcc,tstepcc",
     1 --> 2 by "detailscc" when "cc" cc "tstepcc">1 cc "tstepcc"<=5 reset "tstepcc",
     1 --> 0 by "cancelcc" when "cc",
@@ -76,13 +72,25 @@ object LicensingServices {
     2 --> 0 by "paidcc" when "cc" cc "tstepcc">1 cc "tstepcc"<=5
     ) startWith 0 get "paycc" pub "cancelcc,paidcc" inv(1,"toutcc"<=15) inv(2,"toutcc"<=15) name "CC"
 
-  val paypal = newifta ++ (
+  val creditcard = newifta ++ (
+    0 --> 1 by "paycc" when "cc" reset "toutcc",
+    1 --> 0 by "cancelcc" when "cc",
+    1 --> 0 by "paidcc" when "cc" //cc "toutcc">1 cc "toutcc"<=5
+    ) startWith 0 get "paycc" pub "cancelcc,paidcc" inv(1,"toutcc"<=1) name "CC"
+
+  val paypalDetailed = newifta ++ (
     0 --> 1 by "paypp" when "pp" reset "tsteppp,toutpp",
     1 --> 2 by "loginpp" when "pp" cc "tsteppp">1 cc "tsteppp"<=5 reset "tsteppp" ,
     1 --> 0 by "cancelpp" when "pp",
     2 --> 0 by "cancelpp" when "pp",
     2 --> 0 by "paidpp" when "pp" cc "tsteppp">1 cc "tsteppp"<=5
     ) startWith 0 get "paypp" pub "cancelpp,paidpp" inv(1,"toutpp"<=15) inv(2,"toutpp"<=15) name "PP"
+
+  val paypal = newifta ++ (
+    0 --> 1 by "paypp" when "pp" reset "toutpp",
+    1 --> 0 by "cancelpp" when "pp",
+    1 --> 0 by "paidpp" when "pp" //cc "tsteppp">1 cc "tsteppp"<=5
+    ) startWith 0 get "paypp" pub "cancelpp,paidpp" inv(1,"toutpp"<=1) name "PP"
 
   val paymentnet = (router("payapp", "paycc", "paypp") ||
     paypal ||
@@ -127,7 +135,7 @@ object LicensingServices {
     0 --> 1 by "submit" reset "ts",
     1 --> 0 by "incomplete",
     1 --> 0 by "assessapp"
-    ) inv(1,"ts"<=20) startWith 0 get "submit" pub "incomplete,assessapp" name "preassess"
+    ) inv(1,"ts"<=20) startWith 0 get "submit" pub "incomplete,assessapp" name "preassess" ap (1,"checkingDocs")
 
   val processingnet = preassessment || assessment || handleappeal || merger("assessapl","assessapp","assess")
 
@@ -141,6 +149,21 @@ object LicensingServices {
   val splnet = application || processingnet || paymentnet || (newifta when "pa" <-> ("pp" || "cc"))
 
   val spl = application * processing * payment when "pa" <-> ("pp" || "cc")
+
+  /**
+    * splnet queries:
+    * A[] not deadlock
+    * Liveness:
+    * App.submitted --> App.L0  ----- (if I submitt, eventually I get an answer and can submit again)
+    * App.appealed --> App.L0 ---- (if I appealed, eventually I get an answer and can submit again) Is it redundant?
+    * App.paying --> (App.paid || App.L0) ---- (if paying, eventually paid or canceled (back to cero))
+    * Reachability:
+    *
+    * Safety:
+    * A[] App.paying imply App.tpay <=1 (It can no take longer than 1 day to pay or cancel)
+    * A[] App.submitted imply App.tsub <=110 if submitted then I get an aswer in less than 110 days.
+    * A[] App.appealed imply App.tapl <= 110 if appealed then I get an aswer in less than 110 days.
+    */
 
 
   ////////////////////////////////////
