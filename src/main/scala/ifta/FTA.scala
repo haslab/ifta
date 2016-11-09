@@ -6,7 +6,7 @@ import ifta.backend.Show
   * Created by jose on 11/10/16.
   */
 case class FTA(locs:Set[Int], init:Int, committed:Set[Int], act:Set[String], clocks:Set[String]
-               , feats:Set[String], edges:Set[FtaEdge], cInv:Map[Int,ClockCons], fm:FExp, aps:Map[Int,String]) {
+               , feats:Set[String], edges:Set[FtaEdge], cInv:Map[Int,ClockCons], fm:FExp, aps:Map[Int,String],shortname:String="") {
   override def toString = Show(this)
 
   /**

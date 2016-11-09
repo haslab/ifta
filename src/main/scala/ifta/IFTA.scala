@@ -156,7 +156,7 @@
 
    // constructors
    private def link(e: Edge): IFTA =
-     IFTA(locs+e.from+e.to,init,act++e.act,clocks++e.cCons.clocks,feats++e.fe.feats,edges+e,cInv,fm,in,out,aps,shortname)
+     IFTA(locs+e.from+e.to,init,act++e.act,clocks++e.cCons.clocks++e.cReset,feats++e.fe.feats,edges+e,cInv,fm,in,out,aps,shortname)
    def ++(e:Edge*) = {
      var res = this
      for (ed <- e) res = res link ed

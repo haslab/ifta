@@ -67,7 +67,7 @@ object DSL {
     var ifta = newifta ++ (0 --> 0 by i when v(i) && not(mkFOr(mkFeat(nouts))))
     for ( o <- nouts )
       ifta ++= (0 --> 0 by Set(i,o) when v(i) && v(o))
-    ifta get i pub nouts.mkString(",") when (mkFOr(mkFeat(nouts))) --> v(i) name "xor"
+    ifta get i pub nouts.mkString(",") when (mkFOr(mkFeat(nouts))) --> v(i) name "Xor"
   }
 
   def fifo(i:String,o:String) = newifta ++ (

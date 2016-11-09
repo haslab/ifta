@@ -19,49 +19,52 @@ object Uppaal {
     * @return
     */
   def apply(tas: NFTA): String = {
+    resetNames()
     val auts = tas.fTAs.map(Simplify.apply)
     val acts = auts.flatMap(_.act)
     val sacts = acts.map(x => if (x.endsWith("!") || x.endsWith("?")) x.dropRight(1) else x)
     val feats = auts.flatMap(_.feats)
-//    val fms = auts.map(_.fm).fold(FTrue)(_&&_)
-//    println(s"auts ${auts.mkString("\n---\n")}")
+    //    val fms = auts.map(_.fm).fold(FTrue)(_&&_)
+    //    println(s"auts ${auts.mkString("\n---\n")}")
     val fms1 = Simplify(auts.fold(FTA(Set(),0,Set(),Set(),Set(),Set(),Set(),Map(),FTrue,Map()))(_ mergeFM _).fm)
-//    println(s"fms1: ${Show(fms1)}")
+    //    println(s"fms1: ${Show(fms1)}")
     val fms = if (feats.isEmpty) fms1
-              else  fms1 && feats.foldLeft[FExp](FNot(FTrue))(_ || Feat(_)) // at least feat must hold in the uppaal model
-//    println(s"solving ${Show(fms)}")
+    else  fms1 && feats.foldLeft[FExp](FNot(FTrue))(_ || Feat(_)) // at least feat must hold in the uppaal model
+    //    println(s"solving ${Show(fms)}")
+    //    val names = auts.zipWithIndex.map(n => getFtaName(n._1,n._2)).mkString("",",",",")
+    //(0 until auts.size).map("FTA_"+_).mkString("",",",",")
+
     s"""<?xml version="1.0" encoding="utf-8"?>
-             |<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
-             |<nta>
-             |	<declaration>// Place global declarations here.
-             |// Channels (actions)
-             |${if (sacts.isEmpty) "" else sacts.mkString("chan ",",",";")}
-             |// Features (booleans)
-             |${if (feats.isEmpty) "" else feats.mkString("bool ",",",";")}
-             | </declaration>
-             |${auts.zipWithIndex.map(x=>mkTemplate(x._1,x._2)).mkString("\n")}
-             |${mkContext(acts)}
-             |${mkFeatModel(fms)}
-             |<system>// Place template instantiations here.
-             |//(no intantiation needed)
-             |// List one or more processes to be composed into a system.
-             |system ${if (auts.isEmpty) ""  else (0 until auts.size).map("FTA_"+_).mkString("",",",",")}
-             |  ${if (auts.isEmpty) ";" else "Context, FeatModel;" }
-             |</system>
-             |	<queries>
-             |	</queries>
-             |</nta>
-             |
+        |<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+        |<nta>
+        |  <declaration>// Place global declarations here.
+        |// Channels (actions)
+        |${if (sacts.isEmpty) "" else sacts.mkString("chan ",",",";")}
+        |// Features (booleans)
+        |${if (feats.isEmpty) "" else feats.mkString("bool ",",",";")}
+        | </declaration>
+        |${auts.zipWithIndex.map(x=>mkTemplate(x._1,x._2)).mkString("\n")}
+        |${mkContext(acts)}
+        |${mkFeatModel(fms)}
+        |<system>// Place template instantiations here.
+        |//(no intantiation needed)
+        |// List one or more processes to be composed into a system.
+        |system ${if (auts.isEmpty) ""  else usednames.map(n => n._1).mkString("",",",";")}
+        |</system>
+        |  <queries>
+        |  </queries>
+        |</nta>
+        |
         """.stripMargin
   }
-//  def mkProcesses(fTA: FTA): String = {
-//    s"""fTA${fTA.act.mkString("_", "_", "")} = FTA${fTA.act.mkString("_", "_", "")}();"""
-//  }
+  //  def mkProcesses(fTA: FTA): String = {
+  //    s"""fTA${fTA.act.mkString("_", "_", "")} = FTA${fTA.act.mkString("_", "_", "")}();"""
+  //  }
 
   def mkContext(acts:Set[String]) = {
     s"""<template>
-        |		<name x="5" y="5">Context</name>
-        |		<declaration>
+        |       <name x="5" y="5">Context</name>
+        |       <declaration>
         |// Place local declarations here.
         |   </declaration>
         |   <location id="id0" x="0" y="0"> </location>
@@ -73,45 +76,70 @@ object Uppaal {
   private def mkCtxTrs(a:String,i:Int,total:Int,acts:Set[String]): String =
     if ((a.endsWith("!") && !acts.contains(a.dropRight(1)+"?"))
       ||(a.endsWith("?") && !acts.contains(a.dropRight(1)+"!")))
-      s"""	<transition>
-        |			<source ref="id0"/>
-        |			<target ref="id0"/>
-        |   	<label kind="synchronisation" x="76" y="${i*30-8-((total-1)*15)}">${
-                if(a.endsWith("!")) a.dropRight(1)+"?" else a.dropRight(1)+"!"}</label>
-        |			<nail x="68" y="-51"/>
-        |			<nail x="68" y="42"/>
-        |	 </transition>
+      s"""  <transition>
+          |           <source ref="id0"/>
+          |           <target ref="id0"/>
+          |       <label kind="synchronisation" x="76" y="${i*30-8-((total-1)*15)}">${
+        if(a.endsWith("!")) a.dropRight(1)+"?" else a.dropRight(1)+"!"}</label>
+          |           <nail x="68" y="-51"/>
+          |           <nail x="68" y="42"/>
+          |    </transition>
       """.stripMargin
     else ""
 
   def mkFeatModel(fe:FExp) = {
     val sols = Solver.all(fe).zipWithIndex
     s"""<template>
-        |		<name x="5" y="5">FeatModel</name>
-        |		<declaration>
+        |       <name x="5" y="5">FeatModel</name>
+        |       <declaration>
         |// Place local declarations here.
         |   </declaration>
         |// Locations
         |   <location id="id0" x="0" y="0"><committed/></location>
         |${(1 to sols.size).map(n =>
-        "   <location id=\"id"+n+"\" x=\"100\" y=\""+place(n,sols.size)+"\"> </location>").mkString("\n")}
+      "   <location id=\"id"+n+"\" x=\"100\" y=\""+place(n,sols.size)+"\"> </location>").mkString("\n")}
         |   <init ref="id0"/>"
         |// Transitions
         |${(for ((sol,n) <- sols) yield
-        "   <transition> <source ref=\"id0\"/> <target ref=\"id"+(n+1)+"\"/> "+
-           "<label kind=\"assignment\" x=\"130\" y=\"" + place(n+1, sols.size) + "\">"+
-           sol.toIterable.map(p => if (p._2) p._1+"=true" else "").filter(_!="").mkString(",")+
-           "</label> </transition>").mkString("\n")}
-        | 	</template>
+      "   <transition> <source ref=\"id0\"/> <target ref=\"id"+(n+1)+"\"/> "+
+        "<label kind=\"assignment\" x=\"130\" y=\"" + place(n+1, sols.size) + "\">"+
+        sol.toIterable.map(p => if (p._2) p._1+"=true" else "").filter(_!="").mkString(",")+
+        "</label> </transition>").mkString("\n")}
+        |   </template>
      """.stripMargin
   }
+
   private def place(n:Int,total:Int) =
     -(total-1)/2 * 50 + (50 * (n-1))
 
+  var usednames:Map[String,Int] = Map(("Context"->1),("FeatModel" ->1))
+
+  def resetNames() = {usednames = Map(("Context"->1),("FeatModel" ->1))}
+
+  private def isValidId(id:String):Boolean = id.matches("[a-zA-Z_]([a-zA-Z0-9_])*") && !(kw contains id)
+
+  private def getFtaName(fTA:FTA,index:Int):String = {
+    var name:String = ""
+    if (fTA.shortname == "" || !isValidId(fTA.shortname)) {
+      name = "FTA_"+index;
+      usednames += name -> 1
+    }
+    else if (isValidId(fTA.shortname)) usednames.getOrElse(fTA.shortname,0) match {
+      case 0 => {usednames += fTA.shortname -> 1; name = fTA.shortname}
+      case x => {val i:Int = x+1
+        usednames -= fTA.shortname
+        usednames += ((fTA.shortname -> i),(fTA.shortname+x.toString -> 1))
+        name= fTA.shortname+x.toString}
+    }
+    name
+  }
+
   def mkTemplate(fTA:FTA,index:Int):String = {
+    //    val name = if (fTA.shortname.matches("[a-zA-Z_]([a-zA-Z0-9_])*") && !(kw contains fTA.shortname)) fTA.shortname else "FTA_"+index
+    val name = getFtaName(fTA,index)
     s"""<template>
-        |		<name x="5" y="5">FTA_$index</name>
-        |		<declaration>
+        |       <name x="5" y="5">${name}</name>
+        |       <declaration>
         |// Place local declarations 1 here.
         |// clocks:
         |${if (fTA.clocks.nonEmpty) fTA.clocks.mkString("clock ", ",", ";") else ""}
@@ -121,7 +149,7 @@ object Uppaal {
         |   <init ref="id${fTA.init}"/>"
         |// Transitions
         |${fTA.edges.map(mkTransition).mkString("\n")}
-        |	</template>
+        |   </template>
      """.stripMargin
   }
 
@@ -141,10 +169,10 @@ object Uppaal {
     else s"""<label kind="comments" x="${e.from * 100 + 15}" y="-34">${e.act}</label>"""
   }
 
-//  private def mkSyncLabel(e:FtaEdge): String =
-//    if (e.act.endsWith("!") || e.act.endsWith("?"))
-//      s"""<label kind="synchronisation" x="${e.from * 100 + 15}" y="-34">${e.act}</label>"""
-//    else ""
+  //  private def mkSyncLabel(e:FtaEdge): String =
+  //    if (e.act.endsWith("!") || e.act.endsWith("?"))
+  //      s"""<label kind="synchronisation" x="${e.from * 100 + 15}" y="-34">${e.act}</label>"""
+  //    else ""
 
   /* e.g.
   <location id="id0" x="93" y="-8">
@@ -183,132 +211,140 @@ object Uppaal {
 
   // e.g. <label kind="guard" x="18" y="-38">c &gt;= 5</label>
   private def mkGuard(from:Int,cc:ClockCons,fe:FExp): String =
-    s"""<label kind="guard" x="${from*100+25}" y="-34">${mkCCFE(cc,fe)}</label>"""
+  s"""<label kind="guard" x="${from*100+25}" y="-34">${mkCCFE(cc,fe)}</label>"""
   private def mkCCFE(cc:ClockCons,fe:FExp) =
     if      (cc==CTrue) mkFE(fe)
     else if (fe==FTrue) mkCC(cc)
     else mkCC(cc)+" &amp;&amp; "+mkFE(fe)
   // e.g. <label kind="assignment" x="18" y="-4">c:=0</label>
   private def mkReset(from:Int,as:Set[String]): String =
-    s"""<label kind="assignment" x="${from*100+15}" y="-34">${as.map(_+":=0").mkString(", ")}</label>"""
+  s"""<label kind="assignment" x="${from*100+15}" y="-34">${as.map(_+":=0").mkString(", ")}</label>"""
+
+  // Uppaal reserved keywords
+  private val kw = Set("chan", "clock", "bool", "int", "commit", "const",
+    "urgent", "broadcast", "init", "process", "state", "guard", "sync", "assign",
+    "system", "trans", "deadlock", "and", "or", "xor", "not", "imply", "true", "false",
+    "for", "forall", "exists", "while", "do", "if", "else", "return", "typedef",
+    "struct", "rate", "before_update", "after_update", "meta", "priority",
+    "progress", "scalar", "select", "void", "default","switch","case","continue","break")
 
 
-///////////////////////////////
-//  ////// OLDER EXPERIMENTS //
-///////////////////////////////
+  ///////////////////////////////
+  //  ////// OLDER EXPERIMENTS //
+  ///////////////////////////////
 
-//  def apply(n:NIFTA):String = {
-//    val nIFTA = NIFTA((for (i <- n.iFTAs) yield Simplify(i)))
-//    if (nIFTA.iFTAs.isEmpty) ""
-//    else s"""<?xml version="1.0" encoding="utf-8"?>
-//             |<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
-//             |<nta>
-//             |	<declaration>
-//             | // Place global declarations here.
-//             |${if (nIFTA.interfaces.nonEmpty) nIFTA.interfaces.mkString("chan ",",",";") else ""}
-//             | </declaration>
-//             |${nIFTA.iFTAs.map(i => mkTemplate(i)).mkString("\n")}
-//             |<system>// Place template instantiations here.
-//             |${nIFTA.iFTAs.map(i => mkProcesses(i)).mkString("\n")}
-//             |// List one or more processes to be composed into a system.
-//             |system ${nIFTA.iFTAs.map(i => i.act.mkString("iFTA_","_","") ).mkString(" ",",",";")}
-//             |</system>
-//             |	<queries>
-//             |	</queries>
-//             |</nta>
-//             |
-//      """.stripMargin
-//  }
-//
-//  //  def apply(i: IFTA):String = {
-//  //    val iFTA = Simplify(i)
-//  //    s"""<?xml version="1.0" encoding="utf-8"?>
-//  //      |<!DOCTYPE nta PUBLIC '-//Uppaal Teaem//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
-//  //      |<nta>
-//  //      |	<declaration>
-//  //      | // Place global declarations here.
-//  //      | </declaration>
-//  //      |	<template>
-//  //      |		<name x="5" y="5">IFTA${iFTA.act.mkString("_","_","")}</name>
-//  //      |		<declaration>
-//  //      |// Place local declarations 1 here.
-//  //      |// clocks:
-//  //      |${if (iFTA.clocks.nonEmpty) iFTA.clocks.mkString("clock ",",",";") else ""}
-//  //      |// channels (actions)
-//  //      |${if (iFTA.act.nonEmpty) iFTA.act.mkString("chan ",",",";") else ""}
-//  //      |   </declaration>
-//  //      |// Locations
-//  //      |${iFTA.locs.map(loc=>mkLocation(loc,iFTA.cInv.getOrElse(loc,CTrue))).mkString("\n")}
-//  //      |${iFTA.init.headOption match {case Some(h)=>"   <init ref=\"id"+h+"\"/>";case None =>""}}
-//  //      |// Transitions
-//  //      |${iFTA.edges.map(mkTransition(_,iFTA.in,iFTA.out)).mkString("\n")}
-//  //      |	</template>
-//  //      |	<system>// Place template instantiations here.
-//  //      |Process = IFTA${iFTA.act.mkString("_","_","")}();
-//  //      |// List one or more processes to be composed into a system.
-//  //      |system Process;
-//  //      |    </system>
-//  //      |	<queries>
-//  //      |	</queries>
-//  //      |</nta>
-//  //      |
-//  //    """.stripMargin
-//  //  }
-//
-//  /* e.g.
-//    iFTA_a_b = IFTA_a_b();
-//   */
-//  def mkProcesses(iFTA: IFTA): String = {
-//    s"""iFTA${iFTA.act.mkString("_", "_", "")} = IFTA${iFTA.act.mkString("_", "_", "")}();"""
-//  }
-//
-//  def mkTemplate(iFTA:IFTA):String = {
-//    s"""<template>
-//        |		<name x="5" y="5">IFTA${iFTA.act.mkString("_", "_", "")}</name>
-//        |		<declaration>
-//        |// Place local declarations 1 here.
-//        |// clocks:
-//        |${if (iFTA.clocks.nonEmpty) iFTA.clocks.mkString("clock ", ",", ";") else ""}
-//        |// channels (actions)
-//        |${if (iFTA.act.nonEmpty) iFTA.act.mkString("chan ", ",", ";") else ""}
-//        |   </declaration>
-//        |// Locations
-//        |${iFTA.locs.map(loc => mkLocation(loc, iFTA.cInv.getOrElse(loc, CTrue))).mkString("\n")}
-//        |   <init ref="id${iFTA.init}"/>"
-//        |// Transitions
-//        |${iFTA.edges.map(mkTransition(_, iFTA.in, iFTA.out)).mkString("\n")}
-//        |	</template>
-//     """.stripMargin
-//  }
-//  //${iFTA.init.headOption match {case Some(h) => "   <init ref=\"id" + h + "\"/>"; case None => ""}}
-//
-//
-//  /* e.g.
-//  	<transition>
-//			<source ref="id1"/>
-//			<target ref="id0"/>
-//			<label kind="guard" x="18" y="-38">c &gt;= 5 &amp;&amp; c&lt;=2 &amp;&amp; c&gt;1</label>
-//			<label kind="synchronisation" x="18" y="-21">a</label>
-//			<label kind="assignment" x="18" y="-4">c:=0</label>
-//		</transition>
-//		keep only edges with in and out actions, and add ! or ?
-//   */
-//  private def mkTransition(e:Edge,in:Set[String],out:Set[String]): String = {
-//    s"""<transition>
-//        |  <source ref="id${e.from}"/>
-//        |  <target ref="id${e.to}"/>
-//        |  ${if (e.cCons==CTrue || e.fe==FTrue) "" else mkGuard(e.from,e.cCons,e.fe)}
-//        |  ${if (e.act.size!=1) "" else mkSync(e.from,e.act.head,in,out)}
-//        |  ${if (e.cReset.isEmpty) "" else mkReset(e.from,e.cReset)}
-//        |</transition>""".stripMargin
-//  }
-//  // e.g. <label kind="synchronisation" x="18" y="-21">a!</label>
-//  private def mkSync(from:Int,a:String,in:Set[String],out:Set[String]): String = {
-//    if (in contains a)
-//      s"""<label kind="synchronisation" x="${from * 100 + 15}" y="-34">$a?</label>"""
-//    else if (out contains a)
-//      s"""<label kind="synchronisation" x="${from * 100 + 15}" y="-34">$a!</label>"""
-//    else ""
-//  }
+  //  def apply(n:NIFTA):String = {
+  //    val nIFTA = NIFTA((for (i <- n.iFTAs) yield Simplify(i)))
+  //    if (nIFTA.iFTAs.isEmpty) ""
+  //    else s"""<?xml version="1.0" encoding="utf-8"?>
+  //             |<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+  //             |<nta>
+  //             |    <declaration>
+  //             | // Place global declarations here.
+  //             |${if (nIFTA.interfaces.nonEmpty) nIFTA.interfaces.mkString("chan ",",",";") else ""}
+  //             | </declaration>
+  //             |${nIFTA.iFTAs.map(i => mkTemplate(i)).mkString("\n")}
+  //             |<system>// Place template instantiations here.
+  //             |${nIFTA.iFTAs.map(i => mkProcesses(i)).mkString("\n")}
+  //             |// List one or more processes to be composed into a system.
+  //             |system ${nIFTA.iFTAs.map(i => i.act.mkString("iFTA_","_","") ).mkString(" ",",",";")}
+  //             |</system>
+  //             |    <queries>
+  //             |    </queries>
+  //             |</nta>
+  //             |
+  //      """.stripMargin
+  //  }
+  //
+  //  //  def apply(i: IFTA):String = {
+  //  //    val iFTA = Simplify(i)
+  //  //    s"""<?xml version="1.0" encoding="utf-8"?>
+  //  //      |<!DOCTYPE nta PUBLIC '-//Uppaal Teaem//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+  //  //      |<nta>
+  //  //      |   <declaration>
+  //  //      | // Place global declarations here.
+  //  //      | </declaration>
+  //  //      |   <template>
+  //  //      |       <name x="5" y="5">IFTA${iFTA.act.mkString("_","_","")}</name>
+  //  //      |       <declaration>
+  //  //      |// Place local declarations 1 here.
+  //  //      |// clocks:
+  //  //      |${if (iFTA.clocks.nonEmpty) iFTA.clocks.mkString("clock ",",",";") else ""}
+  //  //      |// channels (actions)
+  //  //      |${if (iFTA.act.nonEmpty) iFTA.act.mkString("chan ",",",";") else ""}
+  //  //      |   </declaration>
+  //  //      |// Locations
+  //  //      |${iFTA.locs.map(loc=>mkLocation(loc,iFTA.cInv.getOrElse(loc,CTrue))).mkString("\n")}
+  //  //      |${iFTA.init.headOption match {case Some(h)=>"   <init ref=\"id"+h+"\"/>";case None =>""}}
+  //  //      |// Transitions
+  //  //      |${iFTA.edges.map(mkTransition(_,iFTA.in,iFTA.out)).mkString("\n")}
+  //  //      |   </template>
+  //  //      |   <system>// Place template instantiations here.
+  //  //      |Process = IFTA${iFTA.act.mkString("_","_","")}();
+  //  //      |// List one or more processes to be composed into a system.
+  //  //      |system Process;
+  //  //      |    </system>
+  //  //      |   <queries>
+  //  //      |   </queries>
+  //  //      |</nta>
+  //  //      |
+  //  //    """.stripMargin
+  //  //  }
+  //
+  //  /* e.g.
+  //    iFTA_a_b = IFTA_a_b();
+  //   */
+  //  def mkProcesses(iFTA: IFTA): String = {
+  //    s"""iFTA${iFTA.act.mkString("_", "_", "")} = IFTA${iFTA.act.mkString("_", "_", "")}();"""
+  //  }
+  //
+  //  def mkTemplate(iFTA:IFTA):String = {
+  //    s"""<template>
+  //        |     <name x="5" y="5">IFTA${iFTA.act.mkString("_", "_", "")}</name>
+  //        |     <declaration>
+  //        |// Place local declarations 1 here.
+  //        |// clocks:
+  //        |${if (iFTA.clocks.nonEmpty) iFTA.clocks.mkString("clock ", ",", ";") else ""}
+  //        |// channels (actions)
+  //        |${if (iFTA.act.nonEmpty) iFTA.act.mkString("chan ", ",", ";") else ""}
+  //        |   </declaration>
+  //        |// Locations
+  //        |${iFTA.locs.map(loc => mkLocation(loc, iFTA.cInv.getOrElse(loc, CTrue))).mkString("\n")}
+  //        |   <init ref="id${iFTA.init}"/>"
+  //        |// Transitions
+  //        |${iFTA.edges.map(mkTransition(_, iFTA.in, iFTA.out)).mkString("\n")}
+  //        | </template>
+  //     """.stripMargin
+  //  }
+  //  //${iFTA.init.headOption match {case Some(h) => "   <init ref=\"id" + h + "\"/>"; case None => ""}}
+  //
+  //
+  //  /* e.g.
+  //      <transition>
+  //          <source ref="id1"/>
+  //          <target ref="id0"/>
+  //          <label kind="guard" x="18" y="-38">c &gt;= 5 &amp;&amp; c&lt;=2 &amp;&amp; c&gt;1</label>
+  //          <label kind="synchronisation" x="18" y="-21">a</label>
+  //          <label kind="assignment" x="18" y="-4">c:=0</label>
+  //      </transition>
+  //      keep only edges with in and out actions, and add ! or ?
+  //   */
+  //  private def mkTransition(e:Edge,in:Set[String],out:Set[String]): String = {
+  //    s"""<transition>
+  //        |  <source ref="id${e.from}"/>
+  //        |  <target ref="id${e.to}"/>
+  //        |  ${if (e.cCons==CTrue || e.fe==FTrue) "" else mkGuard(e.from,e.cCons,e.fe)}
+  //        |  ${if (e.act.size!=1) "" else mkSync(e.from,e.act.head,in,out)}
+  //        |  ${if (e.cReset.isEmpty) "" else mkReset(e.from,e.cReset)}
+  //        |</transition>""".stripMargin
+  //  }
+  //  // e.g. <label kind="synchronisation" x="18" y="-21">a!</label>
+  //  private def mkSync(from:Int,a:String,in:Set[String],out:Set[String]): String = {
+  //    if (in contains a)
+  //      s"""<label kind="synchronisation" x="${from * 100 + 15}" y="-34">$a?</label>"""
+  //    else if (out contains a)
+  //      s"""<label kind="synchronisation" x="${from * 100 + 15}" y="-34">$a!</label>"""
+  //    else ""
+  //  }
 
 }
