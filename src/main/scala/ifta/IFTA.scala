@@ -231,8 +231,8 @@
      else          Edge(prod(loc,from), cCons, act,cReset,fe, prod(loc,to))
 
    // constructors (replace parameters)
-   def reset(c:String) = Edge(from,cCons,act,c.split(",").toSet,fe,to)
-   def reset(c:Iterable[String]) = Edge(from,cCons,act,c.toSet,fe,to)
+   def reset(c:String) = Edge(from,cCons,act,cReset++c.split(",").toSet,fe,to)
+   def reset(c:Iterable[String]) = Edge(from,cCons,act,cReset++c.toSet,fe,to)
    def by(a:String) = Edge(from,cCons,a.split(",").toSet,cReset,fe,to)
    def by(as:Iterable[String]) = Edge(from,cCons,as.toSet,cReset,fe,to)
    def cc(c:ClockCons) = Edge(from,CAnd(cCons,c),act,cReset,fe,to)
