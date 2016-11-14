@@ -68,7 +68,7 @@ object LicensingServices {
     0 --> 1 by "assess" reset "tp",
     1 --> 0 by "accept",
     1 --> 0 by "reject"
-    ) startWith 0 get "assess" pub "accept,reject" inv(1,"tp"<=90) name "Assess" ap(1,"assessing")
+    ) startWith 0 get "assess" pub "accept,reject" inv(1,"tp"<=90) name "Assess" ap (1,"assessing")
 
   val preAssessment = newifta ++ (
     0 --> 1 by "submit" reset "ts",

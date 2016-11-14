@@ -69,15 +69,39 @@
        if (this.shortname=="" || other.shortname=="") this.shortname+other.shortname
        else  this.shortname+"*"+other.shortname
 
-     var index:Int = 1
-     // TODO: improve naive approach to avoid name conflict between in Uppaal locations
-     val resAps:Map[Int,String]= (for (l1<-loc1;l2<-loc2; if aps.contains(l1) || other.aps.contains(l2))
-       yield prod(l1,l2) -> (
-         if (aps.contains(l1) && other.aps.contains(l2)) {index+=1; aps.getOrElse(l1,"")+(index-1)+"_"+aps.getOrElse(l2,"")+(index-1)}
-         else if (aps.contains(l1)) {index+=1; aps.getOrElse(l1,"")+(index-1)}
-         else {index +=1; other.aps.getOrElse(l2,"")+(index-1)})).toMap[Int,String]
+     var prodLocNames: Map[String,Int] = Map()
+     def mkProdLocName(l1:Int,l2:Int):String ={
+       var n:String = ""
+       (aps.contains(l1), other.aps.contains(l2))  match {
+         case (true, true) =>
+           validLocName(aps.get(l1).get+"_"+other.aps.get(l2).get)
+         case (true,false) => validLocName(aps.get(l1).get)
+         case (false,true) => validLocName(other.aps.get(l2).get)
+         case (_,_) => ""
+       }
+     }
+     def validLocName(n:String):String = {
+       var index:Int = 0
+       var res:String = n
+       if (prodLocNames.contains(n)) {
+         nameOffset(n,prodLocNames.get(n).get) match {case i => index=i}
+         res += index
+         prodLocNames -= n
+         prodLocNames += res -> 1
+       }
+       prodLocNames += n -> (index+1)
+       res
+     }
 
-     Simplify.removeUnreach(IFTA(resLocs,resInit,resAct,resCl,resFeat,resEdges,resInv,resFm,resIn,resOut,resAps,nm))
+     def nameOffset(n:String,index:Int):Int =
+       if (!prodLocNames.contains(n+index)) index
+       else nameOffset(n,index+1)
+
+
+     var resAut = Simplify.removeUnreach(IFTA(resLocs,resInit,resAct,resCl,resFeat,resEdges,resInv,resFm,resIn,resOut,Map(),nm))
+
+     resAut ap (for (l1<-loc1;l2<-loc2; if ((resAut.locs contains prod(l1,l2)) && (aps.contains(l1) || other.aps.contains(l2))))
+       yield prod(l1,l2) -> mkProdLocName(l1,l2))
    }
 
    // todo - fix!
@@ -174,10 +198,15 @@
      IFTA(locs+l,init,act,clocks++cc.clocks,feats,edges,cInv+(l->cc),fm,in,out,aps,shortname)
    def name(n:String): IFTA =
      IFTA(locs,init,act,clocks,feats,edges,cInv,fm,in,out,aps,shortname=n)
-   def ap(l:Int,n:String):IFTA =
-     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,in,out,aps+(l->n),shortname)
-   def ap(map:(Int,String)*):IFTA =
-     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,in,out,aps++map.toMap,shortname)
+   def ap(l:Int,n:String):IFTA = {
+//     if (aps.contains(l))
+//       throw new RuntimeException("Location name already exists")
+     IFTA(locs, init, act, clocks, feats, edges, cInv, fm, in, out, aps + (l -> n), shortname)
+   }
+   def ap(pair:(Int,String)*):IFTA =
+     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,in,out,aps++pair.toMap,shortname)
+   def ap(pair:Iterable[(Int,String)]):IFTA =
+     IFTA(locs,init,act,clocks,feats,edges,cInv,fm,in,out,aps++pair.toMap[Int,String],shortname)
 
    // build a NIFTA
    def ||(i:IFTA):NIFTA = NIFTA(Set(this,i))
