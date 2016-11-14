@@ -8,7 +8,7 @@ This project is a small Scala implementation of the Interface Featured Timed Aut
  - export into UPPAAL Timed Automata with features
 
 Below you will find a quick overview on how to build, visualise, compose, and analyse IFTA using our Scala library.
-For more examples, please check our [examples folder](tree/master/src/main/scala/ifta/examples).
+For more examples, please check our [examples folder](src/main/scala/ifta/examples).
 
 ## Building primitive IFTAs
 

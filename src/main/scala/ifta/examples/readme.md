@@ -49,7 +49,8 @@ val splNet =
 The top view of network can be visualised using Graphviz. For that execute `con2dot(paymentNet)` to produce the `dot` graph. This graph can be easily visualised, e.g., using the online tool [Viz.js](https://mdaines.github.io/viz.js/), producing the following graph. Here ">-" represent mergers and "Xor" represents the exclusive router.
 
 ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/ifta/examples/images/LS-conn.svg "Depicting the connector composing the Licensing Services.")
-
+![alt text](images/LS-conn.svg "Depicting the connector composing the Licensing Services.")
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/blob/master/src/main/ifta/examples/images/LS-conn.svg "Depicting the connector composing the Licensing Services.")
 
 ## Specifying components - primitive IFTAs
 
