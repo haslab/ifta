@@ -48,15 +48,14 @@ val splNet =
 
 The top view of network can be visualised using Graphviz. For that execute `con2dot(paymentNet)` to produce the `dot` graph. This graph can be easily visualised, e.g., using the online tool [Viz.js](https://mdaines.github.io/viz.js/), producing the following graph. Here ">-" represent mergers and "Xor" represents the exclusive router.
 
-![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/ifta/examples/images/LS-conn.svg "Depicting the connector composing the Licensing Services.")
-![alt text](images/LS-conn.svg "Depicting the connector composing the Licensing Services.")
-![alt text](https://cdn.rawgit.com/joseproenca/ifta/blob/master/src/main/ifta/examples/images/LS-conn.svg "Depicting the connector composing the Licensing Services.")
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/examples/images/LS-conn.svg "Depicting the connector composing the Licensing Services.")
+
 
 ## Specifying components - primitive IFTAs
 
 The automata of the 5 core components of these example can be visualised also using Graphviz, producing the graphs depicted below. For example, `toDot(application)` produces the first of the automata below.
 
-![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/ifta/examples/images/LS-application.svg "Application component of the Licensing Services.") ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/ifta/examples/images/LS-preassessment.svg "PreAssessment component of the Licensing Services.") ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/ifta/examples/images/LS-assessment.svg "Assessment component of the Licensing Services.") ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/ifta/examples/images/LS-handleappeal.svg "HandleAppeal component of the Licensing Services.") ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/ifta/examples/images/LS-paypal.svg "Paypal component of the Licensing Services.") ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/ifta/examples/images/LS-creditcard.svg "Creditcard component of the Licensing Services.")
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/examples/images/LS-application.svg "Application component of the Licensing Services.") ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/examples/images/LS-preassessment.svg "PreAssessment component of the Licensing Services.") ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/examples/images/LS-assessment.svg "Assessment component of the Licensing Services.") ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/examples/images/LS-handleappeal.svg "HandleAppeal component of the Licensing Services.") ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/examples/images/LS-paypal.svg "Paypal component of the Licensing Services.") ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/examples/images/LS-creditcard.svg "Creditcard component of the Licensing Services.")
 
 
 
@@ -74,7 +73,7 @@ The latter has no committed states (unlike the former), and has only 4 states (b
 In both cases the automata contain feature annotations in their guards (since UPPAAL supports general boolean expressions in the guards), and each UPPAAL file includes an additional automata with the feature model.
 This additional automata contains all possible selection of features, depiced below, and must be taken exactly once before any other automata, to capture the selection of the desired features before any action takes place.
 
-![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/ifta/examples/images/LS-fm.svg "Automata with the feature model of the Licensing Services.")
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/examples/images/LS-fm.svg "Automata with the feature model of the Licensing Services.")
 
 By loading the resulting files into UPPAAL, it is possible to verify properties such as:
 
