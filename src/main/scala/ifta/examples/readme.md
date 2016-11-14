@@ -78,6 +78,6 @@ This additional automata contains all possible selection of features, depiced be
 By loading the resulting files into UPPAAL, it is possible to verify properties such as:
 
  - Deadlock free – `A[] not deadlock`;
- - Liveness: a submition and an appeal will eventually result in an answer - `App.l4 --> App.l0` and `App.l6 --> App.l0`, respectively);
+ - Liveness: a submition and an appeal will eventually result in an answer - `App.l4 --> App.l0` and `App.l6 --> App.l0`, respectively;
  - Safety: a submission must be processed within 110 days - `A[] App.l4 imply App.tsub <=110`;
  - Safety: a payment must be completed within 1 day of initiated - `A[] App.l2 imply App.tpay <=1`.
