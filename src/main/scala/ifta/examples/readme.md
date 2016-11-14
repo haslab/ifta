@@ -73,7 +73,7 @@ The latter has no committed states (unlike the former), and has only 4 states (b
 In both cases the automata contain feature annotations in their guards (since UPPAAL supports general boolean expressions in the guards), and each UPPAAL file includes an additional automata with the feature model.
 This additional automata contains all possible selection of features, depiced below, and must be taken exactly once before any other automata, to capture the selection of the desired features before any action takes place.
 
-![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/examples/images/LS-fm.svg "Automata with the feature model of the Licensing Services.")
+![alt text](https://rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/examples/images/LS-fm.svg "Automata with the feature model of the Licensing Services.")
 
 By loading the resulting files into UPPAAL, it is possible to verify properties such as:
 
