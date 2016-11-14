@@ -74,7 +74,12 @@ object DSL {
     0 --> 1 by s"$i" when v(i) && v(o),
     1 --> 0 by s"$o" when v(i) && v(o),
     0 --> 0 by s"$i" when v(i) && not(v(o))  // can receive if there is no output
-    ) get i pub o   when v(o) --> v(i) name "[.]"
+    ) get i pub o   when v(o) --> v(i) name "[]"
+
+  def fifofull(i:String,o:String) = newifta ++ (
+    0 --> 1 by s"$o" when v(i) && v(o),
+    1 --> 0 by s"$i" when v(i) && v(o)
+    ) get i pub o  when v(o) && v(i) name "[.]"
 
   def sync(i:String,o:String) = newifta ++ (
     0 --> 0 by s"$i,$o" when v(i) && v(o),

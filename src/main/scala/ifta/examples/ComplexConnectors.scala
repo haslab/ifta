@@ -7,20 +7,15 @@ import ifta.DSL._
   */
 object ComplexConnectors {
 
-  val router3 = (router("i","o1","o2") * router("i1","o3","o4")) sync(("o1","i1"))
-
   //  Sequencer a>b>c :
-  val sequencer3network = (
-    fifo("i","o") || repl("o","a","o2")
+  val seq3net = (
+    fifofull("i","o") || repl("o","a","o2")
       || fifo("o2","o3") || repl("o3","b","o5")
       || fifo("o5","o6") || repl("o6","c","i")
     )
 
-  val sequencer3 = (
-    fifo("i","o") * repl("o","a","o2")
-      * fifo("o2","o3") * repl("o3","b","o5")
-      * fifo("o5","o6") * repl("o6","c","i")
-    )
+  // Composed IFTA
+  val seq3 = seq3net.flatten
 
   // examples:
   // repl("a","b","c") *  sync("b","d") *  fifo("c","e") // compose 3 connectors with product
