@@ -279,6 +279,20 @@
      }
    }
 
+   /**
+     * Flattens a network of IFTAs into a single IFTA using `product`.
+     * @return
+     */
+   def flatten: IFTA = product()
+
+   /**
+     * Adds conjunctively a feature expression to a network of IFTA
+     * @param fe Feature expression to be added
+     * @return new constrained NIFTA
+     */
+   def when(fe:FExp): NIFTA =
+     this || (DSL.newifta when fe)
+
 
    // constructors
    def ||(i:IFTA):NIFTA = NIFTA(iFTAs+i)

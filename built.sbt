@@ -11,4 +11,5 @@ libraryDependencies ++= Seq(
     "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5" withSources() withJavadoc()
     //"org.sat4j" % "org.sat4j.pb" % "2.3.1",
     //"org.sat4j" % "org.sat4j.core" % "2.3.1"
+//    "org.jgrapht" % "jgrapht-core" % "1.0.0"
 )

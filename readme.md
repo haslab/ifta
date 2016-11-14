@@ -7,6 +7,8 @@ This project is a small Scala implementation of the Interface Featured Timed Aut
  - composition operator of IFTAs
  - export into UPPAAL Timed Automata with features
 
+Below you will find a quick overview on how to build, visualise, compose, and analyse IFTA using our Scala library.
+For more examples, please check our [examples folder](tree/master/src/main/scala/ifta/examples).
 
 ## Building primitive IFTAs
 
@@ -92,7 +94,7 @@ val link = List("o1"->"ca","o2"->"co")
 // network of 2 automata (communicating over link)
 val netComp  = (cm || rtr) sync    link
 // flattened of the same 2 automata (communicating over link)
-val prodComp = (cm || rtr) product link
+val prodComp = (cm || rtr) product link  // same as (cm sync link)*(rtr sync link)
 ```
 
 The automata of `cm`, `rtr`, and the product `prodComp` are depicted below, respectively.

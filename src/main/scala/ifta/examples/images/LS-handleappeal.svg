@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="245pt" height="80pt" viewBox="0.00 0.00 245.07 79.87">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 75.8708)">
+<title>G</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-75.8708 241.072,-75.8708 241.072,4 -4,4"></polygon>
+<text text-anchor="start" x="92.4304" y="-9.2" font-family="Times,serif" font-style="italic" font-size="14.00">fm = true</text>
+<!-- 0 -->
+<g id="node1" class="node"><title>0</title>
+<ellipse fill="lightgrey" stroke="black" cx="15.8794" cy="-55.0708" rx="11.7898" ry="11.7898"></ellipse>
+<ellipse fill="none" stroke="black" cx="15.8794" cy="-55.0708" rx="15.7597" ry="15.7597"></ellipse>
+<text text-anchor="middle" x="15.8794" y="-50.8708" font-family="Times,serif" font-size="14.00">0</text>
+</g>
+<!-- 1 -->
+<g id="node2" class="node"><title>1</title>
+<ellipse fill="none" stroke="black" cx="173.733" cy="-55.0708" rx="11" ry="11.76"></ellipse>
+<text text-anchor="middle" x="173.733" y="-50.8708" font-family="Times,serif" font-size="14.00">1</text>
+<text text-anchor="middle" x="210.903" y="-30.5914" font-family="Times,serif" font-size="14.00">tas &lt;= 20</text>
+</g>
+<!-- 0&#45;&gt;1 -->
+<g id="edge1" class="edge"><title>0-&gt;1</title>
+<path fill="none" stroke="black" d="M31.8233,-55.0708C60.9015,-55.0708 124.926,-55.0708 155.64,-55.0708"></path>
+<polygon fill="black" stroke="black" points="155.689,-57.5209 162.689,-55.0708 155.689,-52.6209 155.689,-57.5209"></polygon>
+<text text-anchor="middle" x="97.2461" y="-59.2708" font-family="Times,serif" font-size="14.00">appeal,tas:=0,apl</text>
+</g>
+<!-- 1&#45;&gt;0 -->
+<g id="edge2" class="edge"><title>1-&gt;0</title>
+<path fill="none" stroke="black" d="M165.198,-47.3494C159.966,-42.5658 152.552,-36.8572 144.733,-34.2708 104.658,-21.0144 90.3021,-22.5233 49.7588,-34.2708 44.4956,-35.7958 39.2664,-38.443 34.5781,-41.3481"></path>
+<polygon fill="black" stroke="black" points="33.0105,-39.4497 28.5679,-45.3882 35.7442,-43.5163 33.0105,-39.4497"></polygon>
+<text text-anchor="middle" x="97.2461" y="-38.2708" font-family="Times,serif" font-size="14.00">assessapl,apl</text>
+</g>
+</g>
+</svg>

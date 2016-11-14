@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="208pt" height="115pt" viewBox="0.00 0.00 207.54 115.14">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 111.143)">
+<title>G</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-111.143 203.54,-111.143 203.54,4 -4,4"></polygon>
+<text text-anchor="start" x="73.6641" y="-9.2" font-family="Times,serif" font-style="italic" font-size="14.00">fm = true</text>
+<!-- 0 -->
+<g id="node1" class="node"><title>0</title>
+<ellipse fill="lightgrey" stroke="black" cx="15.8794" cy="-63.3434" rx="11.7898" ry="11.7898"></ellipse>
+<ellipse fill="none" stroke="black" cx="15.8794" cy="-63.3434" rx="15.7597" ry="15.7597"></ellipse>
+<text text-anchor="middle" x="15.8794" y="-59.1434" font-family="Times,serif" font-size="14.00">0</text>
+</g>
+<!-- 1 -->
+<g id="node2" class="node"><title>1</title>
+<ellipse fill="none" stroke="black" cx="188.54" cy="-63.3434" rx="11" ry="11.76"></ellipse>
+<text text-anchor="middle" x="188.54" y="-59.1434" font-family="Times,serif" font-size="14.00">1</text>
+<text text-anchor="middle" x="166.755" y="-38.8641" font-family="Times,serif" font-size="14.00">toutpp &lt;= 1</text>
+</g>
+<!-- 0&#45;&gt;1 -->
+<g id="edge1" class="edge"><title>0-&gt;1</title>
+<path fill="none" stroke="black" d="M29.3714,-72.117C35.2653,-75.7343 42.5715,-79.5048 49.7588,-81.3434 97.0282,-93.4356 112.726,-95.0929 159.54,-81.3434 164.457,-79.8992 169.328,-77.2953 173.594,-74.5086"></path>
+<polygon fill="black" stroke="black" points="175.069,-76.4664 179.347,-70.4087 172.225,-72.476 175.069,-76.4664"></polygon>
+<text text-anchor="middle" x="104.649" y="-94.5434" font-family="Times,serif" font-size="14.00">paypp,toutpp:=0,pp</text>
+</g>
+<!-- 1&#45;&gt;0 -->
+<g id="edge2" class="edge"><title>1-&gt;0</title>
+<path fill="none" stroke="black" d="M177.449,-62.0891C172.131,-61.4902 165.493,-60.8403 159.54,-60.5434 110.809,-58.113 98.5063,-58.4715 49.7588,-60.5434 46.2924,-60.6908 42.6259,-60.9251 39.0481,-61.197"></path>
+<polygon fill="black" stroke="black" points="38.6929,-58.7681 31.921,-61.7921 39.1007,-63.6511 38.6929,-58.7681"></polygon>
+<text text-anchor="middle" x="104.649" y="-64.5434" font-family="Times,serif" font-size="14.00">cancelpp,pp</text>
+</g>
+<!-- 1&#45;&gt;0 -->
+<g id="edge3" class="edge"><title>1-&gt;0</title>
+<path fill="none" stroke="black" d="M181.029,-54.5825C175.942,-48.5222 168.283,-40.9575 159.54,-37.5434 114.09,-19.7967 95.8753,-21.6099 49.7588,-37.5434 43.6466,-39.6553 37.8051,-43.4237 32.7867,-47.4394"></path>
+<polygon fill="black" stroke="black" points="30.9961,-45.7489 27.3067,-52.1825 34.2029,-49.4539 30.9961,-45.7489"></polygon>
+<text text-anchor="middle" x="104.649" y="-41.5434" font-family="Times,serif" font-size="14.00">paidpp,pp</text>
+</g>
+</g>
+</svg>
