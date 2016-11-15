@@ -3,7 +3,7 @@
 This folder contain examples of IFTAs, including
  
  - A simple example of a [coffee machine]
- - A combination of Reo connectors (from the ones included in the DSL - see [Reo folder](src/main/scala/ifta/reo))
+ - A combination of Reo connectors (from the ones included in the DSL - see [Reo folder](../reo))
  - A more complex example from e-Gov domain for coordinating licensing services.
 
 We explain better below the more complex example, submitted to an [FSEN'2017](http://fsen.ir/2017/) paper.

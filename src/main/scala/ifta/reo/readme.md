@@ -55,7 +55,7 @@ and visualized in Graphviz using `toDot(myasdrain)`:
 
 ### Replicator 
 
-The `replicator` connector consists of an input `i` and two or more outputs `o1,o2,...`. In its standard behavior it synchronizes all inputs with the output port, i.e., they all must execute atomically. It accepts that any of its inputs is missing, in which case only the inputs that are present are synchonized with the output. In addition, if the output is missing, it behaves as a `syndrain` synchronizing the execution of all the inputs that are present. 
+The `replicator` connector consists of an input `i` and two or more outputs `o1,o2,...`. In its standard behavior it synchronizes all inputs with the output port, i.e., they all must execute atomically. If any of its inputs is missing, only the inputs that are present are synchonized with the output. In addition, if the output is missing, it behaves as a `syndrain` synchronizing the execution of all the inputs that are present. 
 
 It can be specified as follows
 ```scala
@@ -73,7 +73,7 @@ and visualized in Graphviz using `toDot(repl2)` and `toDot(repl4)`:
 
 ### Merger
 
-The `merger` connector consists of two or more inputs `i1,i2,...` and an output`o`. In its standard behavior it synchronizes each input with the output port. It accepts that any of its inputs is missing, without affecting further its behavior. In addition, if the output is missing, it behaves as an `asyndrain` connector, enabling the execution of either of its inputs without further action. 
+The `merger` connector consists of two or more inputs `i1,i2,...` and an output `o`. In its standard behavior it synchronizes each input with the output port. If any of its inputs is missing, it synchronizes only each input present with the output. In addition, if the output is missing, it behaves as an `asyndrain` connector, enabling the execution of either of its inputs without further action. 
 
 It can be specified as follows
 ```scala
