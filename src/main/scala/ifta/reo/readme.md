@@ -26,7 +26,7 @@ It can be specified as follows
 val mysync = sync("i","o")
 ```
 and visualized in Graphviz using `toDot(mysync)`:
-<!--![alt text]( "Sync connector as IFTA")-->
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/sync.svg "Sync connector as IFTA")
 
 ### SyncDrain
 The `syncDrain` connector consists of two inputs `i1` and `i2`. In its standard behavior, both inputs must execute atomically. If an input is missing, it behaves as and `asyncDrain` connector, receiving inputs without further action.
@@ -36,7 +36,7 @@ It can be specified as follows
 val mysdrain = sdrain("i1","i2")
 ```
 and visualized in Graphviz using `toDot(mysdrain)`:
-<!--![alt text]( "SyncDrain connector as IFTA")-->
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/sdrain.svg "SyncDrain connector as IFTA")
 
 ### AsyncDrain
 
@@ -47,7 +47,7 @@ It can be specified as follows
 val myasdrain = asdrain("i1","i2")
 ```
 and visualized in Graphviz using `toDot(myasdrain)`:
-<!--![alt text]( "AsyncDrain connector as IFTA")-->
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/asdrain.svg "AsyncDrain connector as IFTA")
 
 
 ### Replicator 
@@ -63,8 +63,8 @@ val repl2 = repl("i","o1","2")
 val repl3 = repl("i","o1","o2","o3")
 ```
 and visualized in Graphviz using `toDot(repl2)` and `toDot(repl4)`:
-<!--![alt text]( "Replicator connector with 2 outputs modeled as IFTA")-->
-<!--![alt text]( "Replicator connector with 4 outputs modeled as IFTA")-->
+![alt text](https://github.com/joseproenca/ifta/blob/master/src/main/scala/ifta/reo/images/repl.svg "Replicator connector with 2 outputs modeled as IFTA")
+![alt text](https://github.com/joseproenca/ifta/blob/master/src/main/scala/ifta/reo/images/repl3.svg "Replicator connector with 4 outputs modeled as IFTA")
 
 ### Merger
 
@@ -76,7 +76,7 @@ It can be specified as follows
 val merger2 = merger("i1","i2","o")
 ```
 and visualized in Graphviz using `toDot(merger2)`:
-<!--![alt text]( "Merger connector with 2 inputs modeled as IFTA")-->
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/merger.svg "Merger connector with 2 inputs modeled as IFTA")
 
 ### Composed connectors
 
@@ -93,7 +93,9 @@ The connectors provided can be used to construct more complex connectors using I
   val seq3 = seq3net.flatten
 ```
 
-We can see the top view of the network by generating the `dot graph` with the command `con2dot(se3net)` and visualizing it using Graphiviz:
+We can see the top view of the network by generating the `dot graph` with the command `con2dot(seq3net)` and visualizing it using Graphiviz. The result is the following graph, where `[]`,`[.]`, and `-<` represent a `fifo1`, `fifo1full`, and `replicator` connector, respectively.
+
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/seq3net-top.svg "Top view of a sequencer of 3 outputs modeled as NIFTA")
 
 
 
