@@ -1,6 +1,7 @@
 package ifta.examples
 
 import ifta.DSL._
+import ifta.reo.Connectors._
 
 /**
   * Created by guille on 27/10/16.
@@ -8,11 +9,11 @@ import ifta.DSL._
 object ComplexConnectors {
 
   //  Sequencer a>b>c :
-  val seq3net = (
-    fifofull("i","o") || repl("o","a","o2")
-      || fifo("o2","o3") || repl("o3","b","o5")
-      || fifo("o5","o6") || repl("o6","c","i")
-    )
+  val seq3net =
+    fifofull("i","o") || repl("o","a","o2") ||
+      fifo("o2","o3") || repl("o3","b","o5") ||
+      fifo("o5","o6") || repl("o6","c","i")
+
 
   // Composed IFTA
   val seq3 = seq3net.flatten
