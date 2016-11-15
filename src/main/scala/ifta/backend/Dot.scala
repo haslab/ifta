@@ -14,7 +14,7 @@ object Dot {
   def apply(iFTA: IFTA): String = {
     val aut = Simplify(iFTA)
 //    val edges = toDotEdges(aut.edges.map(Simplify(_)))
-    val edges = toDotEdges(aut.edges)
+    val edges = toDotEdges(aut.edges,iFTA)
     val invs = aut.locs.map(l => if (aut.cInv.get(l).nonEmpty) s"""{ node [xlabel="${Show(aut.cInv.getOrElse(l,CTrue))}"] $l }""" else "" )
     "digraph G {\n  rankdir=LR;\n  node [margin=0 width=0.3 height=0.2]\n"+
       "  edge [arrowsize=0.7]\n"+
@@ -27,7 +27,7 @@ object Dot {
       s"$edges}"
   }
 
-  private def toDotEdges(edges: Iterable[Edge]) = {
+  private def toDotEdges(edges: Iterable[Edge],iFTA: IFTA) = {
     val res = new StringBuilder
     for (e <- edges) {
       var temp:List[String] = List()
@@ -36,7 +36,7 @@ object Dot {
       if (e.cReset.nonEmpty) temp ::= e.cReset.map(_ + ":=0").mkString(",")
       if (e.fe != FTrue)     temp ::= Show(e.fe)
       res append
-        s"""${e.from} -> ${e.to} [label="${temp.reverse.mkString(",")}"]\n"""
+        s"""${iFTA.aps.getOrElse(e.from,e.from)} -> ${iFTA.aps.getOrElse(e.to,e.to)} [label="${temp.reverse.mkString(",")}"]\n"""
     }
     res.toString()
   }
@@ -54,7 +54,7 @@ object Dot {
   def apply(fTA: FTA): String = {
     val aut = Simplify(fTA)
 //    val edges = toDotFtaEdges(aut.edges.map(Simplify(_)))
-    val edges = toDotFtaEdges(aut.edges)
+    val edges = toDotFtaEdges(aut.edges,fTA)
     val comms: String = aut.committed.mkString(",")
     val invs = aut.locs.map(l => if (aut.cInv.get(l).nonEmpty) s"""{ node [xlabel="${Show(aut.cInv.getOrElse(l,CTrue))}"] $l }""" else "" )
     "digraph G {\n  rankdir=LR;\n  node [margin=0 width=0.3 height=0.2]\n"+
@@ -70,7 +70,7 @@ object Dot {
       s"$edges}"
   }
 
-  private def toDotFtaEdges(edges: Iterable[FtaEdge]) = {
+  private def toDotFtaEdges(edges: Iterable[FtaEdge],fTA: FTA) = {
     val res = new StringBuilder
     for (e <- edges) {
       var temp:List[String] = List()
@@ -79,7 +79,7 @@ object Dot {
       if (e.cReset.nonEmpty) temp ::= e.cReset.map(_ + ":=0").mkString(",")
       if (e.fe != FTrue)     temp ::= Show(e.fe)
       res append
-        s"""${e.from} -> ${e.to} [label="${temp.reverse.mkString(",")}"]\n"""
+        s"""${fTA.aps.getOrElse(e.from,e.from)} -> ${fTA.aps.getOrElse(e.to,e.to)} [label="${temp.reverse.mkString(",")}"]\n"""
     }
     res.toString()
   }
