@@ -26,6 +26,7 @@ It can be specified as follows
 val mysync = sync("i","o")
 ```
 and visualized in Graphviz using `toDot(mysync)`:
+
 ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/sync.svg "Sync connector as IFTA")
 
 ### SyncDrain
@@ -36,6 +37,7 @@ It can be specified as follows
 val mysdrain = sdrain("i1","i2")
 ```
 and visualized in Graphviz using `toDot(mysdrain)`:
+
 ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/sdrain.svg "SyncDrain connector as IFTA")
 
 ### AsyncDrain
@@ -47,6 +49,7 @@ It can be specified as follows
 val myasdrain = asdrain("i1","i2")
 ```
 and visualized in Graphviz using `toDot(myasdrain)`:
+
 ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/asdrain.svg "AsyncDrain connector as IFTA")
 
 
@@ -62,9 +65,11 @@ val repl2 = repl("i","o1","2")
 // replicator with 3 outputs
 val repl3 = repl("i","o1","o2","o3")
 ```
+
 and visualized in Graphviz using `toDot(repl2)` and `toDot(repl4)`:
-![alt text](https://github.com/joseproenca/ifta/blob/master/src/main/scala/ifta/reo/images/repl.svg "Replicator connector with 2 outputs modeled as IFTA")
-![alt text](https://github.com/joseproenca/ifta/blob/master/src/main/scala/ifta/reo/images/repl3.svg "Replicator connector with 4 outputs modeled as IFTA")
+
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/repl.svg "Replicator connector with 2 outputs modeled as IFTA")
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/repl3.svg "Replicator connector with 4 outputs modeled as IFTA")
 
 ### Merger
 
@@ -76,6 +81,7 @@ It can be specified as follows
 val merger2 = merger("i1","i2","o")
 ```
 and visualized in Graphviz using `toDot(merger2)`:
+
 ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/merger.svg "Merger connector with 2 inputs modeled as IFTA")
 
 ### Composed connectors
