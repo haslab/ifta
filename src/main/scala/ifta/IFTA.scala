@@ -84,7 +84,7 @@
        var index:Int = 0
        var res:String = n
        if (prodLocNames.contains(n)) {
-         nameOffset(n,prodLocNames.get(n).get) match {case i => index=i}
+         index = nameOffset(n,prodLocNames.get(n).get)
          res += index
          prodLocNames -= n
          prodLocNames += res -> 1
@@ -328,13 +328,6 @@
    def ||(n:NIFTA):NIFTA = NIFTA(iFTAs++n.iFTAs)
 
    override def toString = iFTAs.map(Show.apply).mkString(" ||\n")
-
-//   def <<>>(i:IFTA):NIFTA = NIFTA(iFTAs++Set(i))
-//   def <<>>(i:IFTA*):NIFTA = {
-//     var res = this
-//     for (iFTA <- i) res = res<<>>iFTA
-//     res
-//   }
  }
 
 
