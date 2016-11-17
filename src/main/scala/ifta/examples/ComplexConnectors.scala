@@ -26,14 +26,14 @@ object ComplexConnectors {
   /////////////////////
 
   // Multiple merger for two components C1 and C2:
-  lazy val multipleMergerNet =
+  lazy val multipleMergerNet = (
     repl3 || fifo3 || fifo4 || merger1 || merger2 ||
     C1 || C2 || repl2 || repl4 || router1 ||
     fifo2 || fifo5 || router2 || sdrain2 || sdrain3 ||
     router3 || sdrain4 || sdrain5 ||
     repl6 || repl7 || repl5 || repl8 || fifo6 || fifo7 ||
     sdrain6 || repl9 || merger4 || merger3 ||
-    fifo1 || repl1 || sdrain1
+    fifo1 || repl1 || sdrain1) when "vc1inc2in" && "vc1outc2out"
 
   // Component C1
   val C1 = newifta ++ (

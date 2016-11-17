@@ -15,7 +15,7 @@ object Dot {
     val aut = Simplify(iFTA)
 //    val edges = toDotEdges(aut.edges.map(Simplify(_)))
     val edges = toDotEdges(aut.edges,iFTA)
-    val invs = aut.locs.map(l => if (aut.cInv.get(l).nonEmpty) s"""{ node [xlabel="${Show(aut.cInv.getOrElse(l,CTrue))}"] $l }""" else "" )
+    val invs = aut.locs.map(l => if (aut.cInv.get(l).nonEmpty) s"""{ node [xlabel="${Show(aut.cInv.getOrElse(l,CTrue))}"] ${iFTA.aps.getOrElse(l,l)} }""" else "" )
     "digraph G {\n  rankdir=LR;\n  node [margin=0 width=0.3 height=0.2]\n"+
       "  edge [arrowsize=0.7]\n"+
       s"{ rank=min;\n  node [style=filled,shape=doublecircle] ${aut.init} }\n"+
@@ -56,7 +56,7 @@ object Dot {
 //    val edges = toDotFtaEdges(aut.edges.map(Simplify(_)))
     val edges = toDotFtaEdges(aut.edges,fTA)
     val comms: String = aut.committed.mkString(",")
-    val invs = aut.locs.map(l => if (aut.cInv.get(l).nonEmpty) s"""{ node [xlabel="${Show(aut.cInv.getOrElse(l,CTrue))}"] $l }""" else "" )
+    val invs = aut.locs.map(l => if (aut.cInv.get(l).nonEmpty) s"""{ node [xlabel="${Show(aut.cInv.getOrElse(l,CTrue))}"] ${fTA.aps.getOrElse(l,l)} }""" else "" )
     "digraph G {\n  rankdir=LR;\n  node [margin=0 width=0.3 height=0.2]\n"+
       "  edge [arrowsize=0.7]\n"+
       s"{ rank=min;\n  node [style=filled,shape=doublecircle] ${aut.init} }\n"+ // initial state
