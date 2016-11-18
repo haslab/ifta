@@ -168,12 +168,17 @@
    private def syncOnce(pair:(String,String)): IFTA =
      IFTA(locs,init,act.map(merge(_,pair._1,pair._2)),clocks,feats
          ,edges.map(e => e by e.act.map(merge(_, pair._1, pair._2))),cInv
-         ,fm,in.map(merge(_,pair._1,pair._2)),out.map(merge(_,pair._1,pair._2)),aps,shortname=this.shortname)
+         ,mergefm(fm,pair._1,pair._2),in.map(merge(_,pair._1,pair._2)),out.map(merge(_,pair._1,pair._2)),aps,shortname=this.shortname)
 
    def sync(pair:(String,String)*): IFTA = sync(pair.toSeq)
    def sync(pair:Iterable[(String,String)]): IFTA =
      if (pair.isEmpty) this
      else this.syncOnce(pair.head).sync(pair.tail)
+
+   private def mergefm(fExp: FExp, a1:String,a2:String):FExp =
+     if ((act contains a1) && (act contains a2))
+       fExp && (fEPort(a1) <-> fEPort(a2))
+     else fExp
 
    private def merge(a:String,a1:String,a2:String): String =
      if (a == a1 || a == a2) a1+"_"+a2 else a
@@ -289,9 +294,11 @@
 
    def sync(pair:(String,String)*): NIFTA = sync(pair.toSeq)
 
+   //todo: fix sync for networks, find correct fEPort and fEPort(pair._1) <-> fEPort(pair._2)
    def sync(pair:Iterable[(String,String)]): NIFTA =
      if (pair.isEmpty) this
      else NIFTA(iFTAs.map(_.sync(pair.head))).sync(pair.tail)
+
 
    /**
      * Flattens a network of IFTAS into a single (product) IFTA, after linking ports that need to be combined.

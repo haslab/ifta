@@ -29,7 +29,7 @@ object Uppaal {
     val fms1 = Simplify(auts.fold(FTA(Set(),0,Set(),Set(),Set(),Set(),Set(),Map(),FTrue,Map()))(_ mergeFM _).fm)
     //    println(s"fms1: ${Show(fms1)}")
     val fms = if (feats.isEmpty) fms1
-    else  fms1 && feats.foldLeft[FExp](FNot(FTrue))(_ || Feat(_)) // at least feat must hold in the uppaal model
+    else  fms1 && feats.foldLeft[FExp](FNot(FTrue))(_ || Feat(_)) // at least feat must hold in the uppaal model todo: fix otherwise some cases do not work (e.g. multiplemerger)
     //    println(s"solving ${Show(fms)}")
     //    val names = auts.zipWithIndex.map(n => getFtaName(n._1,n._2)).mkString("",",",",")
     //(0 until auts.size).map("FTA_"+_).mkString("",",",",")

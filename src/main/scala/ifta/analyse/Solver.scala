@@ -209,6 +209,7 @@ object Solver {
     for (c <- cnf)
       solver.addClause(new VecInt(c.toArray))
     while(mi.isSatisfiable) {
+//      println(mi.numberOfModelsFoundSoFar())
       val m = mi.model()
       res ::= m
     }
