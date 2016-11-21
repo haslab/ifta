@@ -168,20 +168,32 @@
    private def syncOnce(pair:(String,String)): IFTA =
      IFTA(locs,init,act.map(merge(_,pair._1,pair._2)),clocks,feats
          ,edges.map(e => e by e.act.map(merge(_, pair._1, pair._2))),cInv
-         ,mergefm(fm,pair._1,pair._2),in.map(merge(_,pair._1,pair._2)),out.map(merge(_,pair._1,pair._2)),aps,shortname=this.shortname)
+         ,syncfe(fm,pair._1,pair._2),in.map(merge(_,pair._1,pair._2)),out.map(merge(_,pair._1,pair._2)),aps,shortname=this.shortname)
 
    def sync(pair:(String,String)*): IFTA = sync(pair.toSeq)
    def sync(pair:Iterable[(String,String)]): IFTA =
      if (pair.isEmpty) this
      else this.syncOnce(pair.head).sync(pair.tail)
 
-   private def mergefm(fExp: FExp, a1:String,a2:String):FExp =
+   private def syncfe(fm: FExp, a1:String,a2:String):FExp =
      if ((act contains a1) && (act contains a2))
-       fExp && (fEPort(a1) <-> fEPort(a2))
-     else fExp
+       fm && (fEPort(a1) <-> fEPort(a2))
+     else fm
 
    private def merge(a:String,a1:String,a2:String): String =
      if (a == a1 || a == a2) a1+"_"+a2 else a
+
+   /**
+     * Merges the FM of this and other IFTA
+     * @param other
+     * @return
+     */
+   def mergeFM(other:IFTA):IFTA ={
+     val shared = act intersect other.act
+     val resFM: FExp = (fm && other.fm) &&
+       (for (a <- shared) yield fEPort(a) <-> other.fEPort(a)).fold(FTrue)(_&&_)
+     IFTA(Set(),0,act++other.act,Set(),feats++other.feats,edges++other.edges,Map(),resFM,Set(),Set(),Map())
+   }
 
    // constructors
    private def link(e: Edge): IFTA =
@@ -328,6 +340,10 @@
      */
    def when(fe:FExp): NIFTA =
      this || (DSL.newifta when fe)
+
+
+   def fm =
+       Simplify(iFTAs.fold(IFTA(Set(),0,Set(),Set(),Set(),Set(),Map(),FTrue,Set(),Set(),Map()))(_ mergeFM _).fm)
 
 
    // constructors

@@ -27,9 +27,10 @@ object Uppaal {
     //    val fms = auts.map(_.fm).fold(FTrue)(_&&_)
     //    println(s"auts ${auts.mkString("\n---\n")}")
     val fms1 = Simplify(auts.fold(FTA(Set(),0,Set(),Set(),Set(),Set(),Set(),Map(),FTrue,Map()))(_ mergeFM _).fm)
+    val notused = feats -- fms1.feats.toSet
     //    println(s"fms1: ${Show(fms1)}")
-    val fms = if (feats.isEmpty) fms1
-    else  fms1 && feats.foldLeft[FExp](FNot(FTrue))(_ || Feat(_)) // at least feat must hold in the uppaal model todo: fix otherwise some cases do not work (e.g. multiplemerger)
+    val fms = if (notused.isEmpty) fms1
+    else  fms1 && (notused.foldLeft[FExp](FNot(FTrue))(_ || Feat(_)) || Feat("__feat__") ) // at least feat must hold in the uppaal model
     //    println(s"solving ${Show(fms)}")
     //    val names = auts.zipWithIndex.map(n => getFtaName(n._1,n._2)).mkString("",",",",")
     //(0 until auts.size).map("FTA_"+_).mkString("",",",",")
@@ -61,7 +62,9 @@ object Uppaal {
   //    s"""fTA${fTA.act.mkString("_", "_", "")} = FTA${fTA.act.mkString("_", "_", "")}();"""
   //  }
 
+
   def mkContext(acts:Set[String]) = {
+
     s"""<template>
         |       <name x="5" y="5">Context</name>
         |       <declaration>
@@ -88,7 +91,8 @@ object Uppaal {
     else ""
 
   def mkFeatModel(fe:FExp) = {
-    val sols = Solver.all(fe).zipWithIndex
+    val sols:List[(Map[String,Boolean],Int)] =
+      Solver.all(fe).map(_.filterNot(_._1 == "__feat__")).toSet.toList.zipWithIndex
     s"""<template>
         |       <name x="5" y="5">FeatModel</name>
         |       <declaration>
