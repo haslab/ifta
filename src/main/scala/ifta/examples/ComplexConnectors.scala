@@ -119,9 +119,35 @@ object ComplexConnectors {
     ) startWith 0 get "c2in" pub "c2out"
 
 
-  /////////////////////////////////////
-  // Using only variable connectors: //
-  /////////////////////////////////////
+
+  // Test Connectors
+
+  merger("i1","i2","o") //fixed
+  merger("i1","i2","o").relax // variable where the only restriction for each edge is that the fe of each oction is present.
+  merger("i1","i2","o").relax  exclusive "o" // variable restricting each edge e (where "o" not in e.act) to execute only if "v_o" is not present
+
+  join("i1","i2","o")
+  join("i1","i2","o").relax
+  join("i1","i2","o").relax  exclusive  "i1,i2,o"
+
+  sync("i","o")
+  sync("i","o").relax
+  sync("i","o").relax exclusive "o"
+
+  fifo("i","o")
+  fifo("i","o").relax
+  // doesn't work currently: possible solution remove loop
+
+  repl("i","o1","o2")
+  repl("i","o1","o2").relax
+  repl("i","o1","o2").relax exclusive "o1,o2"
+
+  router("i","o1","o2")
+  router("i","o1","o2").relax
+  router("i","o1","o2").relax exclusive "i" -> "o1,o2" //variable where only edge with action Set("i") is restricted to execute only if not(v_o1 && v_o2)
+
+
+
 
 //  val wrapC1 = merger1 || C1 || router2 when "C1"
 //

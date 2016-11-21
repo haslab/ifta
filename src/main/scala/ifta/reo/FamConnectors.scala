@@ -24,21 +24,40 @@ object FamConnectors {
     def relax: Conn =
       new Conn(locs,init,act,clocks,act.map(v),edges.map(e => relaxEdge(e,act)),cInv,fm,in,out,aps,shortname)
     private def relaxEdge(e: Edge,acts:Set[String]):Edge = {
-      val neg = if (e.fe == FNot(FTrue)) (acts -- e.act).map(v(_)) else Set()
-      val fe = e.act.foldRight[FExp](FTrue)((s, fs) => v(s) && fs) && mkFAnd(neg.map(not(_)))
+//      val neg = if (e.fe == FNot(FTrue)) (acts -- e.act).map(v(_)) else Set()
+//      val fe = e.act.foldRight[FExp](FTrue)((s, fs) => v(s) && fs) && mkFAnd(neg.map(not(_)))
+      val fe = e.act.foldRight[FExp](FTrue)((s, fs) => v(s) && fs)
       Edge(e.from, e.cCons, e.act, e.cReset, fe , e.to)
     }
     override def when(f: FExp): Conn =
       new Conn(locs,init,act,clocks,feats++f.feats,edges,cInv,fm && f,in,out,aps,shortname)
-    def exclude(p:String): Conn = exclude(Set(p))
-    def exclude(ps:Set[String]): Conn =
-      new Conn(locs,init,act,clocks,act,edges.map(excludeEdge(ps,act)),cInv,fm,in,out,aps,shortname)
-    private def excludeEdge(ps:Set[String],as:Set[String])(e:Edge): Edge =
-      if (ps != e.act) e
-      else Edge(e.from,e.cCons,e.act,e.cReset,
-            e.act.foldRight[FExp](FTrue)((s,fs)=>v(s)&&fs) &&
-              (as -- e.act).foldRight[FExp](FTrue)((s,fs)=>not(v(s))&&fs),
-            e.to)
+
+    def exclusive(ps:String):Conn =
+      new Conn(locs,init,act,clocks,act,
+        edges.map(exclusiveEdge(Set(),ps.split(",").toSet)),
+        cInv,fm,in,out,aps,shortname)
+    def exclusive(pair:(String,String)): Conn =
+      new Conn(locs,init,act,clocks,act,
+        edges.map(exclusiveEdge(pair._1.split(",").toSet,pair._2.split(",").toSet)),
+        cInv,fm,in,out,aps,shortname)
+    def exclusiveEdge(as:Set[String],ps:Set[String])(e:Edge): Edge =
+      if ((as == e.act) || as.isEmpty)
+        Edge(e.from,e.cCons,e.act,e.cReset,
+        e.act.foldRight[FExp](FTrue)((s,fs)=>v(s)&&fs) &&
+          //              (as -- e.act).foldRight[FExp](FTrue)((s,fs)=>not(v(s))&&fs),
+          (ps -- e.act).foldRight[FExp](FTrue)((s,fs)=>not(v(s))&&fs),
+        e.to)
+      else e
+
+//    def exclude(p:String): Conn = exclude(Set(p))
+//    def exclude(ps:Set[String]): Conn =
+//      new Conn(locs,init,act,clocks,act,edges.map(excludeEdge(ps,act)),cInv,fm,in,out,aps,shortname)
+//    private def excludeEdge(ps:Set[String],as:Set[String])(e:Edge): Edge =
+//      if (ps != e.act) e
+//      else Edge(e.from,e.cCons,e.act,e.cReset,
+//        e.act.foldRight[FExp](FTrue)((s,fs)=>v(s)&&fs) &&
+//          (as -- e.act).foldRight[FExp](FTrue)((s,fs)=>not(v(s))&&fs),
+//        e.to)
   }
 
   // auxilary constructions
