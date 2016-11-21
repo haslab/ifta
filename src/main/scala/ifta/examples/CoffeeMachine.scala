@@ -1,7 +1,7 @@
 package ifta.examples
 
 import ifta.DSL._
-import ifta.reo.Connectors._
+import ifta.reo.FamConnectors._
 
 /**
   * Created by jose on 04/10/16.
@@ -14,11 +14,11 @@ object CoffeeMachine {
     1 --> 0 by "b" cc "c">=2
     ) startWith 0 when "mk"-->"cf" inv(1,"c"<=5) get "co" get "ca" pub "b"
 
-  val network = cm || router("i","co","ca")
+  val network = cm || router("i","co","ca").relax when ("v_co" || "v_ca") --> "v_i"
 
   // now without shared names
 
-  val myRouter = router("i","o1","o2")
+  val myRouter = router("i","o1","o2").relax
   val link = List("o1"->"ca","o2"->"co")
   val net2 = (cm || myRouter) sync link
 
