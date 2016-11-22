@@ -4,6 +4,7 @@ import java.io.{FileWriter, BufferedWriter}
 
 import ifta.analyse.IFTA2FTA
 import ifta.analyse.Simplify
+import ifta.backend.{Springy,Vis}
 
 object DSL {
   // to help building clock constraints
@@ -33,6 +34,27 @@ object DSL {
 
   val toDot = ifta.backend.Dot
   def con2dot(nIFTA: NIFTA) = ifta.backend.Dot.connector(nIFTA)
+
+  def toSpringy(iFTA: IFTA) = Springy(iFTA)
+  def toSpringy(iFTA: IFTA,file:String) = {
+    val bw = new BufferedWriter(new FileWriter(file))
+    bw.write(Springy(iFTA))
+    bw.close()
+  }
+
+  def con2Springy(nIFTA: NIFTA) = Springy.connector(nIFTA)
+  def con2Springy(nIFTA: NIFTA,file:String) = {
+    val bw = new BufferedWriter(new FileWriter(file))
+    bw.write(Springy.connector(nIFTA))
+    bw.close()
+  }
+
+  def con2Vis(nIFTA: NIFTA) = Vis.connector(nIFTA)
+  def con2Vis(nIFTA: NIFTA,file:String) = {
+    val bw = new BufferedWriter(new FileWriter(file))
+    bw.write(Vis.connector(nIFTA))
+    bw.close()
+  }
 
   def toFTA = IFTA2FTA
 

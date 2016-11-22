@@ -60,6 +60,7 @@ object FamConnectors {
 //        e.to)
   }
 
+
   // auxilary constructions
   private def v(s:String) = "v_"+s
   private def mkFeat(act:Set[String]):Set[FExp] = act.map(a => Feat(v(a)))
