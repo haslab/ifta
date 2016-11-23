@@ -95,9 +95,9 @@ object Dot {
   def connector(nIFTA: NIFTA): String = {
     s"""digraph G {
       |  rankdir=LR;
-      |  node [margin=0.1 width=0.3 height=0.2 shape=rectangle]
+      |  node [margin=0.1 width=0.3 height=0.2 shape=box]
       |  edge [arrowsize=0.7]
-      |  ${getConnEdges(nIFTA,0,Map())}}
+      |  ${getConnEdges(nIFTA,0,Map())}
       |}
     """.stripMargin
     }

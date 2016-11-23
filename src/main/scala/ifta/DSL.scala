@@ -42,15 +42,15 @@ object DSL {
     bw.close()
   }
 
-  def con2Springy(nIFTA: NIFTA) = Springy.connector(nIFTA)
-  def con2Springy(nIFTA: NIFTA,file:String) = {
+  def con2springy(nIFTA: NIFTA) = Springy.connector(nIFTA)
+  def con2springy(nIFTA: NIFTA,file:String) = {
     val bw = new BufferedWriter(new FileWriter(file))
     bw.write(Springy.connector(nIFTA))
     bw.close()
   }
 
-  def con2Vis(nIFTA: NIFTA) = Vis.connector(nIFTA)
-  def con2Vis(nIFTA: NIFTA,file:String) = {
+  def con2vis(nIFTA: NIFTA) = Vis.connector(nIFTA)
+  def con2vis(nIFTA: NIFTA,file:String) = {
     val bw = new BufferedWriter(new FileWriter(file))
     bw.write(Vis.connector(nIFTA))
     bw.close()
