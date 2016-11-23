@@ -37,7 +37,7 @@ object Vis {
     //mkVis(mkConnData(locs,edges),fsOptions)
   }
 
-  private def mkVis(data:String,fsOptions:Map[Int, List[(Int, Boolean)]]):String = {
+  private def mkVis(data:String,fsOptions:(Map[Int,Map[String,Boolean]],Map[Int, List[(Int, Boolean)]])):String = {
     s"""
        |<!DOCTYPE HTML>
        |<html>
@@ -70,14 +70,14 @@ object Vis {
        |<div id="controls">
        |<h2>Feature Selection</h2>
        |
-       |${mkFSOptions(fsOptions)}
+       |${mkFSOptions(fsOptions._1)}
        |
        |</div>
        |
        |<script type="text/javascript">
        |var data, options;
        |
-       |${initFSOptions(fsOptions)}
+       |${initFSOptions(fsOptions._2)}
        |
        |${mkUpdateFs()}
        |
@@ -96,13 +96,19 @@ object Vis {
        |
        """.stripMargin
 
-  private def mkFSOptions(sols:Map[Int,List[(Int,Boolean)]]) = {
+  private def mkFSOptions(sols:Map[Int,Map[String,Boolean]]) = {
+    val orderSols = sols.toList.sortBy(_._1)
     s"""
        |<form id="optionsFS" onclick="updateFS()">
-       | <input type="radio" name="fss" value="all" checked> All<br>
-       |${sols.map(s => s"""<input type="radio" name="fss" value="${s._1}"> FS${s._1} <br>""").mkString("\n")}
+       | <input type="radio" name="fss" value="all" checked> All transitions<br>
+       |${orderSols.map(s => s"""<input type="radio" name="fss" value="${s._1}"> FS${s._1} = ${getUserFeats(s._2)} <br>""").mkString("\n")}
        |</form>
      """.stripMargin
+  }
+
+  private def getUserFeats(feats:Map[String,Boolean]):String = {
+    val f = feats.filter(f => f._2).filterNot(f => f._1.startsWith("v_")).keySet.mkString(",")
+    if (f.nonEmpty) f else "&#8709"
   }
 
   private def mkUpdateFs() = {
@@ -198,18 +204,20 @@ object Vis {
      """.stripMargin
   }
 
-  private def getSols(fm:FExp,edges:Iterable[(Int,FExp)]): Map[Int, List[(Int, Boolean)]] ={
-    var sols = Solver.all(fm).map(_.filterNot(_._1 == "__feat__")).toSet.toList.zipWithIndex
+  private def getSols(fm:FExp,edges:Iterable[(Int,FExp)]): (Map[Int,Map[String,Boolean]],Map[Int, List[(Int, Boolean)]]) ={
+    val sols = Solver.all(fm).map(_.filterNot(_._1 == "__feat__")).toSet.toList.zipWithIndex
+    val mapSols:Map[Int,Map[String,Boolean]] = sols.map(s=>s._2->s._1).toMap
+
     var res:Map[Int,List[(Int,Boolean)]] = Map()
     var templ: List[(Int,Boolean)] = List()
 
-    for ((s,idsol) <- sols) {
+    for ((idsol,s) <- mapSols) {
       templ = List()
       for ((idedge, fe) <- edges)
         templ ::= (idedge, fe.check(s))
       res += idsol -> templ
     }
-    res
+    (mapSols,res)
   }
 
   private def mkIFTAData(iFTA: IFTA):String = {
@@ -245,30 +253,30 @@ object Vis {
 
 
 
-  private def mkConnData(locs:Map[Int,String],edges:Map[Int,Edge]) = {
-//    var locs:Map[Int,String] = Map()
-//    var edges:Map[Int,Edge] = Map()
-//    getConnLocsAndEdges(nIFTA) match {case (l,e) => locs=l; edges=e}
-    s"""
-       |options = {};
-       |
-       |data = {
-       |  nodes: new vis.DataSet(options),
-       |  edges: new vis.DataSet(options)
-       |}
-       |
-       |data.nodes.add([
-       |${locs.map(l=>s"""{id:${l._1} ${if(l._2.nonEmpty) ", " + (l._2) else "" }}""").mkString(",")}
-       |]);
-       |
-       |data.edges.add([
-       |${(for ((i,e) <- edges) yield
-          s"""{id:$i,from:'${e.from}',to: '${e.to}'}""").mkString(",")}
-       |]);
-       |
-       |
-     """.stripMargin
-  }
+//  private def mkConnData(locs:Map[Int,String],edges:Map[Int,Edge]) = {
+////    var locs:Map[Int,String] = Map()
+////    var edges:Map[Int,Edge] = Map()
+////    getConnLocsAndEdges(nIFTA) match {case (l,e) => locs=l; edges=e}
+//    s"""
+//       |options = {};
+//       |
+//       |data = {
+//       |  nodes: new vis.DataSet(options),
+//       |  edges: new vis.DataSet(options)
+//       |}
+//       |
+//       |data.nodes.add([
+//       |${locs.map(l=>s"""{id:${l._1} ${if(l._2.nonEmpty) ", " + (l._2) else "" }}""").mkString(",")}
+//       |]);
+//       |
+//       |data.edges.add([
+//       |${(for ((i,e) <- edges) yield
+//          s"""{id:$i,from:'${e.from}',to: '${e.to}'}""").mkString(",")}
+//       |]);
+//       |
+//       |
+//     """.stripMargin
+//  }
 
 
 //  private def getConnLocsAndEdges(nIFTA: NIFTA):(Map[Int,String],Map[Int,Edge]) = {
