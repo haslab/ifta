@@ -63,6 +63,15 @@ object Vis {
        |  height:100%;
        |  padding: 1em;
        |}
+       |#optionsFS {
+       | font-size:.8em;
+       |  border:none;
+       |  width:100%;
+       |}
+       |
+       |#optionsFS:focus {
+       |  outline:none;
+       |}
        |</style>
        |</head>
        |<body onload="draw();">
@@ -99,10 +108,10 @@ object Vis {
   private def mkFSOptions(sols:Map[Int,Map[String,Boolean]]) = {
     val orderSols = sols.toList.sortBy(_._1)
     s"""
-       |<form id="optionsFS" onclick="updateFS()">
-       | <input type="radio" name="fss" value="all" checked> All transitions<br>
-       |${orderSols.map(s => s"""<input type="radio" name="fss" value="${s._1}"> FS${s._1} = ${getUserFeats(s._2)} <br>""").mkString("\n")}
-       |</form>
+       |<select id="optionsFS" onchange="updateFS()" size="${orderSols.size+1}">
+       | <option  name="fss" value="all" selected="selected"> All transitions </option>
+       |${orderSols.map(s => s"""<option name="fss" value="${s._1}"> FS${s._1} = ${getUserFeats(s._2)} </option>""").mkString("\n")}
+       |</select>
      """.stripMargin
   }
 
@@ -118,7 +127,7 @@ object Vis {
        |  var selection;
        |
        |  for (var i = 0, length = fsOptions.length; i < length; i++) {
-       |    if (fsOptions[i].checked) {
+       |    if (fsOptions[i].selected) {
        |        selection = fsOptions[i].value
        |        break;
        |    }
