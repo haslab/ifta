@@ -49,6 +49,13 @@ object DSL {
     bw.close()
   }
 
+  def toVis(iFTA: IFTA) = Vis(iFTA)
+  def toVis(iFTA: IFTA,file:String) = {
+    val bw = new BufferedWriter(new FileWriter(file))
+    bw.write(Vis(iFTA))
+    bw.close()
+  }
+
   def con2vis(nIFTA: NIFTA) = Vis.connector(nIFTA)
   def con2vis(nIFTA: NIFTA,file:String) = {
     val bw = new BufferedWriter(new FileWriter(file))
