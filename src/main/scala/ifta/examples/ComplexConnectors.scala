@@ -1,7 +1,7 @@
 package ifta.examples
 
 import ifta.DSL._
-import ifta.reo.FamConnectors._
+import ifta.reo.Connectors._
 
 /**
   * Created by guille on 27/10/16.
@@ -119,12 +119,11 @@ object ComplexConnectors {
     ) startWith 0 get "c2in" pub "c2out"
 
 
-
-  // Test Connectors
+  // Example of different configurations for basic Connectors
 
   val m = merger("i1","i2","o") //fixed
   val mrelax =
-    merger("i1","i2","o").relax // variable where the only restriction for each edge is that the fe of each oction is present.
+    merger("i1","i2","o").relax // variable where the only restriction for each edge is that the FE of each of its actions is present.
   val mrelaxstd =
     merger("i1","i2","o").relax  exclusive "o" // variable restricting each edge e (where "o" not in e.act) to execute only if "v_o" is not present
 
@@ -138,7 +137,7 @@ object ComplexConnectors {
 
   val f = fifo("i","o")
   val frelax = fifo("i","o").relax
-  // doesn't work currently: possible solution remove loop
+  val frelaxstd = fifo("i","o").relax requires "i" -> "o" // edge with action "i" requires the precese of aciton "o"
 
   val r = repl("i","o1","o2")
   val rrelax = repl("i","o1","o2").relax
@@ -148,8 +147,6 @@ object ComplexConnectors {
   val rorelax = router("i","o1","o2").relax
   val rorelaxstd =
     router("i","o1","o2").relax exclusive "i" -> "o1,o2" //variable where only edge with action Set("i") is restricted to execute only if not(v_o1 && v_o2)
-
-
 
 
 //  val wrapC1 = merger1 || C1 || router2 when "C1"

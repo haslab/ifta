@@ -21,10 +21,20 @@ object Vis {
   }
 
   def connector(nIFTA: NIFTA):String = {
+//    var locs:Map[Int,String] = Map()
+//    var edges:Map[Int,Edge] = Map()
+//    getConnLocsAndEdges(nIFTA) match {case (l,e) => locs=l; edges=e}
     val graph = connectorDot(nIFTA)
     val edges = graph._2
-    val fs = getSols(nIFTA.fm,edges.toSeq)
-    mkVis(mkConnData(graph._1.replaceAll("[\"]","""\\"""").replaceAll("[\n\r]", "")),fs)
+    val featsNotused = nIFTA.iFTAs.flatMap(_.feats) -- nIFTA.fm.feats.toSet
+    val fm =
+      if (featsNotused.isEmpty) nIFTA.fm
+      else  nIFTA.fm. && (featsNotused.foldLeft[FExp](FNot(FTrue))(_ || Feat(_)) || Feat("__feat__"))
+    val fsOptions = getSols(fm,edges.toSeq)
+    //val fsOptions = getSols(fm,edges.map(e => (e._1,e._2.fe)))
+
+    mkVis(mkConnData(graph._1.replaceAll("[\"]","""\\"""").replaceAll("[\n\r]", "")),fsOptions)
+    //mkVis(mkConnData(locs,edges),fsOptions)
   }
 
   private def mkVis(data:String,fsOptions:Map[Int, List[(Int, Boolean)]]):String = {
@@ -217,14 +227,14 @@ object Vis {
        |]);
        |
        |data.edges.add([
-       |${(for ((e,i) <- edges) yield mkIFTAEdge(e,i,iFTA)).mkString(",")}
+       |${(for ((e,i) <- edges) yield mkIFTAEdge(e,i)).mkString(",")}
        |]);
        |
        |
      """.stripMargin
   }
 
-  private def mkIFTAEdge(e:Edge,id:Int,i:IFTA):String = {
+  private def mkIFTAEdge(e:Edge,id:Int):String = {
     var label:List[String] = List()
     if (e.fe != FTrue)      label ::= Show(e.fe)
     if (e.cReset.nonEmpty)  label ::= e.cReset.map(_ + ":=0").mkString(",")
@@ -233,31 +243,112 @@ object Vis {
     s"""{id:$id,from:'${e.from}',to: '${e.to}', label:'${label.mkString(",")}'}"""
   }
 
-  private def mkConnData(dot:String):String = {
-    //    val dot = connectorDot(nIFTA)._1.replaceAll("[\"]","""\\"""").replaceAll("[\n\r]", "")
+
+
+  private def mkConnData(locs:Map[Int,String],edges:Map[Int,Edge]) = {
+//    var locs:Map[Int,String] = Map()
+//    var edges:Map[Int,Edge] = Map()
+//    getConnLocsAndEdges(nIFTA) match {case (l,e) => locs=l; edges=e}
     s"""
-       |var parsedData = vis.network.convertDot("${dot}");
+       |options = {};
        |
-     |  data = {
-       |    nodes: new vis.DataSet(parsedData.nodes),
-       |    edges: new vis.DataSet(parsedData.edges)
-       |  }
+       |data = {
+       |  nodes: new vis.DataSet(options),
+       |  edges: new vis.DataSet(options)
+       |}
        |
-     |  options = parsedData.options;
+       |data.nodes.add([
+       |${locs.map(l=>s"""{id:${l._1} ${if(l._2.nonEmpty) ", " + (l._2) else "" }}""").mkString(",")}
+       |]);
        |
-   """.stripMargin
+       |data.edges.add([
+       |${(for ((i,e) <- edges) yield
+          s"""{id:$i,from:'${e.from}',to: '${e.to}'}""").mkString(",")}
+       |]);
+       |
+       |
+     """.stripMargin
   }
 
+
+//  private def getConnLocsAndEdges(nIFTA: NIFTA):(Map[Int,String],Map[Int,Edge]) = {
+//    var locs: Map[Int,String] = Map()
+//    var edges: Map[Int,Edge] = Map()
+//    var map:Map[String,(Int,Boolean,FExp)] = Map()
+//    var edgeId  = 0
+//    var l = 0
+//    var lastL = l
+//
+//    for (ifta <- nIFTA.iFTAs) {
+////       lastL = l
+//      if (ifta.shortname!="")
+//        locs += l -> s"""label:'${ifta.shortname}'"""
+//      else if (ifta.in.nonEmpty || ifta.out.nonEmpty)
+//          locs += l -> s"""label:'${(ifta.in++ifta.out).mkString("-")}'"""
+//      for (in <- ifta.in) {
+//        if (map contains in) {
+//          locs += (lastL+1) -> s"""label:'${in}',shape:'text'"""
+//          edges += edgeId -> Edge(map(in)._1,CTrue,Set(),Set(),map(in)._3,lastL+1)
+//          edges += (edgeId+1) -> Edge(lastL+1,CTrue,Set(),Set(),ifta.fEPort(in),l)
+//          edgeId = edgeId + 2
+//          lastL = lastL +1
+//          map -= in
+//        }
+//        else map += (in->(l,true,ifta.fEPort(in)))
+//      }
+//      for (out <- ifta.out) {
+//        if (map contains out) {
+//          locs += (lastL+1) -> s"""label:'${out}',shape:'text'"""
+//          edges += edgeId -> Edge(l,CTrue,Set(),Set(),ifta.fEPort(out),lastL+1)
+//          edges += (edgeId+1) -> Edge(lastL+1,CTrue,Set(),Set(),map(out)._3,map(out)._1)
+//          edgeId = edgeId + 2
+//          lastL = lastL+1
+//          map -= out
+//        }
+//        else map += (out->(l,false,ifta.fEPort(out)))
+//      }
+//      l = lastL+1
+//      lastL = l
+//    }
+//
+//    for ((k,(l,b,fe)) <- map) {
+//      locs +=  (lastL+1) ->  s"""label:'${k}', shape:'ellipse'"""
+//      if(b) {
+//        edges += (lastL+1) -> Edge(lastL+1,CTrue,Set(),Set(),fe,l)
+//      }
+//      else  {
+//        edges += edgeId -> Edge(l,CTrue,Set(),Set(),fe,lastL+1)
+//      }
+//      lastL = lastL + 1
+//      edgeId = edgeId + 1
+//    }
+//    (locs,edges)
+//  }
+
+    private def mkConnData(dot:String):String = {
+      //    val dot = connectorDot(nIFTA)._1.replaceAll("[\"]","""\\"""").replaceAll("[\n\r]", "")
+      s"""
+         |var parsedData = vis.network.convertDot("${dot}");
+         |
+       |  data = {
+         |    nodes: new vis.DataSet(parsedData.nodes),
+         |    edges: new vis.DataSet(parsedData.edges)
+         |  }
+         |
+       |  options = parsedData.options;
+         |
+     """.stripMargin
+    }
 
   private def connectorDot(nIFTA: NIFTA): (String, Map[Int, FExp]) = {
     var sol = getConnEdges(nIFTA,0,Map())
     val res =
       s"""digraph G {
-        |  rankdir=LR;
-        |  node [margin=0.1 width=0.3 height=0.2 shape=box]
-        |  edge [arrowsize=0.7]
-        |  ${sol._1}
-        |}
+          |  rankdir=LR;
+          |  node [margin=0.1 width=0.3 height=0.2 shape=box]
+          |  edge [arrowsize=0.7]
+          |  ${sol._1}
+          |}
     """.stripMargin
     (res,sol._2)
   }
@@ -307,7 +398,7 @@ object Vis {
       res += s"""\n  { node [shape=ellipse,margin=0]  $k }"""
       if(b) {
         res += s"""\n  "$k" -> $l [id=$edgeId]"""
-
+        edges += edgeId -> fe
       }
       else  {
         res += s"""\n  $l -> "$k" [id=$edgeId]"""

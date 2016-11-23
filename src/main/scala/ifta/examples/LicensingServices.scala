@@ -2,7 +2,7 @@ package ifta.examples
 
 import ifta.DSL._
 import ifta.{Edge, FTrue, IFTA}
-import ifta.reo.FamConnectors._
+import ifta.reo.Connectors._
 
 
 /**

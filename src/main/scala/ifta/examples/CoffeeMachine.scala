@@ -1,7 +1,7 @@
 package ifta.examples
 
 import ifta.DSL._
-import ifta.reo.FamConnectors._
+import ifta.reo.Connectors._
 
 /**
   * Created by jose on 04/10/16.
