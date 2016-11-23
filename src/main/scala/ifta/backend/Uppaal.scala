@@ -30,7 +30,7 @@ object Uppaal {
     val notused = feats -- fms1.feats.toSet
     //    println(s"fms1: ${Show(fms1)}")
     val fms = if (notused.isEmpty) fms1
-    else  fms1 && (notused.foldLeft[FExp](FNot(FTrue))(_ || Feat(_)) || Feat("__feat__") ) // at least feat must hold in the uppaal model
+    else  fms1 && (notused.foldLeft[FExp](FNot(FTrue))(_ || Feat(_)) || Feat("__feat__")) // at least feat must hold in the uppaal model
     //    println(s"solving ${Show(fms)}")
     //    val names = auts.zipWithIndex.map(n => getFtaName(n._1,n._2)).mkString("",",",",")
     //(0 until auts.size).map("FTA_"+_).mkString("",",",",")

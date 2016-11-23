@@ -32,15 +32,15 @@ object Connectors {
     override def when(f: FExp): Conn =
       new Conn(locs,init,act,clocks,feats++f.feats,edges,cInv,fm && f,in,out,aps,shortname)
 
-    def exclusive(ps:String):Conn =
-      new Conn(locs,init,act,clocks,act,
-        edges.map(exclusiveEdge(Set(),ps.split(",").toSet)),
+    def excludes(ps:String):Conn =
+      new Conn(locs,init,act,clocks,feats,
+        edges.map(excludesEdge(Set(),ps.split(",").toSet)),
         cInv,fm,in,out,aps,shortname)
-    def exclusive(pair:(String,String)): Conn =
-      new Conn(locs,init,act,clocks,act,
-        edges.map(exclusiveEdge(pair._1.split(",").toSet,pair._2.split(",").toSet)),
+    def excludes(pair:(String,String)): Conn =
+      new Conn(locs,init,act,clocks,feats,
+        edges.map(excludesEdge(pair._1.split(",").toSet,pair._2.split(",").toSet)),
         cInv,fm,in,out,aps,shortname)
-    def exclusiveEdge(as:Set[String],ps:Set[String])(e:Edge): Edge =
+    def excludesEdge(as:Set[String], ps:Set[String])(e:Edge): Edge =
       if ((as == e.act) || as.isEmpty)
         Edge(e.from,e.cCons,e.act,e.cReset,
         e.act.foldRight[FExp](FTrue)((s,fs)=>v(s)&&fs) &&
@@ -50,7 +50,7 @@ object Connectors {
       else e
 
     def requires(pair:(String,String)):Conn =
-      new Conn(locs,init,act,clocks,act,
+      new Conn(locs,init,act,clocks,feats,
         edges.map(requiresEdge(pair._1.split(",").toSet,pair._2.split(",").toSet)),
         cInv,fm,in,out,aps,shortname)
     def requiresEdge(as:Set[String],ps:Set[String])(e:Edge): Edge =

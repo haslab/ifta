@@ -50,11 +50,11 @@ object LicensingServices {
     ) startWith 0 get "paypp" pub "cancelpp,paidpp" inv(1,"toutpp"<=1) name "PP"
 
   val paymentNet =
-    (router("payapp", "paycc", "paypp").relax when ("v_paycc" || "v_paypp") <-> "v_payapp") ||
+    (router("payapp", "paycc", "paypp").relax excludes "payapp" -> "paycc,paypp" when ("v_paycc" || "v_paypp") <-> "v_payapp") ||
     paypal ||
     creditcard ||
-    (merger("cancelcc", "cancelpp", "cancelpay").relax when "v_cancelpay" <-> ("v_cancelcc" || "v_cancelpp"))  ||
-    (merger("paidcc", "paidpp", "paidapp").relax when "v_paidapp" <-> ("v_paidcc" || "v_paidpp"))
+    (merger("cancelcc", "cancelpp", "cancelpay").relax excludes "cancelpay" when "v_cancelpay" <-> ("v_cancelcc" || "v_cancelpp"))  ||
+    (merger("paidcc", "paidpp", "paidapp").relax excludes "paidapp" when "v_paidapp" <-> ("v_paidcc" || "v_paidpp"))
 
   ///////////////////////////////////
   // Processing Application Module //
@@ -81,7 +81,7 @@ object LicensingServices {
     preAssessment ||
     assessment ||
     appeal ||
-    (merger("assessapl","assessapp","assess").relax when "v_assess" <-> ("v_assessapl"||"v_assessapp"))
+    (merger("assessapl","assessapp","assess").relax excludes "assess" when "v_assess" <-> ("v_assessapl"||"v_assessapp"))
 
   ////////////////////////////
   // Licensing Services SPL //

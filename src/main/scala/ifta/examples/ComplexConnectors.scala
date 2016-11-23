@@ -39,7 +39,8 @@ object ComplexConnectors {
 
   val repl1 = repl("c1inc2in","repl1o1","repl1o2") //.relax when "v_c1inc2in" <-> "C1" || "C2"
 
-  val router1 = router("repl1o1","router1o1","router1o2","router1o3").relax when (
+  val router1 = router("repl1o1","router1o1","router1o2","router1o3").relax excludes
+    "repl1o1" -> "router1o1,router1o2,router1o3" when (
     (("v_router1o1" ||"v_router1o2"|| "v_router1o3") --> "v_repl1o1")  && (("C1" && "C2") <-> "v_router1o2"))
 
   val fifo1 = fifo("repl1o2","fifo1o")
@@ -54,13 +55,15 @@ object ComplexConnectors {
 
   val fifo2 = fifo("repl2o1","fifo2o")
 
-  val merger1 = merger("repl2o2","repl3o1","c1in").relax when ("v_c1in" <-> "v_repl2o2") && ("v_repl3o1" --> "v_c1in")
+  val merger1 = merger("repl2o2","repl3o1","c1in").relax excludes "c1in" when
+    ("v_c1in" <-> "v_repl2o2") && ("v_repl3o1" --> "v_c1in")
 
   val fifo3 = fifo("repl3o2","fifo3o")
 
   val fifo4 = fifo("repl3o3","fifo4o")
 
-  val merger2 = merger("repl3o4","repl4o1","c2in").relax when ("v_c2in" <-> "v_repl4o1") && ("v_repl3o4" --> "v_c2in")
+  val merger2 = merger("repl3o4","repl4o1","c2in").relax excludes "c2in" when
+    ("v_c2in" <-> "v_repl4o1") && ("v_repl3o4" --> "v_c2in")
 
   val fifo5 = fifo("repl4o2","fifo5o")
 
@@ -68,7 +71,8 @@ object ComplexConnectors {
 
   val sdrain2 = sdrain("repl5o3","router2o1")
 
-  val router2 = router("c1out","router2o1","router2o2").relax when ("v_c1out" <-> "v_router2o1") && ("v_router2o2" --> "v_c1out")
+  val router2 = router("c1out","router2o1","router2o2").relax excludes "c1out" -> "router2o1,router2o2" when
+    ("v_c1out" <-> "v_router2o1") && ("v_router2o2" --> "v_c1out")
 
   val sdrain3 = sdrain("router2o2","repl6o1")
 
@@ -78,7 +82,8 @@ object ComplexConnectors {
 
   val sdrain4 = sdrain("repl7o3","router3o1")
 
-  val router3 = router("c2out","router3o1","router3o2").relax when ("v_c2out" <-> "v_router3o2") && ("v_router3o1" --> "v_c2out")
+  val router3 = router("c2out","router3o1","router3o2").relax excludes "c2out" -> "router3o1,router3o2" when
+    ("v_c2out" <-> "v_router3o2") && ("v_router3o1" --> "v_c2out")
 
   val sdrain5 = sdrain("router3o2","repl8o1")
 
@@ -92,14 +97,14 @@ object ComplexConnectors {
 
   val repl9 = repl("fifo7o","repl9o1","repl9o2")
 
-  val merger3 = merger("repl5o1","repl6o3","repl7o1","repl8o2","c1outc2out").relax when
+  val merger3 = merger("repl5o1","repl6o3","repl7o1","repl8o2","c1outc2out").relax excludes "c1outc2out" when
     (("v_repl5o1" || "v_repl6o3" || "v_repl7o1" || "v_repl8o2" ) <-> "v_c1outc2out") //&&
 //    ("v_repl5o1" <-> "C1") &&
 //    (("v_repl6o3" || "v_repl7o1") <-> ("C1" && "C2")) &&
 //    ("v_repl8o2" <-> "C2")
 
 
-  val merger4 = merger("repl9o2","repl5o2","repl8o3","sdrain1i2").relax when
+  val merger4 = merger("repl9o2","repl5o2","repl8o3","sdrain1i2").relax excludes "sdrain1i2" when
     (("v_repl9o2" || "v_repl5o2" || "v_repl8o3") <-> "v_sdrain1i2")// &&
 //    ("v_repl5o2" <-> "C1") &&
 //    ("v_repl8o3" <-> "C2") &&
@@ -125,15 +130,15 @@ object ComplexConnectors {
   val mrelax =
     merger("i1","i2","o").relax // variable where the only restriction for each edge is that the FE of each of its actions is present.
   val mrelaxstd =
-    merger("i1","i2","o").relax  exclusive "o" // variable restricting each edge e (where "o" not in e.act) to execute only if "v_o" is not present
+    merger("i1","i2","o").relax  excludes "o" // variable restricting each edge e (where "o" not in e.act) to execute only if "v_o" is not present
 
   val j = join("i1","i2","o")
   val jrelax = join("i1","i2","o").relax
-  val jrelaxstd = join("i1","i2","o").relax  exclusive  "i1,i2,o"
+  val jrelaxstd = join("i1","i2","o").relax  excludes  "i1,i2,o"
 
   val s = sync("i","o")
   val srelax = sync("i","o").relax
-  val srelaxstd = sync("i","o").relax exclusive "o"
+  val srelaxstd = sync("i","o").relax excludes "o"
 
   val f = fifo("i","o")
   val frelax = fifo("i","o").relax
@@ -141,12 +146,12 @@ object ComplexConnectors {
 
   val r = repl("i","o1","o2")
   val rrelax = repl("i","o1","o2").relax
-  val rrelaxstd = repl("i","o1","o2").relax exclusive "o1,o2"
+  val rrelaxstd = repl("i","o1","o2").relax excludes "o1,o2"
 
   val ro = router("i","o1","o2")
   val rorelax = router("i","o1","o2").relax
   val rorelaxstd =
-    router("i","o1","o2").relax exclusive "i" -> "o1,o2" //variable where only edge with action Set("i") is restricted to execute only if not(v_o1 && v_o2)
+    router("i","o1","o2").relax excludes "i" -> "o1,o2" //variable where only edge with action Set("i") is restricted to execute only if not(v_o1 && v_o2)
 
 
 //  val wrapC1 = merger1 || C1 || router2 when "C1"
