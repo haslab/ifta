@@ -8,12 +8,11 @@ This folder contain examples of IFTAs, including
 
 We explain better below the more complex example, submitted to an [FSEN'2017](http://fsen.ir/2017/) paper.
 
-
 ## Licensing Services: introduction
 
 This case study uses IFTA to model a family of public licensing services. All services in the family support submissions of licensing requests, and assessment of requests. Some licensing services, in addition, require payments before submitting a request (feature `pa`), others allow appeals on rejected requests (feature `apl`), or both. Furthermore, services that require payments can support credit card (feature `cc`) or paypal payments (feature `pp`), or both. Functionality is divided in components and provided as follows.
 
-This example uses 6 individual components: `Application`, `PayPall`, `CreditCard`, `Preassess`, `Appeeal`, and `Assess`. These components are combined via connectors that merge, route, and connect the interfaces of these components, totalizing 10 composed IFTA.
+This example uses 6 individual components: `Application`, `PayPall`, `CreditCard`, `Preassess`, `Appeal`, and `Assess`. These components are combined via connectors that merge, route, and connect the interfaces of these components, totalizing 10 composed IFTA.
 
 We follow a top-down approach; we first illustrate how the components are composed, followed by how each component is specified. Later we provide some conclusions obtained via the UPPAAL backend.
 
@@ -26,7 +25,6 @@ import ifta.DSL._
 import ifta.reo.Connectors._
 import ifta.examples.LicensingServices._
 ```
-
 
 ## Connecting components with Reo
 
@@ -51,14 +49,11 @@ The top view of network can be visualised using Graphviz. For that execute `con2
 
 ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/examples/images/LS-conn.svg "Depicting the connector composing the Licensing Services.")
 
-
 ## Specifying components - primitive IFTAs
 
 The automata of the 5 core components of these example can be visualised also using Graphviz, producing the graphs depicted below. For example, `toDot(application)` produces the first of the automata below.
 
 ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/examples/images/LS-application.svg "Application component of the Licensing Services.") ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/examples/images/LS-preassessment.svg "PreAssessment component of the Licensing Services.") ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/examples/images/LS-assessment.svg "Assessment component of the Licensing Services.") ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/examples/images/LS-handleappeal.svg "HandleAppeal component of the Licensing Services.") ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/examples/images/LS-paypal.svg "Paypal component of the Licensing Services.") ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/examples/images/LS-creditcard.svg "Creditcard component of the Licensing Services.")
-
-
 
 ## Model checking with UPPAAL
 

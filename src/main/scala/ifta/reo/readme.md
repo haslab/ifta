@@ -147,27 +147,26 @@ We can visualized each of this connectors in Graphviz using: `toDot(repl2)`, `to
 
 ### Composed connectors
 
-The connectors provided can be used to construct more complex connectors using IFTA composition. 
+The connectors provided in this folder can be used to construct more complex connectors using IFTA composition. 
 We provide some examples in the file `ComplexConnectors` that can be found in the [examples folder](src/main/scala/ifta/examples). 
 For example, a `sequencer of 3 outputs` is a connector that enables the execution of its outputs in a sequence fashion `o1,o2,o3,o1,o2,o3,...` , and it can be specified as follows. 
 
 ```scala
-//  Sequencer a>b>c as a network of IFTA:
- val seq3net =
-     fifofull("i","o") || repl("o","a","o2") ||
-       fifo("o2","o3") || repl("o3","b","o5") ||
-       fifo("o5","o6") || repl("o6","c","i")
-    
-  // equencer a>b>c as an IFTA:
+// Sequencer A>B>C as a NIFTA 
+// where A, B and C are IFTA accepting inputs `a`, `b`, and `c`, respectively, defined in ComplexConnectors.scala
+  val seq3net = 
+    fifofull("i","o") ||
+    (repl("o","a","o2").relax excludes "a,o2" when ("v_a" || "v_o2") --> "v_o") ||
+    fifo("o2","o3") ||
+    (repl("o3","b","o5").relax excludes "b,o5" when ("v_o5" || "v_b") --> "v_o3") ||
+    fifo("o5","o6") ||
+    (repl("o6","c","i").relax excludes "c,i"when ("v_i" || "v_c") --> "v_o6") ||
+    A || B || C  when "v_i" <-> ("A" || "B" || "C") 
+                
+// Sequencer A>B>C as an IFTA:
   val seq3 = seq3net.flatten
 ```
 
 We can see the top view of the network by generating the `dot graph` with the command `con2dot(seq3net)` and visualizing it using Graphiviz. The result is the following graph, where `[]`,`[.]`, and `-<` represent a `fifo1`, `fifo1full`, and `replicator` connector, respectively.
 
 ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/seq3net-top.svg "Top view of a sequencer of 3 outputs modeled as NIFTA")
-
-
-
-
-
-

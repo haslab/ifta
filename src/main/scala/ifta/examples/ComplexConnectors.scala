@@ -12,11 +12,27 @@ object ComplexConnectors {
   // Sequencer //
   ///////////////
 
-  //  Sequencer a>b>c as a NIFTA: todo: adapt for new connectors
-  val seq3net =
-    fifofull("i","o") || repl("o","a","o2") ||
-      fifo("o2","o3") || repl("o3","b","o5") ||
-      fifo("o5","o6") || repl("o6","c","i")
+  //  Sequencer a>b>c as a NIFTA:
+  val seq3net = (
+    fifofull("i","o") ||
+    (repl("o","a","o2").relax excludes "a,o2" when (("v_a" || "v_o2") --> "v_o")) ||
+    fifo("o2","o3") ||
+    (repl("o3","b","o5").relax excludes "b,o5" when (("v_o5" || "v_b") --> "v_o3")) ||
+    fifo("o5","o6") ||
+    (repl("o6","c","i").relax excludes "c,i"when (("v_i" || "v_c") --> "v_o6")) ||
+    A || B || C ) when "v_i" <-> ("A" || "B" || "C")
+
+  val A = newifta ++ (
+    0 --> 1 by "a" when "A"
+    ) get "a" name "A"
+
+  val B = newifta ++ (
+    0 --> 1 by "b" when "B"
+    ) get "b" name "B"
+
+  val C = newifta ++ (
+    0 --> 1 by "c" when "C"
+    ) get "c" name "C"
 
   // Sequencer a>b>c as an IFTA
   val seq3 = seq3net.flatten
@@ -36,7 +52,6 @@ object ComplexConnectors {
     fifo1 || repl1 || sdrain1 //when (("v_c1outc2out") <-> ("C1" || "C2")) // &&
 //      ("vc1inc2in" <-> "vc1outc2out"))
 
-
   val repl1 = repl("c1inc2in","repl1o1","repl1o2") //.relax when "v_c1inc2in" <-> "C1" || "C2"
 
   val router1 = router("repl1o1","router1o1","router1o2","router1o3").relax excludes
@@ -45,7 +60,7 @@ object ComplexConnectors {
 
   val fifo1 = fifo("repl1o2","fifo1o")
 
-  val repl2 = repl("router1o1","repl2o1","repl2o2")
+  val repl2 = repl("router1o1","repl2o1","repl2o2") // router1 -> repl(3) -> (fifo2,merger1)
 
   val repl3 = repl("router1o2","repl3o1", "repl3o2","repl3o3","repl3o4")
 
@@ -115,13 +130,13 @@ object ComplexConnectors {
   val C1 = newifta ++ (
     0 --> 1 by "c1in" when "C1",
     1 --> 0 by "c1out" when "C1"
-    ) startWith 0 get "c1in" pub "c1out"
+    ) startWith 0 get "c1in" pub "c1out" name "C1"
 
   // Component C2
   val C2 = newifta ++ (
     0 --> 1 by "c2in" when "C2",
     1 --> 0 by "c2out" when "C2"
-    ) startWith 0 get "c2in" pub "c2out"
+    ) startWith 0 get "c2in" pub "c2out" name "C2"
 
 
   // Example of different configurations for basic Connectors
