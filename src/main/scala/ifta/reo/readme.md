@@ -169,4 +169,4 @@ For example, a `sequencer of 3 outputs` is a connector that enables the executio
 
 We can see the top view of the network by generating the `dot graph` with the command `con2dot(seq3net)` and visualizing it using Graphiviz. The result is the following graph, where `[]`,`[.]`, and `-<` represent a `fifo1`, `fifo1full`, and `replicator` connector, respectively.
 
-![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/seq3net-top.svg "Top view of a sequencer of 3 outputs modeled as NIFTA")
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/reo-seq3net.svg "Top view of a sequencer of 3 outputs modeled as NIFTA")
