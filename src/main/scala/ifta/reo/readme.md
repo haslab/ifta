@@ -32,10 +32,14 @@ We use the operation `excludes` and `requires`, respectively, for this purpose.
 Informally, given any connector `conn` with actions `a`,`b` and `c` :
 ```scala
 // con must be relaxed before affecting its behavior
-conn.relax excludes "a" -> "b,c" // a transition with an unique action a is exclusive with respect to b and c,i.e.:
+conn.relax excludes "a" -> "b,c" // a transition with an unique action `a` is exclusive with respect to `b` and `c`,i.e.:
 // can execute if a is present and if b and c are not present.
-conn.relax excludes "b,c" // any transition in conn is exclusive with respect to b and c, i.e.:
-// can execute if the transitions' actions are present and if b/c is not present, if b/c is not part of the transitions actions.
+conn.relax excludes "b,c" // all transition in conn are exclusive with respect to `b` and `c`, i.e.:
+// can execute if the transitions' actions are present and if 
+// b(c) is not present in case b(c) is not part of the transitions' actions.
+
+conn.relax requires "a,b" -> "c" // a transition with atomic actions `a` and `b` requires the presence of `c` to be enabled.
+conn.relax requires "c" // all transitions in conn require the presence of `c`.
 ```
 
 We further explain the use of these operation by explaining the semantics of some connectors in terms of their standard and variable behavior. 
@@ -59,7 +63,7 @@ val mysyncVarRes = mysyncVar excludes "i" -> "o"
 
 We can visualized each of this connectors in Graphviz using `toDot(mysync)`,`toDot(mysyncVar)`, and `toDot(mysyncVarRes)`:
 
-![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/reo-sync.svg"IFTA view of a Sync with standard behavior")
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/reo-sync.svg "IFTA view of a Sync with standard behavior")
 ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/reo-sync-relax.svg "IFTA view of a Sync with variable behavior")
 ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/reo-sync-relax-excludes.svg "IFTA view of a Sync with variable restricted behavior")
 
