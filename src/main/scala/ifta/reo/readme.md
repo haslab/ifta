@@ -16,8 +16,9 @@ Reo is a channel-based exogenous coordination language where complex coordinator
 
 ## Using IFTA Connectors
 
-Modeling Reo connectors as IFTA enables them with variable behavior based on the presence of ports connected, through synchronization, to their ports. 
-Initially, each connector exhibits a **fixed** behavior, i.e. it behaves as its corresponding Reo connector where either all ports are present or all ports are missing. We provide two types of operations to manipulate connectors, which can modify their **variability** and **behavior**. 
+Modeling Reo connectors as IFTA can enable them with variable behavior based on the presence of ports connected, through synchronization, to their ports. 
+Initially, each connector exhibits a **fixed** behavior, i.e. it behaves as its corresponding Reo connector where either all ports are present or all ports are missing. 
+We provide two types of operations to manipulate connectors, which can modify their **variability** and **behavior**. 
 
 ### Enabling Connectors with Variability
 We use the operation `relax` over a connector in order to allow its ports to be variable, this is, each port can or not be present.
@@ -25,8 +26,17 @@ We can impose additional variability restrictions by adding feature restrictions
 
 ### Restricting Connectors Behavior
 In addition to modifying the variability of a connector we can affect the way it behaves. 
-We can say that an specific action, set of atomic actions, or all actions, can execute only if some ports are **not present**, or conversely, only if they **are present**.
-We use the operation `excludes` and `requires`, respectively, for this purpose.  
+We can say that an specific action, or set of atomic actions, can execute only if some ports are **not present**, or conversely, only if they **are present**.
+We use the operation `excludes` and `requires`, respectively, for this purpose.   
+
+Informally, given any connector `conn` with actions `a`,`b` and `c` :
+```scala
+// con must be relaxed before affecting its behavior
+conn.relax excludes "a" -> "b,c" // a transition with an unique action a is exclusive with respect to b and c,i.e.:
+// can execute if a is present and if b and c are not present.
+conn.relax excludes "b,c" // any transition in conn is exclusive with respect to b and c, i.e.:
+// can execute if the transitions' actions are present and if b/c is not present, if b/c is not part of the transitions actions.
+```
 
 We further explain the use of these operation by explaining the semantics of some connectors in terms of their standard and variable behavior. 
 In addition we show how they can be constructed, composed and visualized using the provided DSL. 
@@ -49,7 +59,9 @@ val mysyncVarRes = mysyncVar excludes "i" -> "o"
 
 We can visualized each of this connectors in Graphviz using `toDot(mysync)`,`toDot(mysyncVar)`, and `toDot(mysyncVarRes)`:
 
-![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/sync.svg "Sync connector as IFTA")
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/reo-sync.svg"IFTA view of a Sync with standard behavior")
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/reo-sync-relax.svg "IFTA view of a Sync with variable behavior")
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/reo-sync-relax-excludes.svg "IFTA view of a Sync with variable restricted behavior")
 
 ### SyncDrain
 The `syncDrain` connector consists of two inputs `i1` and `i2`. In its standard behavior, both inputs must execute atomically. 
@@ -68,7 +80,9 @@ val mysdrainVarRes = mysdrainVar excludes "i1,i2"
 
 We can visualized each of this connectors in Graphviz using `toDot(mysdrain)`, `toDot(mysdrainVar)`, and `toDot(mysdrainVarRes)`:
 
-![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/sdrain.svg "SyncDrain connector as IFTA")
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/reo-sdrain.svg "IFTA view of a Syncdrain with standard behavior")
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/reo-sdrain-relax.svg "IFTA view of a Syncdrain with variable behavior")
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/reo-sdrain-relax-excludes.svg "IFTA view of a Syncdrain with variable restricted behavior")
 
 <!--### AsyncDrain-->
 
@@ -110,9 +124,10 @@ val repl3 = repl("i","o1","o2","o3")
 
 We can visualized each of this connectors in Graphviz using: `toDot(repl2)`, `toDot(repl2var)`, `toDot(repl2varRes)` and `toDot(repl3)`:
 
-![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/repl.svg "Replicator connector with 2 outputs modeled as IFTA")
-![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/repl3.svg "Replicator connector with 4 outputs modeled as IFTA")
-s
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/reo-repl2.svg "IFTA view of a Replicator with 2 outpus and standard behavior")
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/reo-repl2-relax.svg "IFTA view of a Replicator with 2 outpus and variable behavior")
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/reo-repl2-relax-excludes.svg "IFTA view of a Replicator with 2 outpus and variable restricted behavior")
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/src/main/scala/ifta/reo/images/reo-repl3.svg "IFTA view of a Replicator with 3 outputs and standard behavior")
 <!--### Merger-->
 
 <!--The `merger` connector consists of two or more inputs `i1,i2,...` and an output `o`. In its standard behavior it synchronizes each input with the output port. If any of its inputs is missing, it synchronizes only each input present with the output. In addition, if the output is missing, it behaves as an `asyndrain` connector, enabling the execution of either of its inputs without further action. -->
