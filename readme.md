@@ -36,7 +36,7 @@ myAut.instance  // or myAut.instance("f") to refine
 
 ## Visualising an automata and exporting to [Uppaal](http://uppaal.com)
 
-To debug and analyse automata, two functions are provided to produce an intuitive `dot` graph file and to produce an `xml` file that can be used by Uppaal.
+To debug and analyse automata, three functions are provided to produce an intuitive `dot` graph file, an `xml` file that can be used by Uppaal, and an interactive `html` file using [Vis.js](http://visjs.org) to visualize an automata and see how it is affected by its possible feature selections.
 
 ```scala
 toDot(myAut)
@@ -44,16 +44,22 @@ toDot(myAut)
 
 toUppaal(myAut get "a" pub "b,c","myAut.xml")
 // produces an xml file that can be opened with Uppaal model checker, using "a" as an input channel and "b" and "c" as output channels
+
+// the application IFTA is defined in the examples folder
+toVis(application, "application.html")
+// produces an html file that can be opened in a browser and see which transitions are enabled in each possible feature selection
 ```
 
-The `dot` output is handy to quickly visualise a connector with an intuitive layout (use, for example online tool [Viz.js](https://mdaines.github.io/viz.js/) to preview the produced graph), while the [Uppaal](http://uppaal.com) output requires some manual layout adjustments but can be used to simulate and to prove (temporal) properties.
+The `dot` output is handy to quickly visualise a connector with an intuitive layout (use, for example online tool [Viz.js](https://mdaines.github.io/viz.js/) to preview the produced graph). 
+The [Uppaal](http://uppaal.com) output requires some manual layout adjustments but can be used to simulate and to prove (temporal) properties.
 Note that the `Uppaal` model was extended to annotations to make `a` an input channel and `b` and `c` output channels, represented as `a?`, `b!`, and `c!` in the Uppaal model.
+The `html` output is handy to see what possible feature selections are derived from the feature model and how they affect the transitions of the automata.
 
-Screenshots of the `dot` and `Uppaal` outputs follow bellow.
+Screenshots of the `dot`, `Uppaal`, and `Vis.js` outputs follow bellow.
 Observe that Uppaal does not support multiple actions per transition - these are rewritten as an interleaving of all combinations, imposing that inputs come before outputs (to reduce the state space).
 
 ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/images/myAut.svg "Automata example in Dot")   ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/images/myAutUpp.svg "Automata example in Uppaal")
-
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/images/application-toVis.gif "Automata example in Vis")
 ## Time extension
 
 Automata can be extended with clocks, using the same notion of clocks as Uppaal. Hence, states can have clock constraints as invariants, and edges can have clock constraints as guards that make a transition active.
@@ -106,6 +112,13 @@ In larger examples it is often necessary to visualise the composition of automat
 
 ```scala
 con2dot( ((cm name "CM") || (rtr name "Rt")) sync link )
+// produces a dot graph depicting how the different IFTA of the network interact 
+
+// seq3net is a NIFTA for a sequencer connector of three outputs. Its definition can be found in the examples folder
+con2vis(seq3net, "seq3net.html")
+// produces a html file depicting how the different IFTA of the network interact
+// and how the feature selections derived from its feature model affect the precense of intefaces
 ```
 
 ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/images/cm-router-conn.svg "Depicting the connector composing the coffee machine and the router")
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/images/seq3-con2vis.gif "Depicting the network of a sequencer connector of 3 outputs")
