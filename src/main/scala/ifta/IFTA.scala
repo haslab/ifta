@@ -26,6 +26,20 @@
                  , feats:Set[String], edges:Set[Edge], cInv:Map[Int,ClockCons], fm:FExp
                  , in:Set[String], out:Set[String], aps:Map[Int,String], shortname:String="") {
 
+   def goFromBy(loc: Int, bigEdge: Edge): Option[Int] = bigEdge match {
+     case Edge(from,cc,as,rs,f,to) =>
+       edges.find(e => //e.from==loc &&
+                       e.cCons.restrict(clocks) == cc.restrict(clocks) && // may not always work.
+                       e.act == as.intersect(act) &&
+                       e.cReset == rs.intersect(clocks) /*&&
+                       e.fe.restrict(feats) == f.restrict(feats)*/).map(_.to)
+//       match {
+//         case None => throw new RuntimeException(s"no edge found from $loc by ${Show(bigEdge)} in $this.")
+//         case Some(x) => x.to
+//       }
+   }
+
+
    /**
      * Product of 2 IFTAs synchronising shared ports
      *
@@ -195,6 +209,9 @@
      IFTA(Set(),0,act++other.act,Set(),feats++other.feats,edges++other.edges,Map(),resFM,Set(),Set(),Map())
    }
 
+   def filter(loc:Int) =
+     IFTA(locs,init,act,clocks,feats,edges.filter(_.from == loc),cInv,fm,in,out,aps,shortname)
+
    // constructors
    private def link(e: Edge): IFTA =
      IFTA(locs+e.from+e.to,init,act++e.act,clocks++e.cCons.clocks++e.cReset,feats++e.fe.feats,edges+e,cInv,fm,in,out,aps,shortname)
@@ -332,6 +349,55 @@
      * @return
      */
    def flatten: IFTA = product()
+
+
+   /**
+     * Flattens a network of IFTAs using a step-by-step approach.
+     * @return single IFTA restulting from composing all IFTAs in the network
+     */
+   // TODO: unfinished - probably start by replacing int by something else for locations of IFTAs
+   def flatten2: Set[IFTA] = {
+
+     val auts = iFTAs.toList // to fix the order
+
+     var done = Set[IFTA]()
+     var toGo = Map[IFTA,List[Int]](NIFTA(iFTAs.map(aut => aut.filter(aut.init))).flatten -> auts.map(_.init))
+     // composition of aut restr. to the initial state, and initial state as a list.
+
+     while ((toGo -- done).nonEmpty) {
+       val aut = (toGo -- done).head
+       done += aut._1
+
+       for (e <- aut._1.edges) {
+         // get the state from "state aut._2" for the "automata aut._1"
+         val nMbState = auts.zip(aut._2).map(pair=>pair._1.goFromBy(pair._2,e))
+         val nState:List[Int] = nMbState.zip(aut._2).map(pair => pair._1.getOrElse(pair._2))
+         val nAut:IFTA = NIFTA(auts.zip(nState).map(a => a._1.filter(a._2)).toSet).flatten
+         toGo += nAut -> nState
+       }
+     }
+     done
+   }
+
+//   {  val parts = iFTAs.toList
+//     val init = parts.map(_.init)
+//     flattenAux(parts,Set(init),Set(),0)._1
+//   }
+//   private def flattenAux(all:List[IFTA],next:Set[List[Int]],done:Set[List[Int]],seed:Int) : (IFTA,Int) =
+//     if (next.isEmpty)
+//       (ifta.DSL.newifta,seed)
+//     else {
+//       var next2 = Nil: List[List[Int]]
+//       for (ns <- next; (a, st) <- all.zip(ns)) {
+//         // for all aut a in (next) state st
+//         // - check if a is dependent with any other aut in `all`
+//
+//
+//       }
+//
+//       (ifta.DSL.newifta, seed)
+//     }
+
 
    /**
      * Adds conjunctively a feature expression to a network of IFTA
