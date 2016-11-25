@@ -13,7 +13,7 @@ object ComplexConnectors {
   ///////////////
 
   //  Sequencer a>b>c as a NIFTA:
-  val seq3net = (
+  lazy val seq3net = (
     fifofull("i","o") ||
     (repl("o","a","o2").relax excludes "a,o2" when (("v_a" || "v_o2") --> "v_o")) ||
     fifo("o2","o3") ||

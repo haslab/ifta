@@ -45,7 +45,8 @@ toDot(myAut)
 toUppaal(myAut get "a" pub "b,c","myAut.xml")
 // produces an xml file that can be opened with Uppaal model checker, using "a" as an input channel and "b" and "c" as output channels
 
-toVis(myAut, "myAut.html")
+// the application IFTA is defined in the examples folder
+toVis(application, "application.html")
 // produces an html file that can be opened in a browser and see which transitions are enabled in each possible feature selection
 ```
 
@@ -58,7 +59,7 @@ Screenshots of the `dot`, `Uppaal`, and `Vis.js` outputs follow bellow.
 Observe that Uppaal does not support multiple actions per transition - these are rewritten as an interleaving of all combinations, imposing that inputs come before outputs (to reduce the state space).
 
 ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/images/myAut.svg "Automata example in Dot")   ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/images/myAutUpp.svg "Automata example in Uppaal")
-
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/images/app-tovis.gif "Automata example in Vis")
 ## Time extension
 
 Automata can be extended with clocks, using the same notion of clocks as Uppaal. Hence, states can have clock constraints as invariants, and edges can have clock constraints as guards that make a transition active.
@@ -120,4 +121,4 @@ con2vis(seq3net, "seq3net.html")
 ```
 
 ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/images/cm-router-conn.svg "Depicting the connector composing the coffee machine and the router")
-
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/images/seq3-con2vis.gif "Depicting the network of a sequencer connector of 3 outputs")
