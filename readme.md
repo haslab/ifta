@@ -59,7 +59,7 @@ Screenshots of the `dot`, `Uppaal`, and `Vis.js` outputs follow bellow.
 Observe that Uppaal does not support multiple actions per transition - these are rewritten as an interleaving of all combinations, imposing that inputs come before outputs (to reduce the state space).
 
 ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/images/myAut.svg "Automata example in Dot")   ![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/images/myAutUpp.svg "Automata example in Uppaal")
-![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/images/app-tovis.gif "Automata example in Vis")
+![alt text](https://cdn.rawgit.com/joseproenca/ifta/master/images/application-toVis.gif "Automata example in Vis")
 ## Time extension
 
 Automata can be extended with clocks, using the same notion of clocks as Uppaal. Hence, states can have clock constraints as invariants, and edges can have clock constraints as guards that make a transition active.
