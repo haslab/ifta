@@ -95,12 +95,12 @@ val rtr = newifta ++ (
     ) startWith 0 get "i" pub "o1" pub "o2"
 // or simply: val rtr = router("i","o1","o2")
 
-val link = List("o1"->"ca","o2"->"co")
-
-// network of 2 automata (communicating over link)
-val netComp  = (cm || rtr) sync    link
-// flattened of the same 2 automata (communicating over link)
-val prodComp = (cm || rtr) product link  // same as (cm sync link)*(rtr sync link)
+// network of 2 automata (communicating over 2 pairs of ports)
+val netComp  = (cm || rtr) sync ("o1"->"ca","o2"->"co")
+// flattened of the same 2 automata
+val prodComp = netComp.flatten
+  // same as (cm || rtr) product ("o1"->"ca","o2"->"co")
+  // same as (cm sync ("o1"->"ca","o2"->"co"))*(rtr sync ("o1"->"ca","o2"->"co"))
 ```
 
 The automata of `cm`, `rtr`, and the product `prodComp` are depicted below, respectively.
