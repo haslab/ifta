@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Interface Feature Timed Automata (IFTA) : Building, composing, and analysing Timed Automata with variability and Reo">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Interface Feature Timed Automata (IFTA)</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/haslab/ifta">View on GitHub</a>
+
+          <h1 id="project_title">Interface Feature Timed Automata (IFTA)</h1>
+          <h2 id="project_tagline">Building, composing, and analysing Timed Automata with variability and Reo</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/haslab/ifta/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/haslab/ifta/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a id="interface-featured-timed-automata" class="anchor" href="#interface-featured-timed-automata" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Interface Featured Timed Automata</h1>
+
+<p>This project is a small Scala implementation of the Interface Featured Timed Automata (IFTA), that will include:</p>
+
+<ul>
+<li>a small scala DSL</li>
+<li>composition operator of IFTAs</li>
+<li>export into UPPAAL Timed Automata with features</li>
+</ul>
+
+<p>Below you will find a quick overview on how to build, visualise, compose, and analyse IFTA using our Scala library.
+For more examples, please check our <a href="src/main/scala/ifta/examples">examples folder</a>.</p>
+
+<h2>
+<a id="building-primitive-iftas" class="anchor" href="#building-primitive-iftas" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Building primitive IFTAs</h2>
+
+<p>To compile and run the tools you can use <a href="http://www.scala-sbt.org">sbt</a>, for example, by executing the command <code>sbt console</code>.
+There, you can try the following commands:</p>
+
+<div class="highlight highlight-source-scala"><pre><span class="pl-k">import</span> <span class="pl-v">ifta.DSL.</span><span class="pl-v">_</span>
+
+<span class="pl-k">val</span> <span class="pl-en">myAut</span> <span class="pl-k">=</span> newifta <span class="pl-k">++</span> (
+    <span class="pl-c1">0</span> <span class="pl-k">--</span><span class="pl-k">&gt;</span> <span class="pl-c1">1</span> by <span class="pl-s"><span class="pl-pds">"</span>a,b<span class="pl-pds">"</span></span> when <span class="pl-s"><span class="pl-pds">"</span>f<span class="pl-pds">"</span></span>,
+    <span class="pl-c1">1</span> <span class="pl-k">--</span><span class="pl-k">&gt;</span> <span class="pl-c1">0</span> by <span class="pl-s"><span class="pl-pds">"</span>c<span class="pl-pds">"</span></span> when <span class="pl-s"><span class="pl-pds">"</span>g<span class="pl-pds">"</span></span>
+    ) startWith <span class="pl-c1">0</span> when <span class="pl-s"><span class="pl-pds">"</span>g<span class="pl-pds">"</span></span><span class="pl-k">--</span><span class="pl-k">&gt;</span><span class="pl-s"><span class="pl-pds">"</span>f<span class="pl-pds">"</span></span>
+<span class="pl-c">// Create a simple automaton with 2 transitions and initial location "0".</span>
+<span class="pl-c">// "f" and "g" are features that must obey the constraint "g -&gt; f", and</span>
+<span class="pl-c">// determine which edges exist.</span>
+
+myAut.isValid
+<span class="pl-c">// returns "true", meaning that the feature model is non-empty (i.e., satisfiable).</span>
+
+myAut.instance  <span class="pl-c">// or myAut.instance("f") to refine</span>
+<span class="pl-c">// finds a concrete product (timed automaton), by selecting a valid product and instantiating the automaton.</span></pre></div>
+
+<h2>
+<a id="visualising-an-automata-and-exporting-to-uppaal" class="anchor" href="#visualising-an-automata-and-exporting-to-uppaal" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Visualising an automata and exporting to <a href="http://uppaal.com">Uppaal</a>
+</h2>
+
+<p>To debug and analyse automata, three functions are provided to produce an intuitive <code>dot</code> graph file, an <code>xml</code> file that can be used by Uppaal, and an interactive <code>html</code> file using <a href="http://visjs.org">Vis.js</a> to visualize an automata and see how it is affected by its possible feature selections.</p>
+
+<div class="highlight highlight-source-scala"><pre>toDot(myAut)
+<span class="pl-c">// outputs the automaton in dot format (for graphviz - https://mdaines.github.io/viz.js)</span>
+
+toUppaal(myAut get <span class="pl-s"><span class="pl-pds">"</span>a<span class="pl-pds">"</span></span> pub <span class="pl-s"><span class="pl-pds">"</span>b,c<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>myAut.xml<span class="pl-pds">"</span></span>)
+<span class="pl-c">// produces an xml file that can be opened with Uppaal model checker, using "a" as an input channel and "b" and "c" as output channels</span>
+
+<span class="pl-c">// the application IFTA is defined in the examples folder</span>
+toVis(application, <span class="pl-s"><span class="pl-pds">"</span>application.html<span class="pl-pds">"</span></span>)
+<span class="pl-c">// produces an html file that can be opened in a browser and see which transitions are enabled in each possible feature selection</span></pre></div>
+
+<p>The <code>dot</code> output is handy to quickly visualise a connector with an intuitive layout (use, for example online tool <a href="https://mdaines.github.io/viz.js/">Viz.js</a> to preview the produced graph). 
+The <a href="http://uppaal.com">Uppaal</a> output requires some manual layout adjustments but can be used to simulate and to prove (temporal) properties.
+Note that the <code>Uppaal</code> model was extended to annotations to make <code>a</code> an input channel and <code>b</code> and <code>c</code> output channels, represented as <code>a?</code>, <code>b!</code>, and <code>c!</code> in the Uppaal model.
+The <code>html</code> output is handy to see what possible feature selections are derived from the feature model and how they affect the transitions of the automata.</p>
+
+<p>Screenshots of the <code>dot</code>, <code>Uppaal</code>, and <code>Vis.js</code> outputs follow bellow.
+Observe that Uppaal does not support multiple actions per transition - these are rewritten as an interleaving of all combinations, imposing that inputs come before outputs (to reduce the state space).</p>
+
+<p><img src="https://cdn.rawgit.com/joseproenca/ifta/master/images/myAut.svg" alt="alt text" title="Automata example in Dot">   <img src="https://cdn.rawgit.com/joseproenca/ifta/master/images/myAutUpp.svg" alt="alt text" title="Automata example in Uppaal">
+<img src="https://cdn.rawgit.com/joseproenca/ifta/master/images/application-toVis.gif" alt="alt text" title="Automata example in Vis"></p>
+
+<h2>
+<a id="time-extension" class="anchor" href="#time-extension" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Time extension</h2>
+
+<p>Automata can be extended with clocks, using the same notion of clocks as Uppaal. Hence, states can have clock constraints as invariants, and edges can have clock constraints as guards that make a transition active.</p>
+
+<p>The code below defines a simple coffee machine <code>cm</code>  with 2 features <code>cf</code> and <code>mk</code> (standing for coffee and milk), and with 3 actions: <code>co</code> (coffee), <code>ca</code> (cappuccino), and <code>b</code> (brew).
+Time is captured by the clock <code>c</code>, that is set to 0 every time the automata evolves to location 1, and is used to specify that the coffee will be brewed some time between 2 and 5 time units after selecting the product.</p>
+
+<div class="highlight highlight-source-scala"><pre><span class="pl-k">val</span> <span class="pl-en">cm</span> <span class="pl-k">=</span> newifta <span class="pl-k">++</span> (
+    <span class="pl-c1">0</span> <span class="pl-k">--</span><span class="pl-k">&gt;</span> <span class="pl-c1">1</span> by <span class="pl-s"><span class="pl-pds">"</span>co<span class="pl-pds">"</span></span> when <span class="pl-s"><span class="pl-pds">"</span>cf<span class="pl-pds">"</span></span><span class="pl-k">&amp;&amp;</span><span class="pl-s"><span class="pl-pds">"</span>mk<span class="pl-pds">"</span></span> reset <span class="pl-s"><span class="pl-pds">"</span>c<span class="pl-pds">"</span></span>,
+    <span class="pl-c1">0</span> <span class="pl-k">--</span><span class="pl-k">&gt;</span> <span class="pl-c1">1</span> by <span class="pl-s"><span class="pl-pds">"</span>ca<span class="pl-pds">"</span></span> when <span class="pl-s"><span class="pl-pds">"</span>cf<span class="pl-pds">"</span></span>       reset <span class="pl-s"><span class="pl-pds">"</span>c<span class="pl-pds">"</span></span>,
+    <span class="pl-c1">1</span> <span class="pl-k">--</span><span class="pl-k">&gt;</span> <span class="pl-c1">0</span> by <span class="pl-s"><span class="pl-pds">"</span>b<span class="pl-pds">"</span></span> cc <span class="pl-s"><span class="pl-pds">"</span>c<span class="pl-pds">"</span></span><span class="pl-k">&gt;=</span><span class="pl-c1">2</span>
+    ) startWith <span class="pl-c1">0</span> when <span class="pl-s"><span class="pl-pds">"</span>mk<span class="pl-pds">"</span></span><span class="pl-k">--</span><span class="pl-k">&gt;</span><span class="pl-s"><span class="pl-pds">"</span>cf<span class="pl-pds">"</span></span> inv(<span class="pl-c1">1</span>,<span class="pl-s"><span class="pl-pds">"</span>c<span class="pl-pds">"</span></span><span class="pl-k">&lt;=</span><span class="pl-c1">5</span>) get <span class="pl-s"><span class="pl-pds">"</span>co<span class="pl-pds">"</span></span> get <span class="pl-s"><span class="pl-pds">"</span>ca<span class="pl-pds">"</span></span> pub <span class="pl-s"><span class="pl-pds">"</span>b<span class="pl-pds">"</span></span></pre></div>
+
+<h2>
+<a id="composing-automata" class="anchor" href="#composing-automata" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Composing automata</h2>
+
+<p>Two automata <code>a1</code> and <code>a2</code> can be composed in 2 ways:</p>
+
+<ul>
+<li>
+<code>a1 * a2</code>: using the product of IFTA, which returns a new IFTA;</li>
+<li>
+<code>a1 || a2</code>: creating a network of parallel IFTA, without calculating the product.</li>
+</ul>
+
+<p>An example of these compositions follow below, using <code>sync</code> to rename ports that are connected (and need to be unified.</p>
+
+<div class="highlight highlight-source-scala"><pre><span class="pl-k">val</span> <span class="pl-en">cm</span> <span class="pl-k">=</span> ... <span class="pl-c">/* as before */</span>
+
+<span class="pl-k">val</span> <span class="pl-en">rtr</span> <span class="pl-k">=</span> newifta <span class="pl-k">++</span> (
+    <span class="pl-c1">0</span> <span class="pl-k">--</span><span class="pl-k">&gt;</span> <span class="pl-c1">1</span> by <span class="pl-s"><span class="pl-pds">"</span>i<span class="pl-pds">"</span></span>  when <span class="pl-s"><span class="pl-pds">"</span>vi<span class="pl-pds">"</span></span> <span class="pl-k">&amp;&amp;</span> (<span class="pl-s"><span class="pl-pds">"</span>vo1<span class="pl-pds">"</span></span><span class="pl-k">||</span><span class="pl-s"><span class="pl-pds">"</span>vo2<span class="pl-pds">"</span></span>),
+    <span class="pl-c1">1</span> <span class="pl-k">--</span><span class="pl-k">&gt;</span> <span class="pl-c1">0</span> by <span class="pl-s"><span class="pl-pds">"</span>o1<span class="pl-pds">"</span></span> when <span class="pl-s"><span class="pl-pds">"</span>vi<span class="pl-pds">"</span></span> <span class="pl-k">&amp;&amp;</span> <span class="pl-s"><span class="pl-pds">"</span>vo1<span class="pl-pds">"</span></span>,
+    <span class="pl-c1">1</span> <span class="pl-k">--</span><span class="pl-k">&gt;</span> <span class="pl-c1">0</span> by <span class="pl-s"><span class="pl-pds">"</span>o2<span class="pl-pds">"</span></span> when <span class="pl-s"><span class="pl-pds">"</span>vi<span class="pl-pds">"</span></span> <span class="pl-k">&amp;&amp;</span> <span class="pl-s"><span class="pl-pds">"</span>vo2<span class="pl-pds">"</span></span>
+    ) startWith <span class="pl-c1">0</span> get <span class="pl-s"><span class="pl-pds">"</span>i<span class="pl-pds">"</span></span> pub <span class="pl-s"><span class="pl-pds">"</span>o1<span class="pl-pds">"</span></span> pub <span class="pl-s"><span class="pl-pds">"</span>o2<span class="pl-pds">"</span></span>
+<span class="pl-c">// or simply: val rtr = router("i","o1","o2")</span>
+
+<span class="pl-c">// network of 2 automata (communicating over 2 pairs of ports)</span>
+<span class="pl-k">val</span> <span class="pl-en">netComp</span>  <span class="pl-k">=</span> (cm <span class="pl-k">||</span> rtr) sync (<span class="pl-s"><span class="pl-pds">"</span>o1<span class="pl-pds">"</span></span><span class="pl-k">-</span><span class="pl-k">&gt;</span><span class="pl-s"><span class="pl-pds">"</span>ca<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>o2<span class="pl-pds">"</span></span><span class="pl-k">-</span><span class="pl-k">&gt;</span><span class="pl-s"><span class="pl-pds">"</span>co<span class="pl-pds">"</span></span>)
+<span class="pl-c">// flattened of the same 2 automata</span>
+<span class="pl-k">val</span> <span class="pl-en">prodComp</span> <span class="pl-k">=</span> netComp.flatten
+  <span class="pl-c">// same as (cm || rtr) product ("o1"-&gt;"ca","o2"-&gt;"co")</span>
+  <span class="pl-c">// same as (cm sync ("o1"-&gt;"ca","o2"-&gt;"co"))*(rtr sync ("o1"-&gt;"ca","o2"-&gt;"co"))</span></pre></div>
+
+<p>The automata of <code>cm</code>, <code>rtr</code>, and the product <code>prodComp</code> are depicted below, respectively.
+Observe that both compositions <code>netComp</code> and <code>prodComp</code> can be exported to Uppaal: the former using a network of automata, and the latter producing a single automaton.</p>
+
+<p><img src="https://cdn.rawgit.com/joseproenca/ifta/master/images/cm.svg" alt="alt text" title="Coffee Machine automaton in Dot"> <img src="https://cdn.rawgit.com/joseproenca/ifta/master/images/router.svg" alt="alt text" title="Router automaton in Dot"> <img src="https://cdn.rawgit.com/joseproenca/ifta/master/images/cm-router.svg" alt="alt text" title="Product of cm and rtr in Dot"></p>
+
+<p>In larger examples it is often necessary to visualise the composition of automata. This can be done, for example, as follows.</p>
+
+<div class="highlight highlight-source-scala"><pre>con2dot( ((cm name <span class="pl-s"><span class="pl-pds">"</span>CM<span class="pl-pds">"</span></span>) <span class="pl-k">||</span> (rtr name <span class="pl-s"><span class="pl-pds">"</span>Rt<span class="pl-pds">"</span></span>)) sync link )
+<span class="pl-c">// produces a dot graph depicting how the different IFTA of the network interact </span>
+
+<span class="pl-c">// seq3net is a NIFTA for a sequencer connector of three outputs. Its definition can be found in the examples folder</span>
+con2vis(seq3net, <span class="pl-s"><span class="pl-pds">"</span>seq3net.html<span class="pl-pds">"</span></span>)
+<span class="pl-c">// produces a html file depicting how the different IFTA of the network interact</span>
+<span class="pl-c">// and how the feature selections derived from its feature model affect the precense of intefaces</span></pre></div>
+
+<p><img src="https://cdn.rawgit.com/joseproenca/ifta/master/images/cm-router-conn.svg" alt="alt text" title="Depicting the connector composing the coffee machine and the router">
+<img src="https://cdn.rawgit.com/joseproenca/ifta/master/images/seq3-con2vis.gif" alt="alt text" title="Depicting the network of a sequencer connector of 3 outputs"></p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Interface Feature Timed Automata (IFTA) maintained by <a href="https://github.com/haslab">haslab</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
