@@ -76,7 +76,7 @@
          yield prod(l1, l2) -> CAnd(cInv.withDefaultValue(CTrue)(l1),
                                other.cInv.withDefaultValue(CTrue)(l2))).toMap[Int,ClockCons]
      val resFm = (fm && other.fm) &&
-       (for (a <- shared) yield fEPort(a) <-> other.fEPort(a)).fold(FTrue)(_&&_)
+       (for (a <- shared) yield fe(a) <-> other.fe(a)).fold(FTrue)(_&&_)
      val resIn = (in ++ other.in) -- shared
      val resOut = (out ++ other.out) -- shared
      val nm =
@@ -161,7 +161,7 @@
      * @param port
      * @return
      */
-   def fEPort(port:String) :FExp =
+   def fe(port:String) :FExp =
      (for ( e <- edges; if e.act contains port) yield e.fe).fold(FNot(FTrue))(_||_)
    //  (for ( e <- edges; if e.act contains port) yield e.fe).reduce(_||_) // fails with empty list
    //  edges.filter(_.act contains port).map(_.act).fold(FTrue)(_||_) // alternative
@@ -191,7 +191,7 @@
 
    private def syncfe(fm: FExp, a1:String,a2:String):FExp =
      if ((act contains a1) && (act contains a2))
-       fm && (fEPort(a1) <-> fEPort(a2))
+       fm && (fe(a1) <-> fe(a2))
      else fm
 
    private def merge(a:String,a1:String,a2:String): String =
@@ -205,7 +205,7 @@
    def mergeFM(other:IFTA):IFTA ={
      val shared = act intersect other.act
      val resFM: FExp = (fm && other.fm) &&
-       (for (a <- shared) yield fEPort(a) <-> other.fEPort(a)).fold(FTrue)(_&&_)
+       (for (a <- shared) yield fe(a) <-> other.fe(a)).fold(FTrue)(_&&_)
      IFTA(Set(),0,act++other.act,Set(),feats++other.feats,edges++other.edges,Map(),resFM,Set(),Set(),Map())
    }
 

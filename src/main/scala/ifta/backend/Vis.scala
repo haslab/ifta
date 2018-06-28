@@ -306,23 +306,23 @@ object Vis {
 //        if (map contains in) {
 //          locs += (lastL+1) -> s"""label:'${in}',shape:'text'"""
 //          edges += edgeId -> Edge(map(in)._1,CTrue,Set(),Set(),map(in)._3,lastL+1)
-//          edges += (edgeId+1) -> Edge(lastL+1,CTrue,Set(),Set(),ifta.fEPort(in),l)
+//          edges += (edgeId+1) -> Edge(lastL+1,CTrue,Set(),Set(),ifta.fe(in),l)
 //          edgeId = edgeId + 2
 //          lastL = lastL +1
 //          map -= in
 //        }
-//        else map += (in->(l,true,ifta.fEPort(in)))
+//        else map += (in->(l,true,ifta.fe(in)))
 //      }
 //      for (out <- ifta.out) {
 //        if (map contains out) {
 //          locs += (lastL+1) -> s"""label:'${out}',shape:'text'"""
-//          edges += edgeId -> Edge(l,CTrue,Set(),Set(),ifta.fEPort(out),lastL+1)
+//          edges += edgeId -> Edge(l,CTrue,Set(),Set(),ifta.fe(out),lastL+1)
 //          edges += (edgeId+1) -> Edge(lastL+1,CTrue,Set(),Set(),map(out)._3,map(out)._1)
 //          edgeId = edgeId + 2
 //          lastL = lastL+1
 //          map -= out
 //        }
-//        else map += (out->(l,false,ifta.fEPort(out)))
+//        else map += (out->(l,false,ifta.fe(out)))
 //      }
 //      l = lastL+1
 //      lastL = l
@@ -389,25 +389,25 @@ object Vis {
           res += s"""\n  ${m(in)._1} -- ${lastL+1} [id="$edgeId"]"""
           res += s"""\n  ${lastL+1} -> $l [id="${edgeId+1}"]"""
           edges += edgeId -> m(in)._3
-          edges += (edgeId+1) -> ifta.fEPort(in)
+          edges += (edgeId+1) -> ifta.fe(in)
           edgeId = edgeId + 2
           lastL = lastL +1
           m -= in
         }
-        else m += (in->(l,true,ifta.fEPort(in)))
+        else m += (in->(l,true,ifta.fe(in)))
       }
       for (out <- ifta.out) {
         if (m contains out) {
           res += s"""\n  ${lastL+1} [shape=text, label="$out"] """
           res += s"""\n  $l -- ${lastL+1} [id="$edgeId"]"""
           res += s"""\n  ${lastL+1} -> ${m(out)._1} [id="${edgeId+1}"]"""
-          edges += edgeId -> ifta.fEPort(out)
+          edges += edgeId -> ifta.fe(out)
           edges += (edgeId+1) -> m(out)._3
           edgeId = edgeId + 2
           lastL = lastL+1
           m -= out
         }
-        else m += (out->(l,false,ifta.fEPort(out)))
+        else m += (out->(l,false,ifta.fe(out)))
       }
       l = lastL+1
     }
