@@ -157,7 +157,7 @@
    /**
      * Feature expression of a port, defined as
      * OR of all fexp associated to edges (_,_,{_,port,_},_,_)
- *
+     *
      * @param port
      * @return
      */
@@ -167,11 +167,25 @@
    //  edges.filter(_.act contains port).map(_.act).fold(FTrue)(_||_) // alternative
 
    /**
-     * Feature expression of each port
-     * for now uses all actions, but it should only be define for ports
+     *
+     * @return set of products modeled by the feature model
      */
-//   val featExpPorts:Map[String,FExp] =
-//     (act map {a => a -> fEPort(a) }).toMap
+   def products = this.fm.products(this.feats)
+
+   /**
+     * Inferred feature model:
+     * The logic OR of the fe of all actions, and the posible case were all feats are not present
+     * This is, the fm at least should satisfy the fe of all transitions present, or all of them missing
+     * @return
+     */
+   def inferredFm: FExp =
+     this.act.map(a => fe(a)).fold(FNot(FTrue))(_ || _) || this.feats.map(f => FNot(Feat(f))).fold(FTrue)(_ && _)
+
+   /**
+     *
+     * @return set of products modeled by the inferred feature model
+     */
+   def inferredProducts = this.inferredFm.products(this.feats)
 
    /**
      * Synchronises 2 actions: replaces every action a1 and a2 by a1|a2.
@@ -184,6 +198,7 @@
          ,edges.map(e => e by e.act.map(merge(_, pair._1, pair._2))),cInv
          ,syncfe(fm,pair._1,pair._2),in.map(merge(_,pair._1,pair._2)),out.map(merge(_,pair._1,pair._2)),aps,shortname=this.shortname)
 
+   // TODO: control both actions are part of the IFTA
    def sync(pair:(String,String)*): IFTA = sync(pair.toSeq)
    def sync(pair:Iterable[(String,String)]): IFTA =
      if (pair.isEmpty) this
@@ -194,6 +209,11 @@
        fm && (fe(a1) <-> fe(a2))
      else fm
 
+   /**
+     * TODO: to be changed; merge should receive the set of actions of the edge
+     * and checked that both are present in the edge, otherwise, it should remove
+     * the edge.
+     */
    private def merge(a:String,a1:String,a2:String): String =
      if (a == a1 || a == a2) a1+"_"+a2 else a
 
