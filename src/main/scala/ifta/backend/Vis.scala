@@ -2,13 +2,17 @@ package ifta.backend
 
 
 import ifta._
-import ifta.analyse.{Solver,Simplify}
+import ifta.analyse.{Simplify, Solver}
 
 
 /**
   * Created by guille on 21/11/16.
   */
 object Vis {
+
+  /* if true it shows all features including feature of connectors "v_", if false it shows only user features*/
+  private var DEBUG = false
+
 
   def apply(iFTA: IFTA):String = {
     val edges = iFTA.edges.zipWithIndex
@@ -116,7 +120,9 @@ object Vis {
   }
 
   private def getUserFeats(feats:Map[String,Boolean]):String = {
-    val f = feats.filter(f => f._2).filterNot(f => f._1.startsWith("v_")).keySet.mkString(",")
+    val f =
+      if (DEBUG) feats.filter(f => f._2).keySet.mkString(",")
+      else feats.filter(f => f._2).filterNot(f => f._1.startsWith("v_")).keySet.mkString(",")
     if (f.nonEmpty) f else "&#8709"
   }
 
@@ -168,10 +174,16 @@ object Vis {
        |    },
        |    edges: {
        |      color: 'black',
+       |      arrows: {
+       |        to: {
+       |        enabled: true,
+       |        scaleFactor: 0.45
+       |      }
+       |      },
        |      smooth: {
        |        forceDirection: 'none',
        |        roundness: 0.50,
-       |        type:'continues'
+       |        type:'straightCross'
        |      }
        |    },
        |    physics: {
@@ -385,11 +397,13 @@ object Vis {
 
       for (in <- ifta.in) {
         if (m contains in) {
-          res += s"""\n  ${lastL+1} [shape=text, label="$in"] """
-          res += s"""\n  ${m(in)._1} -- ${lastL+1} [id="$edgeId"]"""
-          res += s"""\n  ${lastL+1} -> $l [id="${edgeId+1}"]"""
+          //          res += s"""\n  ${lastL+1} [shape=text, label="$in"] """
+          //          res += s"""\n  ${m(in)._1} -- ${lastL+1} [id="$edgeId"]"""
+          //          res += s"""\n  ${lastL+1} -> $l [id="${edgeId+1}"]"""
+          res += s"""\n  ${m(in)._1} -> $l [id="${edgeId+1}"]"""
           edges += edgeId -> m(in)._3
           edges += (edgeId+1) -> ifta.fe(in)
+          //edgeId = edgeId + 2
           edgeId = edgeId + 2
           lastL = lastL +1
           m -= in
@@ -398,11 +412,13 @@ object Vis {
       }
       for (out <- ifta.out) {
         if (m contains out) {
-          res += s"""\n  ${lastL+1} [shape=text, label="$out"] """
-          res += s"""\n  $l -- ${lastL+1} [id="$edgeId"]"""
-          res += s"""\n  ${lastL+1} -> ${m(out)._1} [id="${edgeId+1}"]"""
+          //          res += s"""\n  ${lastL+1} [shape=text, label="$out"] """
+          //          res += s"""\n  $l -- ${lastL+1} [id="$edgeId"]"""
+          //          res += s"""\n  ${lastL+1} -> ${m(out)._1} [id="${edgeId+1}"]"""
+          res += s"""\n  ${l} -> ${m(out)._1} [id="${edgeId+1}"]"""
           edges += edgeId -> ifta.fe(out)
           edges += (edgeId+1) -> m(out)._3
+          //          edgeId = edgeId + 2
           edgeId = edgeId + 2
           lastL = lastL+1
           m -= out
