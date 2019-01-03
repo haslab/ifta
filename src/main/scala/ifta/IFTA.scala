@@ -2,7 +2,7 @@
 
  import ifta.backend.Show
  import ifta.analyse.Simplify
- import org.scalatest.tools.ReporterConfigurations
+// import org.scalatest.tools.ReporterConfigurations remove for used in ReoLive
 
  /**
    * Created by jose on 30/09/16.
@@ -25,6 +25,7 @@
  case class IFTA(locs:Set[Int], init:Int, act:Set[String], clocks:Set[String]
                  , feats:Set[String], edges:Set[Edge], cInv:Map[Int,ClockCons], fm:FExp
                  , in:Set[String], out:Set[String], aps:Map[Int,String], shortname:String="") {
+
 
    def goFromBy(loc: Int, bigEdge: Edge): Option[Int] = bigEdge match {
      case Edge(from,cc,as,rs,f,to) =>

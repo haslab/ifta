@@ -30,7 +30,7 @@ object DSL {
 
   def not(fExp: FExp) = FNot(fExp)
   val newifta = IFTA(Set(0),0,Set(),Set(),Set(),Set(),Map(),true,Set(),Set(),Map())
-//  val nifta = NIFTA(Set())
+  val newnifta = NIFTA(Set())
 
   val toDot = ifta.backend.Dot
   def con2dot(nIFTA: NIFTA) = ifta.backend.Dot.connector(nIFTA)

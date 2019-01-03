@@ -83,87 +83,215 @@ object Connectors {
     new Conn(i.locs,i.init,i.act,i.clocks,i.feats,i.edges,i.cInv,i.fm,i.in,i.out,i.aps,i.shortname)
 
 
+//  def fifo(i: String, o: String) = {
+//    val feat = v(s"${i}_${o}")
+//    mkConn(newifta ++ (
+//      0 --> 1 by s"$i" when feat,
+//      1 --> 0 by s"$o" when feat
+////      0 --> 0 by s"$i" when FNot(FTrue)
+//      ) get i pub o name "[]")
+//  }
   def fifo(i: String, o: String) = {
-    val feat = v(s"${i}_${o}")
+//    val feat = v(s"${i}_${o}")
     mkConn(newifta ++ (
-      0 --> 1 by s"$i" when feat,
-      1 --> 0 by s"$o" when feat
-//      0 --> 0 by s"$i" when FNot(FTrue)
-      ) get i pub o name "[]")
+      0 --> 1 by s"$i" when v(i) && v(o),
+      1 --> 0 by s"$o" when v(i) && v(o)
+      //      0 --> 0 by s"$i" when FNot(FTrue)
+    ) get i pub o name "[]" when v(i) <-> v(o))
   }
+
+//  def fifofull(i: String, o: String) = {
+//    val feat = v(s"${i}_${o}")
+//    mkConn(newifta ++ (
+//      0 --> 1 by s"$o" when feat,
+//      1 --> 0 by s"$i" when feat
+//      ) get i pub o name "[.]")
+//  }
 
   def fifofull(i: String, o: String) = {
-    val feat = v(s"${i}_${o}")
+//    val feat = v(s"${i}_${o}")
     mkConn(newifta ++ (
-      0 --> 1 by s"$o" when feat,
-      1 --> 0 by s"$i" when feat
-      ) get i pub o name "[.]")
+      0 --> 1 by s"$o" when v(i) && v(o),
+      1 --> 0 by s"$i" when v(i) && v(o)
+    ) get i pub o name "[.]" when v(i) <-> v(o))
   }
+
+//  def sync(i: String, o: String) = {
+//    val feat = v(s"${i}_${o}")
+//    mkConn(newifta ++ (
+//      0 --> 0 by s"$i,$o" when feat,
+//      0 --> 0 by s"$i" when FNot(FTrue)
+//      ) get i pub o name "->")
+//  }
 
   def sync(i: String, o: String) = {
-    val feat = v(s"${i}_${o}")
+//    val feat = v(s"${i}_${o}")
     mkConn(newifta ++ (
-      0 --> 0 by s"$i,$o" when feat,
-      0 --> 0 by s"$i" when FNot(FTrue)
-      ) get i pub o name "->")
+      0 --> 0 by s"$i,$o" when v(i) && v(o)
+//      0 --> 0 by s"$i" when FNot(FTrue)
+    ) get i pub o name "->" when v(i) <-> v(o))
   }
+
+//  def lossy(i:String,o:String) = {
+//    val feat = v(s"${i}_${o}")
+//    mkConn(newifta ++ (
+//      0 --> 0 by s"$i,$o" when feat,
+//      0 --> 0 by s"$i" when feat
+//    )get i pub o name "-->")
+//  }
+
+  def lossy(i:String,o:String) = {
+//    val feat = v(s"${i}_${o}")
+    mkConn(newifta ++ (
+      0 --> 0 by s"$i,$o" when v(i) && v(o),
+      0 --> 0 by s"$i" when v(i)
+    )get i pub o name "-->" when v(i) <-> v(o))
+  }
+
+//  def sdrain(i: String, i2: String) = {
+//    val feat = v(s"${i}_${i2}")
+//    mkConn(newifta ++ (
+//      0 --> 0 by s"$i,$i2" when feat,
+//      0 --> 0 by s"$i" when FNot(FTrue),
+//      0 --> 0 by s"$i2" when FNot(FTrue)
+//      ) get i get i2 name ">-<")
+//  }
 
   def sdrain(i: String, i2: String) = {
-    val feat = v(s"${i}_${i2}")
+//    val feat = v(s"${i}_${i2}")
     mkConn(newifta ++ (
-      0 --> 0 by s"$i,$i2" when feat,
-      0 --> 0 by s"$i" when FNot(FTrue),
-      0 --> 0 by s"$i2" when FNot(FTrue)
-      ) get i get i2 name ">-<")
+      0 --> 0 by s"$i,$i2" when v(i) && v(i2),
+//      0 --> 0 by s"$i" when FNot(FTrue),
+//      0 --> 0 by s"$i2" when FNot(FTrue)
+    ) get i get i2 name ">-<" when v(i) <-> v(i2))
   }
+
+//  def asdrain(i: String, i2: String) = {
+//    val feat = v(s"${i}_${i2}")
+//    mkConn(newifta ++ (
+//      0 --> 0 by s"$i" when feat,
+//      0 --> 0 by s"$i2" when feat
+//      ) get i get i2 name ">|<")
+//  }
 
   def asdrain(i: String, i2: String) = {
-    val feat = v(s"${i}_${i2}")
+//    val feat = v(s"${i}_${i2}")
     mkConn(newifta ++ (
-      0 --> 0 by s"$i" when feat,
-      0 --> 0 by s"$i2" when feat
-      ) get i get i2 name ">|<")
+      0 --> 0 by s"$i" when v(i) && v(i2),
+      0 --> 0 by s"$i2" when v(i) && v(i2)
+    ) get i get i2 name ">|<" when v(i) <-> v(i2))
   }
+
+//  def router(i: String, o1: String, o2: String, outs: String*) = {
+//    val feat = v(s"${i}_${o1}_$o2" + (if (outs.isEmpty) "" else outs.mkString("_", "_", "")))
+//    val nouts = Set(o1, o2) ++ outs.toSet
+//    var ifta = newifta ++ (0 --> 0 by i when FNot(FTrue))
+//    for (o <- nouts)
+//      ifta ++= (0 --> 0 by Set(i, o) when feat)
+//    mkConn(ifta get i pub nouts.mkString(",") name "Xor")
+//  }
 
   def router(i: String, o1: String, o2: String, outs: String*) = {
-    val feat = v(s"${i}_${o1}_$o2" + (if (outs.isEmpty) "" else outs.mkString("_", "_", "")))
+//    val feat = v(s"${i}_${o1}_$o2" + (if (outs.isEmpty) "" else outs.mkString("_", "_", "")))
     val nouts = Set(o1, o2) ++ outs.toSet
-    var ifta = newifta ++ (0 --> 0 by i when FNot(FTrue))
+    var ifta = newifta //++ (0 --> 0 by i when FNot(FTrue))
     for (o <- nouts)
-      ifta ++= (0 --> 0 by Set(i, o) when feat)
-    mkConn(ifta get i pub nouts.mkString(",") name "Xor")
+      ifta ++= (0 --> 0 by Set(i, o) when v(i) && v(o))
+    val fm = Feat(v(i)) <-> (mkFAnd(mkFeat(nouts)))
+    mkConn(ifta get i pub nouts.mkString(",") name "Xor" when fm )
   }
+
+//  def join(i: String, i2: String, inOrO: String, rest: String*) = {
+//    val feat = v(s"${i}_${i2}_$inOrO" + (if (rest.isEmpty) "" else rest.mkString("_", "_", "")))
+//    val o = if (rest.isEmpty) inOrO else rest.last
+//    val ins = if (rest.nonEmpty) Set(i, i2, inOrO) ++ (rest.toSet - o) else Set(i, i2)
+//    var ifta = newifta ++ (0 --> 0 by Set(o)++ins when feat)
+//    val ss = (ins + o).subsets().toSet - Set() - Set(o)
+//    for (s <- ss - (Set(o)++ins))
+//      ifta ++= (0 --> 0 by s when FNot(FTrue))
+//    mkConn(ifta get ins.mkString(",") pub o name "+")
+//  }
 
   def join(i: String, i2: String, inOrO: String, rest: String*) = {
-    val feat = v(s"${i}_${i2}_$inOrO" + (if (rest.isEmpty) "" else rest.mkString("_", "_", "")))
+//    val feat = v(s"${i}_${i2}_$inOrO" + (if (rest.isEmpty) "" else rest.mkString("_", "_", "")))
     val o = if (rest.isEmpty) inOrO else rest.last
     val ins = if (rest.nonEmpty) Set(i, i2, inOrO) ++ (rest.toSet - o) else Set(i, i2)
-    var ifta = newifta ++ (0 --> 0 by Set(o)++ins when feat)
-    val ss = (ins + o).subsets().toSet - Set() - Set(o)
-    for (s <- ss - (Set(o)++ins))
-      ifta ++= (0 --> 0 by s when FNot(FTrue))
-    mkConn(ifta get ins.mkString(",") pub o name "+")
+    var ifta = newifta ++ (0 --> 0 by Set(o)++ins when mkFAnd(mkFeat(Set(o)++ins)))
+//    val ss = (ins + o).subsets().toSet - Set() - Set(o)
+//    for (s <- ss - (Set(o)++ins))
+//      ifta ++= (0 --> 0 by s when FNot(FTrue))
+    var fm = Feat(v(o)) <-> (mkFAnd(mkFeat(ins)))
+    mkConn(ifta get ins.mkString(",") pub o name "+" when fm)
   }
 
+//  def merger(i: String, i2: String, inOrO: String, rest: String*) = {
+//    val feat = v(s"${i}_${i2}_$inOrO" + (if (rest.isEmpty) "" else rest.mkString("_", "_", "")))
+//    val o = if (rest.isEmpty) inOrO else rest.last
+//    var ifta = newifta
+//    val ins = if (rest.nonEmpty) Set(i, i2, inOrO) ++ (rest.toSet - o) else Set(i, i2)
+//    for (i <- ins)
+//      ifta ++= (
+//        0 --> 0 by Set(i, o) when feat,
+//        0 --> 0 by Set(i) when FNot(FTrue)
+//        )
+//    mkConn(ifta get ins.mkString(",") pub o name ">-") //when v(o) --> mkFOr(mkFeat(ins)) name ">-")
+//  }
+
   def merger(i: String, i2: String, inOrO: String, rest: String*) = {
-    val feat = v(s"${i}_${i2}_$inOrO" + (if (rest.isEmpty) "" else rest.mkString("_", "_", "")))
+//    val feat = v(s"${i}_${i2}_$inOrO" + (if (rest.isEmpty) "" else rest.mkString("_", "_", "")))
     val o = if (rest.isEmpty) inOrO else rest.last
     var ifta = newifta
     val ins = if (rest.nonEmpty) Set(i, i2, inOrO) ++ (rest.toSet - o) else Set(i, i2)
     for (i <- ins)
       ifta ++= (
-        0 --> 0 by Set(i, o) when feat,
-        0 --> 0 by Set(i) when FNot(FTrue)
-        )
-    mkConn(ifta get ins.mkString(",") pub o name ">-") //when v(o) --> mkFOr(mkFeat(ins)) name ">-")
+        0 --> 0 by Set(i, o) when v(i) && v(o) //,
+//        0 --> 0 by Set(i) when FNot(FTrue)
+      )
+    var fm = v(o) <-> (mkFAnd(mkFeat(ins)))
+    mkConn(ifta get ins.mkString(",") pub o name ">-" when fm) //when v(o) --> mkFOr(mkFeat(ins)) name ">-")
   }
 
+//  def repl(i: String, o1: String, o2: String, outs: String*) = {
+//    val feat = v(s"${i}_${o1}_$o2" + (if (outs.isEmpty) "" else outs.mkString("_", "_", "")))
+//    val nouts = Set(o1, o2) ++ outs.toSet
+//    var ifta = newifta ++ (0 --> 0 by Set(i)++nouts when feat)
+//    for (ss <- (nouts.subsets().toSet - nouts))
+//      ifta ++= 0 --> 0 by Set(i) ++ ss when FNot(FTrue)
+//    mkConn(ifta get i pub nouts.mkString(",") name "-<")
+//  }
+
   def repl(i: String, o1: String, o2: String, outs: String*) = {
-    val feat = v(s"${i}_${o1}_$o2" + (if (outs.isEmpty) "" else outs.mkString("_", "_", "")))
+//    val feat = v(s"${i}_${o1}_$o2" + (if (outs.isEmpty) "" else outs.mkString("_", "_", "")))
     val nouts = Set(o1, o2) ++ outs.toSet
-    var ifta = newifta ++ (0 --> 0 by Set(i)++nouts when feat)
-    for (ss <- (nouts.subsets().toSet - nouts))
-      ifta ++= 0 --> 0 by Set(i) ++ ss when FNot(FTrue)
-    mkConn(ifta get i pub nouts.mkString(",") name "-<")
+    var ifta = newifta ++ (0 --> 0 by Set(i)++nouts when mkFAnd(mkFeat(Set(i)++nouts)))
+//    for (ss <- (nouts.subsets().toSet - nouts))
+//      ifta ++= 0 --> 0 by Set(i) ++ ss when FNot(FTrue)
+    var fm = v(i) <-> (mkFAnd(mkFeat(nouts)))
+    mkConn(ifta get i pub nouts.mkString(",") name "-<" when fm)
   }
+
+  def writer(o:String) = {
+    val feat = v(o)
+    mkConn(newifta ++ (
+      0 --> 0 by o when feat
+    ) pub o name "writer")
+  }
+
+  def reader(i:String) = {
+    val feat = v(i)
+    mkConn(newifta ++ (
+      0 --> 0 by i when feat
+    ) get i name "reader")
+  }
+
+  def noSink(o:String, outs: String*) = {
+    val nouts = Set(o) ++ outs.toSet
+    mkConn(newifta pub nouts.mkString(",") name "noSnk")
+  }
+
+  def noSrc(i:String, inputs:String*) = {
+    val nints = Set(i) ++ inputs.toSet
+    mkConn(newifta get nints.mkString(",") name "noSrc")
+  }
+
 }
