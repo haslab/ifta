@@ -26,7 +26,6 @@
                  , feats:Set[String], edges:Set[Edge], cInv:Map[Int,ClockCons], fm:FExp
                  , in:Set[String], out:Set[String], aps:Map[Int,String], shortname:String="") {
 
-
    def goFromBy(loc: Int, bigEdge: Edge): Option[Int] = bigEdge match {
      case Edge(from,cc,as,rs,f,to) =>
        edges.find(e => //e.from==loc &&
@@ -40,88 +39,175 @@
 //       }
    }
 
+   def *(other:IFTA,timeout:Int):IFTA = prod(other,false,timeout)
+   def *(other:IFTA):IFTA = prod(other,false, -1)
 
+   def hideProduct(other:IFTA,timeout:Int):IFTA = prod(other,true,timeout)
+   def hideProduct(other:IFTA):IFTA = prod(other,true,-1)
    /**
-     * Product of 2 IFTAs synchronising shared ports
-     *
+     * Product of 2 IFTAs with timeout
      * @param other
-     * @return
+     * @param timeout
      */
-   def *(other:IFTA): IFTA = {
-     // index of loc1 and loc2 will be used to new locations
-     val loc1 = locs.toList
-     val loc2 = other.locs.toList
-     val base = loc1.length
-     // l1 x l2 = index(l1) + index(l2)*base
-     def prod(l1:Int,l2:Int) =
-       loc1.indexOf(l1)+loc2.indexOf(l2)*base
+    def prod(other:IFTA, hide:Boolean, timeout:Int= -1) = {
+      var steps = timeout
+      def tick() = {
+        if (steps > 1)
+          steps -= 1
+        else throw new RuntimeException(s"Timeout when composing:\n ${this.toString}\n ${other.toString}")
+      }
+      // index of loc1 and loc2 will be used to new locations
+      val loc1 = locs.toList
+      val loc2 = other.locs.toList
+      val base = loc1.length
+      // l1 x l2 = index(l1) + index(l2)*base
+      def prod(l1:Int,l2:Int) =
+        loc1.indexOf(l1)+loc2.indexOf(l2)*base
 
-     val shared = act intersect other.act
+      val shared = act intersect other.act
 
-     val resLocs = (0 until (loc1.length * loc2.length)).toSet
-     val resInit = prod(init,other.init)
-//       for (i <- init; j <- other.init) yield prod(i,j)
+      val resLocs = (0 until (loc1.length * loc2.length)).toSet
+      val resInit = prod(init,other.init)
+      //       for (i <- init; j <- other.init) yield prod(i,j)
 
-     val resAct = (act ++ other.act) -- shared
-     val resCl  = clocks ++ other.clocks
-     val resFeat = feats ++ other.feats
+      val resAct = (act ++ other.act) -- shared
+      val resCl  = clocks ++ other.clocks
+      val resFeat = feats ++ other.feats
 
-     val resEdges = (for (e1 <- edges; e2 <- other.edges; if e1.compat(e2,shared))
-                      yield e1.join(e2,prod))            ++
-                    (for (e1 <- edges; loc <- other.locs; if e1.act.intersect(shared).isEmpty)
-                      yield e1.independent(loc, prod,1)) ++
-                    (for (e2 <- other.edges; loc <- locs; if e2.act.intersect(shared).isEmpty)
-                      yield e2.independent(loc, prod,2))
+      val resEdges = (for (e1 <- edges; e2 <- other.edges; if e1.compat(e2,shared))
+        yield {if (timeout > -1) tick(); e1.join(e2,hide,prod)})            ++
+        (for (e1 <- edges; loc <- other.locs; if e1.act.intersect(shared).isEmpty)
+          yield {if (timeout > -1) tick(); e1.independent(loc, prod,1)}) ++
+        (for (e2 <- other.edges; loc <- locs; if e2.act.intersect(shared).isEmpty)
+          yield {if (timeout > -1) tick(); e2.independent(loc, prod,2)})
 
-     val resInv = (for (l1<-loc1; l2<-loc2)
-         yield prod(l1, l2) -> CAnd(cInv.withDefaultValue(CTrue)(l1),
-                               other.cInv.withDefaultValue(CTrue)(l2))).toMap[Int,ClockCons]
-     val resFm = (fm && other.fm) &&
-       (for (a <- shared) yield fe(a) <-> other.fe(a)).fold(FTrue)(_&&_)
-     val resIn = (in ++ other.in) -- shared
-     val resOut = (out ++ other.out) -- shared
-     val nm =
-       if (this.shortname=="" || other.shortname=="") this.shortname+other.shortname
-       else  this.shortname+"*"+other.shortname
+      val resInv = (for (l1<-loc1; l2<-loc2)
+        yield prod(l1, l2) -> CAnd(cInv.withDefaultValue(CTrue)(l1),
+          other.cInv.withDefaultValue(CTrue)(l2))).toMap[Int,ClockCons]
+      val resFm = (fm && other.fm) &&
+        (for (a <- shared) yield fe(a) <-> other.fe(a)).fold(FTrue)(_&&_)
+      val resIn = (in ++ other.in) -- shared
+      val resOut = (out ++ other.out) -- shared
+      val nm =
+        if (this.shortname=="" || other.shortname=="") this.shortname+other.shortname
+        else  this.shortname+"*"+other.shortname
 
-     var prodLocNames: Map[String,Int] = Map()
-     def mkProdLocName(l1:Int,l2:Int):String ={
-       var n:String = ""
-       (aps.contains(l1), other.aps.contains(l2))  match {
-         case (true, true) =>
-           validLocName(aps.get(l1).get+"_"+other.aps.get(l2).get)
-         case (true,false) => validLocName(aps.get(l1).get)
-         case (false,true) => validLocName(other.aps.get(l2).get)
-         case (_,_) => ""
-       }
-     }
-     def validLocName(n:String):String = {
-       var index:Int = 0
-       var res:String = n
-       if (prodLocNames.contains(n)) {
-         index = nameOffset(n,prodLocNames.get(n).get)
-         res += index
-         prodLocNames -= n
-         prodLocNames += res -> 1
-       }
-       prodLocNames += n -> (index+1)
-       res
-     }
+      var prodLocNames: Map[String,Int] = Map()
+      def mkProdLocName(l1:Int,l2:Int):String ={
+        var n:String = ""
+        (aps.contains(l1), other.aps.contains(l2))  match {
+          case (true, true) =>
+            validLocName(aps.get(l1).get+"_"+other.aps.get(l2).get)
+          case (true,false) => validLocName(aps.get(l1).get)
+          case (false,true) => validLocName(other.aps.get(l2).get)
+          case (_,_) => ""
+        }
+      }
+      def validLocName(n:String):String = {
+        var index:Int = 0
+        var res:String = n
+        if (prodLocNames.contains(n)) {
+          index = nameOffset(n,prodLocNames.get(n).get)
+          res += index
+          prodLocNames -= n
+          prodLocNames += res -> 1
+        }
+        prodLocNames += n -> (index+1)
+        res
+      }
 
-     def nameOffset(n:String,index:Int):Int =
-       if (!prodLocNames.contains(n+index)) index
-       else nameOffset(n,index+1)
+      def nameOffset(n:String,index:Int):Int =
+        if (!prodLocNames.contains(n+index)) index
+        else nameOffset(n,index+1)
 
 
-     var resAut = Simplify.removeUnreach(IFTA(resLocs,resInit,resAct,resCl,resFeat,resEdges,resInv,resFm,resIn,resOut,Map(),nm))
+      var resAut = Simplify.removeUnreach(IFTA(resLocs,resInit,resAct,resCl,resFeat,resEdges,resInv,resFm,resIn,resOut,Map(),nm))
 
-     resAut ap (for (l1<-loc1;l2<-loc2; if ((resAut.locs contains prod(l1,l2)) && (aps.contains(l1) || other.aps.contains(l2))))
-       yield prod(l1,l2) -> mkProdLocName(l1,l2))
-   }
+      resAut ap (for (l1<-loc1;l2<-loc2; if ((resAut.locs contains prod(l1,l2)) && (aps.contains(l1) || other.aps.contains(l2))))
+        yield prod(l1,l2) -> mkProdLocName(l1,l2))
+    }
+
+//   /**
+//     * Product of 2 IFTAs synchronising shared ports
+//     *
+//     * @param other
+//     * @return
+//     */
+//   def *(other:IFTA): IFTA = {
+//     // index of loc1 and loc2 will be used to new locations
+//     val loc1 = locs.toList
+//     val loc2 = other.locs.toList
+//     val base = loc1.length
+//     // l1 x l2 = index(l1) + index(l2)*base
+//     def prod(l1:Int,l2:Int) =
+//       loc1.indexOf(l1)+loc2.indexOf(l2)*base
+//
+//     val shared = act intersect other.act
+//
+//     val resLocs = (0 until (loc1.length * loc2.length)).toSet
+//     val resInit = prod(init,other.init)
+////       for (i <- init; j <- other.init) yield prod(i,j)
+//
+//     val resAct = (act ++ other.act) -- shared
+//     val resCl  = clocks ++ other.clocks
+//     val resFeat = feats ++ other.feats
+//
+//     val resEdges = (for (e1 <- edges; e2 <- other.edges; if e1.compat(e2,shared))
+//                      yield e1.join(e2,prod))            ++
+//                    (for (e1 <- edges; loc <- other.locs; if e1.act.intersect(shared).isEmpty)
+//                      yield e1.independent(loc, prod,1)) ++
+//                    (for (e2 <- other.edges; loc <- locs; if e2.act.intersect(shared).isEmpty)
+//                      yield e2.independent(loc, prod,2))
+//
+//     val resInv = (for (l1<-loc1; l2<-loc2)
+//         yield prod(l1, l2) -> CAnd(cInv.withDefaultValue(CTrue)(l1),
+//                               other.cInv.withDefaultValue(CTrue)(l2))).toMap[Int,ClockCons]
+//     val resFm = (fm && other.fm) &&
+//       (for (a <- shared) yield fe(a) <-> other.fe(a)).fold(FTrue)(_&&_)
+//     val resIn = (in ++ other.in) -- shared
+//     val resOut = (out ++ other.out) -- shared
+//     val nm =
+//       if (this.shortname=="" || other.shortname=="") this.shortname+other.shortname
+//       else  this.shortname+"*"+other.shortname
+//
+//     var prodLocNames: Map[String,Int] = Map()
+//     def mkProdLocName(l1:Int,l2:Int):String ={
+//       var n:String = ""
+//       (aps.contains(l1), other.aps.contains(l2))  match {
+//         case (true, true) =>
+//           validLocName(aps.get(l1).get+"_"+other.aps.get(l2).get)
+//         case (true,false) => validLocName(aps.get(l1).get)
+//         case (false,true) => validLocName(other.aps.get(l2).get)
+//         case (_,_) => ""
+//       }
+//     }
+//     def validLocName(n:String):String = {
+//       var index:Int = 0
+//       var res:String = n
+//       if (prodLocNames.contains(n)) {
+//         index = nameOffset(n,prodLocNames.get(n).get)
+//         res += index
+//         prodLocNames -= n
+//         prodLocNames += res -> 1
+//       }
+//       prodLocNames += n -> (index+1)
+//       res
+//     }
+//
+//     def nameOffset(n:String,index:Int):Int =
+//       if (!prodLocNames.contains(n+index)) index
+//       else nameOffset(n,index+1)
+//
+//
+//     var resAut = Simplify.removeUnreach(IFTA(resLocs,resInit,resAct,resCl,resFeat,resEdges,resInv,resFm,resIn,resOut,Map(),nm))
+//
+//     resAut ap (for (l1<-loc1;l2<-loc2; if ((resAut.locs contains prod(l1,l2)) && (aps.contains(l1) || other.aps.contains(l2))))
+//       yield prod(l1,l2) -> mkProdLocName(l1,l2))
+//   }
 
    // todo - fix!
    def *(other:IFTA,pair:(String,String)): IFTA =
-    this.sync(pair) * other.sync(pair)
+    this.sync(pair) * (other.sync(pair))
 
    lazy val interface:Set[String] = in ++ out
 
@@ -299,9 +385,10 @@
      * @param prod function to combine location numbers
      * @return
      */
-   def join(other:Edge,prod:(Int,Int)=>Int): Edge =
-     Edge(prod(from,other.from), CAnd(cCons, other.cCons), act++other.act
-         ,cReset++other.cReset,FAnd(fe,other.fe),prod(to,other.to))
+   def join(other:Edge,hide:Boolean, prod:(Int,Int)=>Int): Edge =
+     Edge(prod(from,other.from), CAnd(cCons, other.cCons)
+       ,if (hide) act++other.act -- act.intersect(other.act) else act++other.act
+       ,cReset++other.cReset,FAnd(fe,other.fe),prod(to,other.to))
 
    /**
     * Creates an edge taken independently during composition
@@ -356,22 +443,31 @@
      * @param pair Nodes
      * @return
      */
-   def product(pair:(String,String)*): IFTA = product(pair.toSeq)
-   def product(pair:Iterable[(String,String)]): IFTA = {
+
+   def product(pair:(String,String)*): IFTA = product(-1,pair.toSeq)
+   def product(timeout:Int, pair:(String,String)*): IFTA = product(timeout,pair.toSeq)
+   def hideProduct(timeout:Int, pair:(String,String)*): IFTA = product(true,timeout,pair.toSeq)
+   def hideProduct(pair:(String,String)*): IFTA = product(true,-1,pair.toSeq)
+   def product(pair:Iterable[(String,String)]): IFTA = product(false,-1, pair)
+   def hideProduct(timeout:Int = -1, pair:Iterable[(String,String)]): IFTA = product(true,timeout, pair)
+   def product(timeout:Int = -1, pair:Iterable[(String,String)]): IFTA = product(false,timeout, pair)
+   private def product(hiding:Boolean, timeout:Int, pair:Iterable[(String,String)]): IFTA = {
      val synched = this.sync(pair)
      synched.iFTAs.headOption match {
-       case Some(x) => synched.iFTAs.tail.fold(x)(_*_)
+       case Some(x) => if (hiding) synched.iFTAs.tail.fold(x)(_.hideProduct(_,timeout)) else synched.iFTAs.tail.fold(x)(_*(_,timeout))
        case None => DSL.newifta
      }
    }
 
+
    /**
      * Flattens a network of IFTAs into a single IFTA using `product`.
+     * @timeout -1 -> no timeout;  n>-1 number of steps to compose all automata in the net
      * @return
      */
-   def flatten: IFTA = product()
-
-
+   def hideFlatten(timeout:Int = -1) = hideProduct(timeout)
+   def flatten(timeout:Int): IFTA = product(timeout)
+   def flatten:IFTA = product(-1)
    /**
      * Flattens a network of IFTAs using a step-by-step approach.
      * @return single IFTA restulting from composing all IFTAs in the network
