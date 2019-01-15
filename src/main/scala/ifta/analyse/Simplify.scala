@@ -1,6 +1,7 @@
 package ifta.analyse
 
 import ifta._
+import ifta.common.FExpOverflowException
 
 /**
   * Created by jose on 04/10/16.
@@ -15,41 +16,46 @@ object Simplify {
   def apply(i:FTA): FTA =
     FTA(i.locs,i.init,i.committed,i.act,i.clocks,i.feats,i.edges.map(apply),i.cInv.mapValues(apply),apply(i.fm),i.aps,i.shortname)
 
-  def apply(f:FExp): FExp = f match {
-    case FTrue => FTrue
-    case Feat(_)     => f
-    case FAnd(e1,e2) => (apply(e1),apply(e2)) match {
-      case (FTrue, e) => e
-      case (e,FTrue) => e
-      case (FNot(FTrue), _) => FNot(FTrue)
-      case (_,FNot(FTrue)) => FNot(FTrue)
-      case (FNot(e3),e4) => if (e3 == e4) FNot(FTrue) else FAnd(FNot(e3),e4)
-      case (e3,FNot(e4)) => if (e3 == e4) FNot(FTrue) else FAnd(e3,FNot(e4))
-      case (e3, e4) => if (e3 == e4) e3 else FAnd(e3,e4)
+  def apply(f:FExp): FExp = try {
+    f match {
+      case FTrue => FTrue
+      case Feat(_) => f
+      case FAnd(e1, e2) => (apply(e1), apply(e2)) match {
+        case (FTrue, e) => e
+        case (e, FTrue) => e
+        case (FNot(FTrue), _) => FNot(FTrue)
+        case (_, FNot(FTrue)) => FNot(FTrue)
+        case (FNot(e3), e4) => if (e3 == e4) FNot(FTrue) else FAnd(FNot(e3), e4)
+        case (e3, FNot(e4)) => if (e3 == e4) FNot(FTrue) else FAnd(e3, FNot(e4))
+        case (e3, e4) => if (e3 == e4) e3 else FAnd(e3, e4)
+      }
+      case FOr(e1, e2) => (apply(e1), apply(e2)) match {
+        case (FTrue, eSolver) => FTrue
+        case (e, FTrue) => FTrue
+        case (FNot(FTrue), e) => e
+        case (e, FNot(FTrue)) => e
+        case (FNot(e3), e4) => if (e3 == e4) FTrue else FOr(FNot(e3), e4)
+        case (e3, FNot(e4)) => if (e3 == e4) FTrue else FOr(e3, FNot(e4))
+        case (e3, e4) => if (e3 == e4) e3 else FOr(e3, e4)
+      }
+      case FNot(FNot(e)) => apply(e)
+      case FNot(e) => FNot(apply(e))
+      case FImp(e1, e2) => (apply(e1), apply(e2)) match {
+        case (FNot(FTrue), _) => FTrue //FNot(FTrue)
+        case (_, FTrue) => FTrue
+        case (e3, e4) => FImp(e3, e4)
+      }
+      case FEq(e1, e2) => (apply(e1), apply(e2)) match {
+        case (FTrue, e3) => e3
+        case (e3, FTrue) => e3
+        case (FNot(FTrue), e3) => FNot(e3)
+        case (e3, FNot(FTrue)) => FNot(e3)
+        case (e3, e4) => if (e3 == e4) FTrue else FEq(e3, e4)
+      }
     }
-    case FOr(e1,e2) => (apply(e1),apply(e2)) match {
-      case (FTrue, eSolver) => FTrue
-      case (e, FTrue) => FTrue
-      case (FNot(FTrue), e) => e
-      case (e, FNot(FTrue)) => e
-      case (FNot(e3),e4) => if (e3 == e4) FTrue else FOr(FNot(e3),e4)
-      case (e3,FNot(e4)) => if (e3 == e4) FTrue else FOr(e3,FNot(e4))
-      case (e3, e4) => if (e3 == e4) e3 else FOr(e3, e4)
-    }
-    case FNot(FNot(e)) => apply(e)
-    case FNot(e) => FNot(apply(e))
-    case FImp(e1,e2) => (apply(e1), apply(e2)) match {
-      case (FNot(FTrue),_) => FTrue//FNot(FTrue)
-      case (_,FTrue) => FTrue
-      case (e3,e4) => FImp(e3,e4)
-    }
-    case FEq(e1,e2) => (apply(e1), apply(e2)) match {
-      case (FTrue,e3) => e3
-      case (e3,FTrue) => e3
-      case (FNot(FTrue),e3) => FNot(e3)
-      case (e3,FNot(FTrue)) => FNot(e3)
-      case (e3,e4) => if (e3==e4) FTrue else FEq(e3,e4)
-    }
+  } catch {
+    case e:StackOverflowError => throw new FExpOverflowException("When simplifying a feature expression")
+    case e:Throwable => throw new RuntimeException("Unknown exception when simplifying a feature expression:\n -" + e.getMessage)
   }
 
   def apply(cc:ClockCons): ClockCons = cc match {

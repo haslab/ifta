@@ -1,6 +1,7 @@
 package ifta
 
 import ifta.analyse.{Simplify, Solver}
+import ifta.common.FExpOverflowException
 
 /**
   * Created by jose on 30/09/16.
@@ -49,10 +50,33 @@ sealed trait FExp {
     allSols.map(s => s.filterNot( _ =="__feat__"))
   }
 
-  def &&(other:FExp) = FAnd(this,other)
-  def ||(other:FExp) = FOr(this,other)
-  def -->(other:FExp) = FImp(this,other) //FNot(this) || other
-  def <->(other:FExp) = FEq(this,other)  //(this --> other) && (other --> this)
+  def &&(other:FExp) = try {
+    FAnd(this,other)
+  } catch {
+    case e:StackOverflowError => throw new FExpOverflowException("When creating new FAnd")
+    case e:Throwable => throw e
+  }
+
+  def ||(other:FExp) = try {
+    FOr(this,other)
+  } catch {
+    case e:StackOverflowError => throw new FExpOverflowException("When creating new FOr")
+    case e:Throwable => throw e
+  }
+
+  def -->(other:FExp) =  try {
+    FImp(this,other) //FNot(this) || other
+  } catch {
+    case e:StackOverflowError => throw new FExpOverflowException("When creating new FImp")
+    case e:Throwable => throw e
+  }
+
+  def <->(other:FExp) = try {
+    FEq(this,other)  //(this --> other) && (other --> this)
+  } catch {
+    case e: StackOverflowError => throw new FExpOverflowException("When creating new FEq")
+    case e: Throwable => throw e
+  }
 }
 
 case object FTrue                extends FExp
@@ -63,4 +87,3 @@ case class FNot(e:FExp)          extends FExp
 // to simplify notation
 case class FImp(e1:FExp,e2:FExp) extends FExp
 case class FEq(e1:FExp,e2:FExp)  extends FExp
-

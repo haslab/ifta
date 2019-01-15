@@ -41,21 +41,21 @@
    }
 
    def *(other:IFTA,timeout:Int):IFTA = prod(other,false,timeout)
-   def *(other:IFTA):IFTA = prod(other,false, -1)
+   def *(other:IFTA):IFTA = prod(other,false, 0)
 
    def hideProduct(other:IFTA,timeout:Int):IFTA = prod(other,true,timeout)
-   def hideProduct(other:IFTA):IFTA = prod(other,true,-1)
+   def hideProduct(other:IFTA):IFTA = prod(other,true,0)
    /**
      * Product of 2 IFTAs with timeout
      * @param other
      * @param timeout
      */
-    def prod(other:IFTA, hide:Boolean, timeout:Int= -1) = {
+    def prod(other:IFTA, hide:Boolean, timeout:Int= 0) = {
       var steps = timeout
       def tick() = {
         if (steps > 1)
           steps -= 1
-        else throw new TimeoutException(s"Timeout when composing IFTA") //:\n ${this.toString}\n ${other.toString}")
+        else throw new TimeoutException(s"When composing IFTA") //:\n ${this.toString}\n ${other.toString}")
       }
       // index of loc1 and loc2 will be used to new locations
       val loc1 = locs.toList
@@ -75,24 +75,30 @@
       val resCl  = clocks ++ other.clocks
       val resFeat = feats ++ other.feats
 
-      val resEdges = (for (e1 <- edges; e2 <- other.edges; if e1.compat(e2,shared))
-        yield {if (timeout > -1) tick(); e1.join(e2,hide,prod)})            ++
-        (for (e1 <- edges; loc <- other.locs; if e1.act.intersect(shared).isEmpty)
-          yield {if (timeout > -1) tick(); e1.independent(loc, prod,1)}) ++
-        (for (e2 <- other.edges; loc <- locs; if e2.act.intersect(shared).isEmpty)
-          yield {if (timeout > -1) tick(); e2.independent(loc, prod,2)})
+      val resEdges = (for (e1 <- edges; e2 <- other.edges; if e1.compat(e2, shared)) yield
+            {if (timeout > 0) tick(); e1.join(e2, hide, prod)}) ++
+          (for (e1 <- edges; loc <- other.locs; if e1.act.intersect(shared).isEmpty)
+            yield {
+              if (timeout > 0) tick(); e1.independent(loc, prod, 1)
+            }) ++
+          (for (e2 <- other.edges; loc <- locs; if e2.act.intersect(shared).isEmpty)
+            yield {
+              if (timeout > 0) tick(); e2.independent(loc, prod, 2)
+            })
 
       val resInv = (for (l1<-loc1; l2<-loc2)
         yield prod(l1, l2) -> CAnd(cInv.withDefaultValue(CTrue)(l1),
           other.cInv.withDefaultValue(CTrue)(l2))).toMap[Int,ClockCons]
+
       //maybe remove simplify here
       var resFm:FExp = FTrue
       try{
         resFm = Simplify((fm && other.fm) &&
         (for (a <- shared) yield fe(a) <-> other.fe(a)).fold(FTrue)(_&&_))
       } catch {
-        case e:StackOverflowError => throw new FExpOverflowException("Feature Model too big when composing IFTA")
-        case e => throw e
+        case e:StackOverflowError  => throw new FExpOverflowException("Feature model too big when composing IFTA - " + e.getMessage)
+        case e:FExpOverflowException => throw new FExpOverflowException("Feature model too big when composing IFTA - " + e.getMessage)
+        case e:Throwable => throw new RuntimeException("Feature model problem when composing IFTA:\n - " + e.getMessage)
       }
       val resIn = (in ++ other.in) -- shared
       val resOut = (out ++ other.out) -- shared
@@ -127,7 +133,6 @@
       def nameOffset(n:String,index:Int):Int =
         if (!prodLocNames.contains(n+index)) index
         else nameOffset(n,index+1)
-
 
       var resAut = Simplify.removeUnreach(IFTA(resLocs,resInit,resAct,resCl,resFeat,resEdges,resInv,resFm,resIn,resOut,Map(),nm))
 
@@ -256,8 +261,12 @@
      * @param port
      * @return
      */
-   def fe(port:String) :FExp =
+   def fe(port:String) :FExp = try {
      (for ( e <- edges; if e.act contains port) yield e.fe).fold(FNot(FTrue))(_||_)
+   } catch {
+     case e:StackOverflowError => throw new FExpOverflowException("When calculating the feature expression of an action")
+   }
+
    //  (for ( e <- edges; if e.act contains port) yield e.fe).reduce(_||_) // fails with empty list
    //  edges.filter(_.act contains port).map(_.act).fold(FTrue)(_||_) // alternative
 
@@ -396,7 +405,7 @@
    def join(other:Edge,hide:Boolean, prod:(Int,Int)=>Int): Edge =
      Edge(prod(from,other.from), CAnd(cCons, other.cCons)
        ,if (hide) act++other.act -- act.intersect(other.act) else act++other.act
-       ,cReset++other.cReset,FAnd(fe,other.fe),prod(to,other.to))
+       ,cReset++other.cReset,fe && other.fe,prod(to,other.to))
 
    /**
     * Creates an edge taken independently during composition
@@ -452,16 +461,15 @@
      * @return
      */
 
-   def product(pair:(String,String)*): IFTA = product(-1,pair.toSeq)
+   def product(pair:(String,String)*): IFTA = product(0,pair.toSeq)
    def product(timeout:Int, pair:(String,String)*): IFTA = product(timeout,pair.toSeq)
    def hideProduct(timeout:Int, pair:(String,String)*): IFTA = product(true,timeout,pair.toSeq)
-   def hideProduct(pair:(String,String)*): IFTA = product(true,-1,pair.toSeq)
-   def product(pair:Iterable[(String,String)]): IFTA = product(false,-1, pair)
-   def hideProduct(timeout:Int = -1, pair:Iterable[(String,String)]): IFTA = product(true,timeout, pair)
-   def product(timeout:Int = -1, pair:Iterable[(String,String)]): IFTA = product(false,timeout, pair)
+   def hideProduct(pair:(String,String)*): IFTA = product(true,0,pair.toSeq)
+   def product(pair:Iterable[(String,String)]): IFTA = product(false,0, pair)
+   def hideProduct(timeout:Int = 0, pair:Iterable[(String,String)]): IFTA = product(true,timeout, pair)
+   def product(timeout:Int = 0, pair:Iterable[(String,String)]): IFTA = product(false,timeout, pair)
    def product(hiding:Boolean, timeout:Int, pair:Iterable[(String,String)]): IFTA = {
      val synched = this.sync(pair)
-     var i = 0
      synched.iFTAs.headOption match {
        case Some(x) => if (hiding) synched.iFTAs.tail.fold(x)(_.hideProduct(_,timeout)) else synched.iFTAs.tail.fold(x)(_*(_,timeout))
        case None => DSL.newifta
@@ -474,9 +482,9 @@
      * @timeout -1 -> no timeout;  n>-1 number of steps to compose all automata in the net
      * @return
      */
-   def hideFlatten(timeout:Int = -1) = hideProduct(timeout)
+   def hideFlatten(timeout:Int = 0) = hideProduct(timeout)
    def flatten(timeout:Int): IFTA = product(timeout)
-   def flatten:IFTA = product(-1)
+   def flatten:IFTA = product(0)
    /**
      * Flattens a network of IFTAs using a step-by-step approach.
      * @return single IFTA restulting from composing all IFTAs in the network
