@@ -2,6 +2,7 @@
 
  import ifta.backend.Show
  import ifta.analyse.Simplify
+ import ifta.common.{FExpOverflowException, TimeoutException}
 // import org.scalatest.tools.ReporterConfigurations remove for used in ReoLive
 
  /**
@@ -54,7 +55,7 @@
       def tick() = {
         if (steps > 1)
           steps -= 1
-        else throw new RuntimeException(s"Timeout when composing:\n ${this.toString}\n ${other.toString}")
+        else throw new TimeoutException(s"Timeout when composing IFTA") //:\n ${this.toString}\n ${other.toString}")
       }
       // index of loc1 and loc2 will be used to new locations
       val loc1 = locs.toList
@@ -84,8 +85,15 @@
       val resInv = (for (l1<-loc1; l2<-loc2)
         yield prod(l1, l2) -> CAnd(cInv.withDefaultValue(CTrue)(l1),
           other.cInv.withDefaultValue(CTrue)(l2))).toMap[Int,ClockCons]
-      val resFm = (fm && other.fm) &&
-        (for (a <- shared) yield fe(a) <-> other.fe(a)).fold(FTrue)(_&&_)
+      //maybe remove simplify here
+      var resFm:FExp = FTrue
+      try{
+        resFm = Simplify((fm && other.fm) &&
+        (for (a <- shared) yield fe(a) <-> other.fe(a)).fold(FTrue)(_&&_))
+      } catch {
+        case e:StackOverflowError => throw new FExpOverflowException("Feature Model too big when composing IFTA")
+        case e => throw e
+      }
       val resIn = (in ++ other.in) -- shared
       val resOut = (out ++ other.out) -- shared
       val nm =
@@ -451,8 +459,9 @@
    def product(pair:Iterable[(String,String)]): IFTA = product(false,-1, pair)
    def hideProduct(timeout:Int = -1, pair:Iterable[(String,String)]): IFTA = product(true,timeout, pair)
    def product(timeout:Int = -1, pair:Iterable[(String,String)]): IFTA = product(false,timeout, pair)
-   private def product(hiding:Boolean, timeout:Int, pair:Iterable[(String,String)]): IFTA = {
+   def product(hiding:Boolean, timeout:Int, pair:Iterable[(String,String)]): IFTA = {
      val synched = this.sync(pair)
+     var i = 0
      synched.iFTAs.headOption match {
        case Some(x) => if (hiding) synched.iFTAs.tail.fold(x)(_.hideProduct(_,timeout)) else synched.iFTAs.tail.fold(x)(_*(_,timeout))
        case None => DSL.newifta
