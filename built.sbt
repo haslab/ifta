@@ -5,6 +5,7 @@ version := "1.0"
 scalaVersion := "2.12.4"
  
 libraryDependencies ++= Seq(
+    "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.6",
     "junit" % "junit" % "4.12",
 //    "org.scalatest" % "scalatest_2.11" % "3.0.0-M15",
     //"org.ow2.sat4j" % "org.ow2.sat4j.sat" % "2.3.5"

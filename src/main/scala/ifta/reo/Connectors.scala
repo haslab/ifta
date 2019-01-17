@@ -197,7 +197,7 @@ object Connectors {
     var ifta = newifta //++ (0 --> 0 by i when FNot(FTrue))
     for (o <- nouts)
       ifta ++= (0 --> 0 by Set(i, o) when v(i) && v(o))
-    val fm = Feat(v(i)) <-> (mkFAnd(mkFeat(nouts)))
+    val fm =  mkFAnd(mkFeat(nouts++Set(i))) || FNot(mkFOr(mkFeat(nouts++Set(i))))// Feat(v(i)) <-> (mkFAnd(mkFeat(nouts)))
     mkConn(ifta get i pub nouts.mkString(",") name "Xor" when fm )
   }
 
@@ -220,7 +220,7 @@ object Connectors {
 //    val ss = (ins + o).subsets().toSet - Set() - Set(o)
 //    for (s <- ss - (Set(o)++ins))
 //      ifta ++= (0 --> 0 by s when FNot(FTrue))
-    var fm = Feat(v(o)) <-> (mkFAnd(mkFeat(ins)))
+    var fm = mkFAnd(mkFeat(ins++Set(o))) || FNot(mkFOr(mkFeat(ins++Set(o))))//Feat(v(o)) <-> (mkFAnd(mkFeat(ins)))
     mkConn(ifta get ins.mkString(",") pub o name "+" when fm)
   }
 
@@ -247,7 +247,7 @@ object Connectors {
         0 --> 0 by Set(i, o) when v(i) && v(o) //,
 //        0 --> 0 by Set(i) when FNot(FTrue)
       )
-    var fm = v(o) <-> (mkFAnd(mkFeat(ins)))
+    var fm = mkFAnd(mkFeat(ins++Set(o))) || FNot(mkFOr(mkFeat(ins++Set(o))))//v(o) <-> (mkFAnd(mkFeat(ins)))
     mkConn(ifta get ins.mkString(",") pub o name ">-" when fm) //when v(o) --> mkFOr(mkFeat(ins)) name ">-")
   }
 
@@ -266,7 +266,7 @@ object Connectors {
     var ifta = newifta ++ (0 --> 0 by Set(i)++nouts when mkFAnd(mkFeat(Set(i)++nouts)))
 //    for (ss <- (nouts.subsets().toSet - nouts))
 //      ifta ++= 0 --> 0 by Set(i) ++ ss when FNot(FTrue)
-    var fm = v(i) <-> (mkFAnd(mkFeat(nouts)))
+    var fm = mkFAnd(mkFeat(nouts++Set(i))) || FNot(mkFOr(mkFeat(nouts++Set(i))))//v(i) <-> (mkFAnd(mkFeat(nouts)))
     mkConn(ifta get i pub nouts.mkString(",") name "-<" when fm)
   }
 

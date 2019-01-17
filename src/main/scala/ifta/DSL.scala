@@ -1,10 +1,10 @@
 package ifta
 
-import java.io.{FileWriter, BufferedWriter}
+import java.io.{BufferedWriter, FileWriter}
 
-import ifta.analyse.IFTA2FTA
-import ifta.analyse.Simplify
-import ifta.backend.{Springy,Vis}
+import ifta.analyse.{IFTA2FTA, Parser, Simplify}
+import ifta.backend.{Springy, Vis}
+import ifta.common.ParseException
 
 object DSL {
   // to help building clock constraints
@@ -77,5 +77,11 @@ object DSL {
     val bw = new BufferedWriter(new FileWriter(file))
     bw.write(backend.Uppaal(IFTA2FTA(nIFTA))) // NIFTA -> NFTA -> UPPAAL
     bw.close()
+  }
+
+  def parseFexp(fe:String):FExp = Parser.parseFexp(fe) match {
+    case Parser.Success(f,_) => f
+    case f:Parser.NoSuccess =>
+      throw new ParseException(f.toString)
   }
 }

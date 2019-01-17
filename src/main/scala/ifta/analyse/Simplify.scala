@@ -55,7 +55,7 @@ object Simplify {
     }
   } catch {
     case e:StackOverflowError => throw new FExpOverflowException("When simplifying a feature expression")
-    case e:Throwable => throw new RuntimeException("Unknown exception when simplifying a feature expression:\n -" + e.getMessage)
+//    case e:Throwable => throw new RuntimeException("Unknown exception when simplifying a feature expression:\n -" + e.getMessage)
   }
 
   def apply(cc:ClockCons): ClockCons = cc match {
