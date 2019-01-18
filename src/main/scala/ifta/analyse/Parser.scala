@@ -15,6 +15,8 @@ object Parser extends RegexParsers {
 
   def parseProducts(prod:String):ParseResult[Set[Set[String]]] = parseAll(products,prod)
 
+  def parseFeats(feats:String):ParseResult[Set[String]] = parseAll(prod,feats)
+
   override def skipWhitespace = true
 
   /* Feature Expression */

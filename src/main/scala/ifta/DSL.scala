@@ -84,4 +84,16 @@ object DSL {
     case f:Parser.NoSuccess =>
       throw new ParseException(f.toString)
   }
+
+  def parserFeats(feats:String):Set[String] = Parser.parseFeats(feats) match {
+    case Parser.Success(f,_) => f
+    case f:Parser.NoSuccess =>
+      throw new ParseException(f.toString)
+  }
+
+  def parseProducts(prods:String):Set[Set[String]] = Parser.parseProducts(prods) match {
+    case Parser.Success(f,_) => f
+    case f:Parser.NoSuccess =>
+      throw new ParseException(f.toString)
+  }
 }
