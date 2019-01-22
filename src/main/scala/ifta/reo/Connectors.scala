@@ -294,4 +294,30 @@ object Connectors {
     mkConn(newifta get nints.mkString(",") name "noSrc")
   }
 
+  def sink(i:String, inputs:String*) = {
+    val nints = Set(i) ++ inputs.toSet
+    var ifta = newifta
+    nints.foreach(in => ifta ++= 0 --> 0 by in when v(in))
+    val fm = mkFAnd(mkFeat(nints)) || not(mkFOr(mkFeat(nints)))
+    mkConn(ifta get nints.mkString(",") when fm)
+  }
+
+  def source(o:String, outs:String*) = {
+    val nouts = Set(o) ++ outs.toSet
+    var ifta = newifta ++ (
+        0 --> 0 by nouts.mkString(",") when mkFAnd(mkFeat(nouts))
+      )
+    val fm = mkFAnd(mkFeat(nouts)) || not(mkFOr(mkFeat(nouts)))
+    mkConn(ifta pub nouts.mkString(",") when fm)
+  }
+
+  def mixed(ins:Set[String],outs:Set[String]) = {
+    var ifta = newifta
+    ins.foreach(i =>
+      ifta ++= 0 --> 0 by (Set(i)++outs).mkString(",") when v(i) && mkFAnd(mkFeat(outs))
+    )
+    val fm = mkFAnd(mkFeat(ins++outs)) || not(mkFOr(mkFeat(ins++outs)))
+    mkConn( ifta get ins.mkString(",") pub outs.mkString(",") when fm)
+  }
+
 }
