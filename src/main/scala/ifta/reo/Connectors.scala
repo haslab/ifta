@@ -201,6 +201,16 @@ object Connectors {
     mkConn(ifta get i pub nouts.mkString(",") name "Xor" when fm )
   }
 
+  def vrouter(i:String,o1:String,o2:String, outs:String*) = {
+    val nouts = Set(o1, o2) ++ outs.toSet
+    var ifta = newifta //++ (0 --> 0 by i when FNot(FTrue))
+    for (o <- nouts)
+      ifta ++= (0 --> 0 by Set(i, o) when v(i) && v(o))
+    val fm =  Feat(v(i)) <-> (mkFOr(mkFeat(nouts)))
+    mkConn(ifta get i pub nouts.mkString(",") name "Xor" when fm )
+
+  }
+
 //  def join(i: String, i2: String, inOrO: String, rest: String*) = {
 //    val feat = v(s"${i}_${i2}_$inOrO" + (if (rest.isEmpty) "" else rest.mkString("_", "_", "")))
 //    val o = if (rest.isEmpty) inOrO else rest.last
@@ -221,6 +231,18 @@ object Connectors {
 //    for (s <- ss - (Set(o)++ins))
 //      ifta ++= (0 --> 0 by s when FNot(FTrue))
     var fm = mkFAnd(mkFeat(ins++Set(o))) || FNot(mkFOr(mkFeat(ins++Set(o))))//Feat(v(o)) <-> (mkFAnd(mkFeat(ins)))
+    mkConn(ifta get ins.mkString(",") pub o name "+" when fm)
+  }
+
+
+  def vjoin(i: String, i2: String, inOrO: String, rest: String*) = {
+    val o = if (rest.isEmpty) inOrO else rest.last
+    val ins = if (rest.nonEmpty) Set(i, i2, inOrO) ++ (rest.toSet - o) else Set(i, i2)
+    var ifta = newifta //++ (0 --> 0 by Set(o)++ins when mkFAnd(mkFeat(Set(o)++ins)))
+    val ss = (ins + o).subsets().toSet - Set() - Set(o)
+        for (s <- ss - (Set(o)++ins))
+          ifta ++= (0 --> 0 by s when mkFAnd(mkFeat(s)) && not(mkFOr(mkFeat((ins+o)--s))))
+    var fm = Feat(v(o)) <-> (mkFOr(mkFeat(ins)))
     mkConn(ifta get ins.mkString(",") pub o name "+" when fm)
   }
 
@@ -251,6 +273,18 @@ object Connectors {
     mkConn(ifta get ins.mkString(",") pub o name ">-" when fm) //when v(o) --> mkFOr(mkFeat(ins)) name ">-")
   }
 
+  def vmerger(i: String, i2: String, inOrO: String, rest: String*) = {
+    val o = if (rest.isEmpty) inOrO else rest.last
+    var ifta = newifta
+    val ins = if (rest.nonEmpty) Set(i, i2, inOrO) ++ (rest.toSet - o) else Set(i, i2)
+    for (i <- ins)
+      ifta ++= (
+        0 --> 0 by Set(i, o) when v(i) && v(o)
+        )
+    var fm = Feat(v(o)) <-> (mkFOr(mkFeat(ins)))
+    mkConn(ifta get ins.mkString(",") pub o name ">-" when fm) //when v(o) --> mkFOr(mkFeat(ins)) name ">-")
+  }
+
 //  def repl(i: String, o1: String, o2: String, outs: String*) = {
 //    val feat = v(s"${i}_${o1}_$o2" + (if (outs.isEmpty) "" else outs.mkString("_", "_", "")))
 //    val nouts = Set(o1, o2) ++ outs.toSet
@@ -267,6 +301,16 @@ object Connectors {
 //    for (ss <- (nouts.subsets().toSet - nouts))
 //      ifta ++= 0 --> 0 by Set(i) ++ ss when FNot(FTrue)
     var fm = mkFAnd(mkFeat(nouts++Set(i))) || FNot(mkFOr(mkFeat(nouts++Set(i))))//v(i) <-> (mkFAnd(mkFeat(nouts)))
+    mkConn(ifta get i pub nouts.mkString(",") name "-<" when fm)
+  }
+
+  def vrepl(i: String, o1: String, o2: String, outs: String*) = {
+    val nouts = Set(o1, o2) ++ outs.toSet
+    var ifta = newifta // ++ (0 --> 0 by Set(i)++nouts when mkFAnd(mkFeat(Set(i)++nouts)))
+    val ss = nouts.subsets().toSet - Set()
+    for (s <- ss)
+      ifta ++= 0 --> 0 by Set(i) ++ s when v(i) && mkFAnd(mkFeat(s)) && not(mkFOr(mkFeat(nouts--s)))
+    var fm = Feat(v(i)) <-> (mkFOr(mkFeat(nouts)))
     mkConn(ifta get i pub nouts.mkString(",") name "-<" when fm)
   }
 
