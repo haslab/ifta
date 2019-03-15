@@ -43,8 +43,10 @@ case class IftaAutomata(ifta:IFTA,nifta:Set[IFTA],conns:Set[Prim]) extends Autom
   override def getTrans(fullName: Boolean): Set[(Int, Any, String, Int)] =
     for (e <- ifta.edges) yield (
       e.from
-      , Show(Simplify(e.cCons)) + "~"
-      + e.act.map(getPortName(_)).mkString(",") + "~"
+      , (Simplify(e.cCons) match {
+          case CTrue => ""
+          case cc => Show(cc)}) + "~"
+      + e.act.map(p => getPortName(p)+getDir(p)).mkString(".") + "~"
       + Show(Simplify(e.fe)) + "~"
       + e.cReset.map(c => s"$c = 0").mkString(",")
       , (e.from, e.to, e.act, e.fe, e.cCons, e.cReset).hashCode().toString()
@@ -110,6 +112,19 @@ case class IftaAutomata(ifta:IFTA,nifta:Set[IFTA],conns:Set[Prim]) extends Autom
       s"out${if (ifta.out.size > 1) outSeed else ""}"
     } else ""
   }
+
+  /**
+    * Returns the direction of an interface port,
+    * Since it is an interface port, it is either an input or an output
+    * @param p
+    * @return
+    */
+  private def getDir(p:String):String =
+    if (ifta.in.contains(p))
+      "↓"
+    else if (ifta.out.contains(p))
+      "↑"
+    else ""
 
 }
 
