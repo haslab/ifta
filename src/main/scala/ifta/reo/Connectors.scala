@@ -364,4 +364,27 @@ object Connectors {
     mkConn( ifta get ins.mkString(",") pub outs.mkString(",") when fm)
   }
 
+  def vmixed(ins:Set[String],outs:Set[String]) = {
+    var ifta = newifta
+    val ss =  outs.subsets().toSet - Set() // all subsets of outs - emptyset
+    ins.foreach( i =>
+      ss.foreach( os =>
+        ifta ++= 0 --> 0 by (Set(i)++os) when
+          v(i) && mkFAnd(mkFeat(os)) && not(mkFOr(mkFeat(outs--os))))
+    )
+    val fm = mkFOr(mkFeat(ins)) <-> mkFOr(mkFeat(outs))
+    mkConn( ifta get ins.mkString(",") pub outs.mkString(",") when fm)
+  }
+
+  def vmixedxor(ins:Set[String],outs:Set[String]) = {
+    var ifta = newifta
+    ins.foreach( i =>
+      outs.foreach( o =>
+        ifta ++= 0 --> 0 by (Set(i)+o) when
+          v(i) && v(o))
+    )
+    val fm = mkFOr(mkFeat(ins)) <-> mkFOr(mkFeat(outs))
+    mkConn( ifta get ins.mkString(",") pub outs.mkString(",") when fm)
+  }
+
 }
