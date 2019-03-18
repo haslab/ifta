@@ -60,6 +60,11 @@ case class IftaAutomata(ifta:IFTA,nifta:Set[IFTA],conns:Set[Prim]) extends Autom
   /** An easier to read representation */
   override def show: String = Show(Simplify(ifta))
 
+  /** Return the fm with feats renamed after ports (or internal ports)*/
+  def getFm:FExp = renameFe(Simplify(ifta.fm))
+
+  /** Return feats renamed after ports (or internal ports)*/
+  def getFeats:Set[FExp] = ifta.feats.map(f => renameFe(Feat(f)))
   /**
     * Returns the fancy name of an interface port
     *
