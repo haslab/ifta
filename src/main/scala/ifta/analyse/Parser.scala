@@ -43,8 +43,8 @@ object Parser extends RegexParsers {
     "("~>fexp<~")"
 
   def binOp: Parser[(FExp,FExp) => FExp] =
-  "&&"  ^^ { _ => (f1:FExp,f2:FExp) => f1 && f2}  |
-  "||"  ^^ { _ => (f1:FExp,f2:FExp) => f1 || f2}  |
+  "&"  ^^ { _ => (f1:FExp,f2:FExp) => f1 && f2}  |
+  "|"  ^^ { _ => (f1:FExp,f2:FExp) => f1 || f2}  |
   "-->" ^^ { _ => (f1:FExp,f2:FExp) => f1 --> f2} |
   "<->" ^^ { _ => (f1:FExp,f2:FExp) => f1 <-> f2}
 

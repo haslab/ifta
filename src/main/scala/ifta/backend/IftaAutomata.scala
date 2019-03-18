@@ -51,7 +51,7 @@ case class IftaAutomata(ifta:IFTA,nifta:Set[IFTA],conns:Set[Prim]) extends Autom
           case CTrue => ""
           case cc => Show(cc)}) + "~"
       + e.act.map(p => getPortName(p)+getDir(p)).mkString(".") + "~"
-      + Show(Simplify(renameFe(e.fe))) + "~"
+      + Show(Simplify(getRenamedFe(e.fe))) + "~"
       + e.cReset.map(c => s"$c = 0").mkString(",")
       , (e.from, e.to, e.act, e.fe, e.cCons, e.cReset).hashCode().toString()
       , e.to
@@ -61,10 +61,11 @@ case class IftaAutomata(ifta:IFTA,nifta:Set[IFTA],conns:Set[Prim]) extends Autom
   override def show: String = Show(Simplify(ifta))
 
   /** Return the fm with feats renamed after ports (or internal ports)*/
-  def getFm:FExp = renameFe(Simplify(ifta.fm))
+  def getFm:FExp = getRenamedFe(Simplify(ifta.fm))
 
   /** Return feats renamed after ports (or internal ports)*/
-  def getFeats:Set[FExp] = ifta.feats.map(f => renameFe(Feat(f)))
+  def getFeats:Set[FExp] = ifta.feats.map(f => getRenamedFe(Feat(f)))
+
   /**
     * Returns the fancy name of an interface port
     *
@@ -136,18 +137,18 @@ case class IftaAutomata(ifta:IFTA,nifta:Set[IFTA],conns:Set[Prim]) extends Autom
     else ""
 
   /** Rename a fexp so that features associated to port have the ports name - instead of e.g. v_0*/
-  private def renameFe(fe:FExp):FExp = fe match {
+  def getRenamedFe(fe:FExp):FExp = fe match {
     case Feat(n)      =>
       if (n.startsWith("v_")) {
         var name = n.slice(2, n.size)
         Feat(portName.getOrElse(name, "f"+internalNames.getOrElse(name,n)))
       } else Feat(n)
     case FTrue        => FTrue
-    case FAnd(e1, e2) => renameFe(e1) && renameFe(e2)
-    case FOr(e1, e2)  => renameFe(e1) || renameFe(e2)
-    case FNot(e)      => FNot(renameFe(e))
-    case FImp(e1,e2)  => renameFe(e1) --> renameFe(e2)
-    case FEq(e1,e2)   => renameFe(e1) <-> renameFe(e2)
+    case FAnd(e1, e2) => getRenamedFe(e1) && getRenamedFe(e2)
+    case FOr(e1, e2)  => getRenamedFe(e1) || getRenamedFe(e2)
+    case FNot(e)      => FNot(getRenamedFe(e))
+    case FImp(e1,e2)  => getRenamedFe(e1) --> getRenamedFe(e2)
+    case FEq(e1,e2)   => getRenamedFe(e1) <-> getRenamedFe(e2)
   }
 
 }
