@@ -9,13 +9,14 @@ import ifta.analyse.Simplify
 object Show {
   def apply(fExp: FExp): String = showFExp(Simplify(fExp))
   def showFExp(fExp: FExp): String = fExp match {
-    case FTrue => "true"
+    case FTrue => "⊤"
+    case FNot(FTrue) => "⊥"
     case Feat(name) => name
 //    case FAnd(e1, e2@FAnd(_,_)) => parShow(e1)+" && "+Show(e2)
-    case FAnd(FAnd(e1,e2), e3) => parShow(e1)+" && "+showFExp(FAnd(e2,e3))
-    case FAnd(e1, e2) => parShow(e1)+" && "+parShow(e2)
-    case FOr(FOr(e1,e2), e3) => parShow(e1)+" || "+showFExp(FOr(e2,e3))
-    case FOr(e1, e2) => parShow(e1)+" || "+parShow(e2)
+    case FAnd(FAnd(e1,e2), e3) => parShow(e1)+" & "+showFExp(FAnd(e2,e3))
+    case FAnd(e1, e2) => parShow(e1)+" & "+parShow(e2)
+    case FOr(FOr(e1,e2), e3) => parShow(e1)+" | "+showFExp(FOr(e2,e3))
+    case FOr(e1, e2) => parShow(e1)+" | "+parShow(e2)
     case FNot(e) => "!"+parShow(e)
     case FImp(e1, e2) => parShow(e1)+" --> "+parShow(e2)
     case FEq(e1, e2) => parShow(e1)+" <-> "+parShow(e2)

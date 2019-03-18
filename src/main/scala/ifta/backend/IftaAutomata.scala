@@ -29,9 +29,13 @@ case class IftaAutomata(ifta:IFTA,nifta:Set[IFTA],conns:Set[Prim]) extends Autom
 
   private var inSeed: Int = 0
   private var outSeed: Int = 0
+  private var internalSeed: Int = 0
 
   private lazy val portName: Map[String, String] =
     (ifta.in ++ ifta.out).map(p => p -> mkPortName(p)).toMap
+
+  private lazy val internalNames: Map[String,String] =
+    (nifta.flatMap(n => n.act) -- (ifta.in ++ ifta.out)).zipWithIndex.map(m => (m._1 -> m._2.toString)).toMap
 
   /** Set of states of the automata, represented as integers */
   override def getStates: Set[Int] = ifta.locs
@@ -47,7 +51,7 @@ case class IftaAutomata(ifta:IFTA,nifta:Set[IFTA],conns:Set[Prim]) extends Autom
           case CTrue => ""
           case cc => Show(cc)}) + "~"
       + e.act.map(p => getPortName(p)+getDir(p)).mkString(".") + "~"
-      + Show(Simplify(e.fe)) + "~"
+      + Show(Simplify(renameFe(e.fe))) + "~"
       + e.cReset.map(c => s"$c = 0").mkString(",")
       , (e.from, e.to, e.act, e.fe, e.cCons, e.cReset).hashCode().toString()
       , e.to
@@ -125,6 +129,21 @@ case class IftaAutomata(ifta:IFTA,nifta:Set[IFTA],conns:Set[Prim]) extends Autom
     else if (ifta.out.contains(p))
       "↑"
     else ""
+
+  /** Rename a fexp so that features associated to port have the ports name - instead of e.g. v_0*/
+  private def renameFe(fe:FExp):FExp = fe match {
+    case Feat(n)      =>
+      if (n.startsWith("v_")) {
+        var name = n.slice(2, n.size)
+        Feat(portName.getOrElse(name, "f"+internalNames.getOrElse(name,n)))
+      } else Feat(n)
+    case FTrue        => FTrue
+    case FAnd(e1, e2) => renameFe(e1) && renameFe(e2)
+    case FOr(e1, e2)  => renameFe(e1) || renameFe(e2)
+    case FNot(e)      => FNot(renameFe(e))
+    case FImp(e1,e2)  => renameFe(e1) --> renameFe(e2)
+    case FEq(e1,e2)   => renameFe(e1) <-> renameFe(e2)
+  }
 
 }
 
