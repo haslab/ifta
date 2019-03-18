@@ -157,9 +157,13 @@ object IftaAutomata {
         case Prim(CPrim("drain", _, _, _), List(a, b), List(),_) =>
           sdrain(a.toString,b.toString) name "drain"
         case Prim(CPrim("merger", _, _, _), List(a, b), List(c),_) =>
-          vmerger(a.toString,b.toString,c.toString) name "merger"
+          merger(a.toString,b.toString,c.toString) name "merger"
+        case Prim(CPrim("vmerger", _, _, _), List(a, b), List(c),_) =>
+          vmerger(a.toString,b.toString,c.toString) name "vmerger"
         case Prim(CPrim("dupl", _, _, _), List(a), List(b, c),_) =>
-          vrepl(a.toString,b.toString,c.toString) name "dupl"
+          repl(a.toString,b.toString,c.toString) name "dupl"
+        case Prim(CPrim("vdupl", _, _, _), List(a), List(b, c),_) =>
+          vrepl(a.toString,b.toString,c.toString) name "vdupl"
         case Prim(CPrim("writer", _, _, _), List(), List(a),_) =>
           writer(a.toString)
         case Prim(CPrim("reader", _, _, _), List(a), List(),_) =>
@@ -169,12 +173,19 @@ object IftaAutomata {
         case Prim(CPrim("noSrc", _, _, _), List(a), List(),_) =>
           noSrc(a.toString)
         // if we use onetooneSimple we need to add support for nodes
+        case Prim(CPrim("node",_,_,extra), ins, outs, _) if extra.intersect(Set("vdupl","mrg")) == Set("vdupl","mrg") =>
+          mrg2vdupl(ins.map(_.toString).toSet,outs.map(_.toString).toSet) name "vmixed"
+        case Prim(CPrim("node",_,_,extra), ins, outs, _) if extra.intersect(Set("dupl","vmrg")) == Set("dupl","vmrg") =>
+          vmrg2dupl(ins.map(_.toString).toSet,outs.map(_.toString).toSet) name "vmixed"
         // dupl or mrg (typical mixed node)
         case Prim(CPrim("node",_,_,extra), ins, outs, _) if extra.intersect(Set("dupl","mrg")).nonEmpty =>
-          vmixed(ins.map(_.toString).toSet,outs.map(_.toString).toSet) name "mixed"
+          mixed(ins.map(_.toString).toSet,outs.map(_.toString).toSet) name "mixed"
+        // vdupl or vmrg (typical vmixed node)
+        case Prim(CPrim("node",_,_,extra), ins, outs, _) if extra.intersect(Set("vdupl","vmrg")).nonEmpty =>
+          vmixed(ins.map(_.toString).toSet,outs.map(_.toString).toSet) name "vmixed"
         // xor
         case Prim(CPrim("node",_,_,extra), ins, outs, _) if extra contains("xor") =>
-          vmixedxor(ins.map(_.toString).toSet,outs.map(_.toString).toSet) name "merger"
+          mixedxor(ins.map(_.toString).toSet,outs.map(_.toString).toSet) name "xor"
         // unknown name with type 1->1 -- behave as identity
         case Prim(CPrim(name, _, _, _), List(a), List(b),_) =>
           sync(a.toString,b.toString) name name

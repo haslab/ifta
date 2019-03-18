@@ -355,6 +355,7 @@ object Connectors {
     mkConn(ifta pub nouts.mkString(",") when fm)
   }
 
+  /** Typical mixed node */
   def mixed(ins:Set[String],outs:Set[String]) = {
     var ifta = newifta
     ins.foreach(i =>
@@ -364,6 +365,7 @@ object Connectors {
     mkConn( ifta get ins.mkString(",") pub outs.mkString(",") when fm)
   }
 
+  /** Variable mixed node (typical mixed node with variability) */
   def vmixed(ins:Set[String],outs:Set[String]) = {
     var ifta = newifta
     val ss =  outs.subsets().toSet - Set() // all subsets of outs - emptyset
@@ -376,6 +378,42 @@ object Connectors {
     mkConn( ifta get ins.mkString(",") pub outs.mkString(",") when fm)
   }
 
+  /** Variable mixed node where the inputs are variable but not the outputs */
+  def vmrg2dupl(ins:Set[String],outs:Set[String]) = {
+    var ifta = newifta
+    ins.foreach( i =>
+        ifta ++= 0 --> 0 by (Set(i)++outs) when v(i) && mkFAnd(mkFeat(outs))
+    )
+    val fm = mkFAnd(mkFeat(outs)) && mkFOr(mkFeat(ins))
+    mkConn( ifta get ins.mkString(",") pub outs.mkString(",") when fm)
+  }
+
+  /** Variable mixed node where the inputs fixed but the outputs are variables */
+  def mrg2vdupl(ins:Set[String],outs:Set[String]) = {
+    var ifta = newifta
+    val ss =  outs.subsets().toSet - Set() // all subsets of outs - emptyset
+    ins.foreach( i =>
+      ss.foreach( os =>
+        ifta ++= 0 --> 0 by (Set(i)++os) when
+          v(i) && mkFAnd(mkFeat(os)) && not(mkFOr(mkFeat(outs--os))))
+    )
+    val fm = mkFAnd(mkFeat(ins)) && mkFOr(mkFeat(outs))
+    mkConn( ifta get ins.mkString(",") pub outs.mkString(",") when fm)
+  }
+
+  /** Mixed node that behaves as a xor */
+  def mixedxor(ins:Set[String],outs:Set[String]) = {
+    var ifta = newifta
+    ins.foreach( i =>
+      outs.foreach( o =>
+        ifta ++= 0 --> 0 by (Set(i)+o) when
+          v(i) && v(o))
+    )
+    val fm = mkFAnd(mkFeat(ins++outs)) || not(mkFOr(mkFeat(ins++outs)))
+    mkConn( ifta get ins.mkString(",") pub outs.mkString(",") when fm)
+  }
+
+  /** Variable mixed node that behaves as a xor */
   def vmixedxor(ins:Set[String],outs:Set[String]) = {
     var ifta = newifta
     ins.foreach( i =>
