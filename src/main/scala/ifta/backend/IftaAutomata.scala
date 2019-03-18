@@ -50,9 +50,9 @@ case class IftaAutomata(ifta:IFTA,nifta:Set[IFTA],conns:Set[Prim]) extends Autom
       , (Simplify(e.cCons) match {
           case CTrue => ""
           case cc => Show(cc)}) + "~"
-      + e.act.map(p => getPortName(p)+getDir(p)).mkString(".") + "~"
+      + e.act.filter(a => (ifta.in++ifta.out).contains(a)).map(p => getPortName(p)+getDir(p)).mkString(".") + "~"
       + Show(Simplify(getRenamedFe(e.fe))) + "~"
-      + e.cReset.map(c => s"$c = 0").mkString(",")
+      + e.cReset.map(c => s"$c = 0").mkString(",") //+ "@" + e.act.mkString("@")
       , (e.from, e.to, e.act, e.fe, e.cCons, e.cReset).hashCode().toString()
       , e.to
     )
@@ -233,7 +233,7 @@ object IftaAutomata {
       * @return composed automata
       */
     def join(a1: IftaAutomata, a2: IftaAutomata): IftaAutomata =
-      join(a1,a2,true,20000)
+      join(a1,a2,false,20000)
 
     def join(a1:IftaAutomata,a2:IftaAutomata,hide:Boolean, timeout:Int):IftaAutomata =
       IftaAutomata(a1.ifta.prod(a2.ifta,hide,timeout),a1.nifta++a2.nifta,a1.conns++a2.conns)

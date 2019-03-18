@@ -328,6 +328,10 @@ object Connectors {
     ) get i name "reader")
   }
 
+//  def timer(ins:Set[String],outs:Set[String],t:Int)= {
+//
+//  }
+
   def noSink(o:String, outs: String*) = {
     val nouts = Set(o) ++ outs.toSet
     mkConn(newifta pub nouts.mkString(",") name "noSnk")
