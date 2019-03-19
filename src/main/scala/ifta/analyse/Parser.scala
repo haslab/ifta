@@ -22,8 +22,8 @@ object Parser extends RegexParsers {
   /* Feature Expression */
 
   val feat: Parser[FExp] = """[a-zA-Z][a-zA-Z0-9_]*""".r ^^ {case f => Feat(f)}
-  val top: Parser[FExp] = """true""".r ^^ {_ => FTrue}
-  val bottom:Parser[FExp] = """!true""".r ^^ {_ => FNot(FTrue)}
+  val top: Parser[FExp] = /*true*/ """⊤""".r ^^ {_ => FTrue}
+  val bottom:Parser[FExp] = /*!true*/ """⊥""".r ^^ {_ => FNot(FTrue)}
 
   def fexp:Parser[FExp] =
     leftFexp ~ binOp ~ fexp ^^ {case f ~ op ~ f1 => op(f,f1)} |

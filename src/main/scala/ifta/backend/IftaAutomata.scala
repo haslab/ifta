@@ -216,7 +216,7 @@ object IftaAutomata {
           sync(a.toString,b.toString) name name
 
         case Prim(p, _, _,_) =>
-          throw new GenerationException(s"Unknown ifta automata for primitive $p")
+          throw new GenerationException(s"Unknown ifta automata for primitive ${p.name}")
         }
       (IftaAutomata(iFta,Set(iFta),Set(e)),0)
     }
