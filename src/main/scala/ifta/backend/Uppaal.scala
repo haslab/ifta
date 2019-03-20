@@ -197,6 +197,7 @@ object Uppaal {
     s"""<label kind="invariant" x="$i" y="11">${mkCC(cc)}</label>"""
   private def mkCC(cc:ClockCons): String = cc match {
     case CTrue => "true"
+    case ET(c, n) => c+"=="+n
     case LT(c, n) => c+"&lt;"+n
     case GT(c, n) => c+"&gt;"+n
     case LE(c, n) => c+"&lt;="+n

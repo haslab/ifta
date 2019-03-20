@@ -29,6 +29,7 @@ object Show {
   def apply(clockCons: ClockCons): String = showCC(Simplify(clockCons))
   def showCC(clockCons: ClockCons): String = clockCons match {
     case CTrue => "true"
+    case ET(c, n) => s"$c = $n"
     case LT(c, n) => s"$c < $n"
     case GT(c, n) => s"$c > $n"
     case LE(c, n) => s"$c <= $n"

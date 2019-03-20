@@ -1,3 +1,4 @@
+
 name := "IFTA"
  
 version := "1.0"
@@ -16,3 +17,5 @@ libraryDependencies ++= Seq(
     //"org.sat4j" % "org.sat4j.core" % "2.3.1"
 //    "org.jgrapht" % "jgrapht-core" % "1.0.0"
 )
+
+excludeFilter in unmanagedSources := "IftaAutomata.scala"

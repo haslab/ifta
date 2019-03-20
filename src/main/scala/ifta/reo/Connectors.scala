@@ -328,9 +328,13 @@ object Connectors {
     ) get i name "reader")
   }
 
-//  def timer(ins:Set[String],outs:Set[String],t:Int)= {
-//
-//  }
+  def timer(i:String,o:String,t:Int)=
+    mkConn(
+      newifta ++ (
+        0 --> 1 by i when v(i) && v(o) reset "c",
+        1 --> 0 by o when v(i) && v(o) cc ("c" equal t)
+      ) get i pub o inv(1, "c"<=t) when v(i) <-> v(o) name s"($t)"
+    )
 
   def noSink(o:String, outs: String*) = {
     val nouts = Set(o) ++ outs.toSet

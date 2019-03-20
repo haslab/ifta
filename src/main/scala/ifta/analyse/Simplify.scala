@@ -59,7 +59,7 @@ object Simplify {
   }
 
   def apply(cc:ClockCons): ClockCons = cc match {
-    case CTrue | LT(_,_) | GT(_,_) | LE(_,_) | GE(_,_) => cc
+    case CTrue | ET(_,_) | LT(_,_) | GT(_,_) | LE(_,_) | GE(_,_) => cc
     case CAnd(CTrue, cc2) => apply(cc2)
     case CAnd(cc1, CTrue) => apply(cc1)
     case CAnd(cc1, cc2) => CAnd(apply(cc1),apply(cc2))

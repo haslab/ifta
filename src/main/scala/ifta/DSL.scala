@@ -9,6 +9,7 @@ import ifta.common.ParseException
 object DSL {
   // to help building clock constraints
   class CVar(n:String) {
+    def equal(f:Int): ClockCons = ET(n,f)
     def <(f:Int): ClockCons = LT(n,f)
     def >(f:Int): ClockCons = GT(n,f)
     def <=(f:Int): ClockCons = LE(n,f)

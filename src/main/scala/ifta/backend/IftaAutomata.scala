@@ -4,7 +4,7 @@ import ifta.analyse.Simplify
 import ifta._
 import ifta.DSL._
 import ifta.reo.Connectors._
-import preo.ast.CPrim
+import preo.ast.{CPrim, IVal}
 import preo.backend.{Automata, AutomataBuilder, Network}
 import preo.backend.Network.Prim
 import preo.common.GenerationException
@@ -52,8 +52,8 @@ case class IftaAutomata(ifta:IFTA,nifta:Set[IFTA],conns:Set[Prim]) extends Autom
           case cc => Show(cc)}) + "~"
       + e.act.filter(a => (ifta.in++ifta.out).contains(a)).map(p => getPortName(p)+getDir(p)).mkString(".") + "~"
       + Show(Simplify(getRenamedFe(e.fe))) + "~"
-      + e.cReset.map(c => s"$c = 0").mkString(",") //+ "@" + e.act.mkString("@")
-      , (e.from, e.to, e.act, e.fe, e.cCons, e.cReset).hashCode().toString()
+      + e.cReset.map(c => s"$c := 0").mkString(",") //+ "@" + e.act.mkString("@")
+      , (e.from, e.to, e.act, e.fe, e.cCons, e.cReset).hashCode().toString
       , e.to
     )
 
@@ -189,6 +189,10 @@ object IftaAutomata {
           repl(a.toString,b.toString,c.toString) name "dupl"
         case Prim(CPrim("vdupl", _, _, _), List(a), List(b, c),_) =>
           vrepl(a.toString,b.toString,c.toString) name "vdupl"
+        case Prim(CPrim("timer", _, _, extra), List(a), List(b),_) =>
+          var info = extra.iterator.filter(e => e.isInstanceOf[(String,Int)]).map(e => e.asInstanceOf[(String,Int)])
+          var to = info.toMap.getOrElse("to",0)
+          timer(a.toString,b.toString,to)
         case Prim(CPrim("writer", _, _, _), List(), List(a),_) =>
           writer(a.toString)
         case Prim(CPrim("reader", _, _, _), List(a), List(),_) =>
@@ -235,6 +239,7 @@ object IftaAutomata {
     def join(a1: IftaAutomata, a2: IftaAutomata): IftaAutomata =
       join(a1,a2,false,20000)
 
+    // TODO: handle internal clocks from different iftas with same name
     def join(a1:IftaAutomata,a2:IftaAutomata,hide:Boolean, timeout:Int):IftaAutomata =
       IftaAutomata(a1.ifta.prod(a2.ifta,hide,timeout),a1.nifta++a2.nifta,a1.conns++a2.conns)
   }

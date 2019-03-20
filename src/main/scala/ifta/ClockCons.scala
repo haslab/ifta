@@ -7,6 +7,7 @@ sealed trait ClockCons {
 
   // probably to remove, after fixing "flatten2" in NIFTA
   def restrict(clocks: Set[String]): ClockCons = this match {
+    case ET(c, n) if !(clocks contains c) => CTrue
     case LT(c, n) if !(clocks contains c) => CTrue
     case GT(c, n) if !(clocks contains c) => CTrue
     case LE(c, n) if !(clocks contains c) => CTrue
@@ -21,6 +22,7 @@ sealed trait ClockCons {
 
   def clocks: List[String] = this match {
     case CTrue => List()
+    case ET(c, n) => List(c)
     case LT(c, n) => List(c)
     case GT(c, n) => List(c)
     case LE(c, n) => List(c)
@@ -31,7 +33,8 @@ sealed trait ClockCons {
   def &(other:ClockCons) = CAnd(this,other)
 }
 
-case object CTrue                extends ClockCons
+case object CTrue              extends ClockCons
+case class ET(c:String,n:Int)  extends ClockCons
 case class LT(c:String,n:Int)  extends ClockCons
 case class GT(c:String,n:Int)  extends ClockCons
 case class LE(c:String,n:Int)  extends ClockCons
