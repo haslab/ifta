@@ -190,8 +190,13 @@ object IftaAutomata {
         case Prim(CPrim("vdupl", _, _, _), List(a), List(b, c),_) =>
           vrepl(a.toString,b.toString,c.toString) name "vdupl"
         case Prim(CPrim("timer", _, _, extra), List(a), List(b),_) =>
-          var info = extra.iterator.filter(e => e.isInstanceOf[(String,Int)]).map(e => e.asInstanceOf[(String,Int)])
-          var to = info.toMap.getOrElse("to",0)
+//          var info = extra.iterator.filter(e => e.isInstanceOf[(String,Int)]).map(e => e.asInstanceOf[(String,Int)])
+//          var to = info.toMap.getOrElse("to",0)
+          var extraInfo = extra.iterator.filter(e => e.isInstanceOf[String]).map(e => e.asInstanceOf[String])
+          var to:Int =  extraInfo.find(e => e.startsWith("to:")) match {
+            case Some(s) => s.drop(3).toInt
+            case _ => 0
+          }
           timer(a.toString,b.toString,to)
         case Prim(CPrim("writer", _, _, _), List(), List(a),_) =>
           writer(a.toString)
