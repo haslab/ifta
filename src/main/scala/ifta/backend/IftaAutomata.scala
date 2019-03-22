@@ -244,8 +244,59 @@ object IftaAutomata {
     def join(a1: IftaAutomata, a2: IftaAutomata): IftaAutomata =
       join(a1,a2,false,20000)
 
-    // TODO: handle internal clocks from different iftas with same name
-    def join(a1:IftaAutomata,a2:IftaAutomata,hide:Boolean, timeout:Int):IftaAutomata =
-      IftaAutomata(a1.ifta.prod(a2.ifta,hide,timeout),a1.nifta++a2.nifta,a1.conns++a2.conns)
+    // TODO: handle internal clocks from different ifta with same name
+    def join(a1:IftaAutomata,a2:IftaAutomata,hide:Boolean, timeout:Int):IftaAutomata = {
+      var sharedClocks = a1.ifta.clocks intersect a2.ifta.clocks
+      if (sharedClocks.isEmpty)
+        IftaAutomata(a1.ifta.prod(a2.ifta, hide, timeout), a1.nifta ++ a2.nifta, a1.conns ++ a2.conns)
+      else {
+        // if they share clocks, rename them to avoid conflicts
+        var newClocks: Map[(String,Int),String] = Map()
+        var seed = 0
+
+        /** create new names for shared clock names */
+        def getClockName(c:String,aut:Int):String = {
+          if (sharedClocks contains c)
+            if (newClocks.contains(c,aut))
+              newClocks((c,aut))
+            else {
+              seed += 1
+              newClocks += ((c,aut) -> s"$c$seed")
+              c + s"$seed"
+            }
+          else c
+        }
+
+        /** rename clocks in clock constraints */
+        def renameClocks(cc:ClockCons,aut:Int):ClockCons = cc match {
+          case CTrue => CTrue
+          case CAnd(cc1,cc2) => CAnd(renameClocks(cc1,aut),renameClocks(cc2,aut))
+          case ET(c,n) => ET(getClockName(c,aut),n)
+          case GT(c,n) => GT(getClockName(c,aut),n)
+          case GE(c,n) => GE(getClockName(c,aut),n)
+          case LE(c,n) => LE(getClockName(c,aut),n)
+          case LT(c,n) => LT(getClockName(c,aut),n)
+        }
+
+        val edges1 = for (e <- a1.ifta.edges) yield
+          Edge(e.from,renameClocks(e.cCons,1),e.act,e.cReset.map(c=> getClockName(c,1)),e.fe,e.to)
+        val edges2 = for (e <- a2.ifta.edges) yield
+          Edge(e.from,renameClocks(e.cCons,2),e.act,e.cReset.map(c=> getClockName(c,2)),e.fe,e.to)
+
+        val ifta1 = IFTA(a1.ifta.locs,a1.ifta.init,a1.ifta.act
+          ,a1.ifta.clocks.map(c=>getClockName(c,1))
+          ,a1.ifta.feats,edges1,a1.ifta.cInv.map(e=> e._1->renameClocks(e._2,1))
+          ,a1.ifta.fm,a1.ifta.in,a1.ifta.out,a1.ifta.aps,a1.ifta.shortname)
+        val ifta2 = IFTA(a2.ifta.locs,a2.ifta.init,a2.ifta.act
+          ,a2.ifta.clocks.map(c=>getClockName(c,2))
+          ,a2.ifta.feats,edges2,a2.ifta.cInv.map(e=> e._1->renameClocks(e._2,2))
+          ,a2.ifta.fm,a2.ifta.in,a2.ifta.out,a2.ifta.aps,a2.ifta.shortname)
+
+        val nifta1 = a1.nifta - a1.ifta + ifta1
+        val nifta2 = a2.nifta - a2.ifta + ifta2
+
+        IftaAutomata(ifta1.prod(ifta2,hide,timeout),nifta1++nifta2,a1.conns++a2.conns)
+      }
+    }
   }
 }
