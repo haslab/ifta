@@ -52,7 +52,7 @@ case class IftaAutomata(ifta:IFTA,nifta:Set[IFTA],conns:Set[Prim]) extends Autom
           case cc => Show(cc)}) + "~"
       + e.act.filter(a => (ifta.in++ifta.out).contains(a)).map(p => getPortName(p)+getDir(p)).mkString(".") + "~"
       + Show(Simplify(getRenamedFe(e.fe))) + "~"
-      + e.cReset.map(c => s"$c := 0").mkString(",") //+ "@" + e.act.mkString("@")
+      + e.cReset.map(c => s"$c := 0").mkString(",") + "§" + e.act.mkString("§")
       , (e.from, e.to, e.act, e.fe, e.cCons, e.cReset).hashCode().toString
       , e.to
     )
@@ -141,7 +141,7 @@ case class IftaAutomata(ifta:IFTA,nifta:Set[IFTA],conns:Set[Prim]) extends Autom
     case Feat(n)      =>
       if (n.startsWith("v_")) {
         var name = n.slice(2, n.size)
-        Feat(portName.getOrElse(name, "f"+internalNames.getOrElse(name,n)))
+          Feat(portName.getOrElse(name, s"f${internalNames.getOrElse(name, n)}"))
       } else Feat(n)
     case FTrue        => FTrue
     case FAnd(e1, e2) => getRenamedFe(e1) && getRenamedFe(e2)
