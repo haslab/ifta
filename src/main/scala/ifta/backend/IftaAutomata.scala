@@ -244,7 +244,6 @@ object IftaAutomata {
     def join(a1: IftaAutomata, a2: IftaAutomata): IftaAutomata =
       join(a1,a2,false,20000)
 
-    // TODO: handle internal clocks from different ifta with same name
     def join(a1:IftaAutomata,a2:IftaAutomata,hide:Boolean, timeout:Int):IftaAutomata = {
       var sharedClocks = a1.ifta.clocks intersect a2.ifta.clocks
       if (sharedClocks.isEmpty)

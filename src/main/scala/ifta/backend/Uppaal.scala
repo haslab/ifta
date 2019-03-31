@@ -12,13 +12,17 @@ object Uppaal {
   ///////
   // This are the one that really matters: for FTA and IFTA
 
+  def apply(tas: NFTA): String = {
+    apply(tas,mkSolutions(tas))
+  }
+
   /**
     * build an UPPAAL automata from a network of FTAs
     *
     * @param tas
     * @return
     */
-  def apply(tas: NFTA): String = {
+  def apply(tas: NFTA,solutions:Set[Set[String]]): String = {
     resetNames()
     val auts = tas.fTAs.map(Simplify.apply)
     val acts = auts.flatMap(_.act)
@@ -26,52 +30,59 @@ object Uppaal {
     val feats = auts.flatMap(_.feats)
     //    val fms = auts.map(_.fm).fold(FTrue)(_&&_)
     //    println(s"auts ${auts.mkString("\n---\n")}")
-    val fms1 = Simplify(auts.fold(FTA(Set(),0,Set(),Set(),Set(),Set(),Set(),Map(),FTrue,Map()))(_ mergeFM _).fm)
-    val notused = feats -- fms1.feats.toSet
-    //    println(s"fms1: ${Show(fms1)}")
-    val fms = if (notused.isEmpty) fms1
-    else  fms1 && (notused.foldLeft[FExp](FNot(FTrue))(_ || Feat(_)) || Feat("__feat__")) // at least feat must hold in the uppaal model
-    //    println(s"solving ${Show(fms)}")
+//    val sols = if (solutions.nonEmpty) solutions else mkSolutions(auts,feats)
+//    val fms1 = Simplify(auts.fold(FTA(Set(),0,Set(),Set(),Set(),Set(),Set(),Map(),FTrue,Map()))(_ mergeFM _).fm)
+//    val notused = feats -- fms1.feats.toSet
+//    //    println(s"fms1: ${Show(fms1)}")
+//    val fms = if (notused.isEmpty) fms1
+//    else  fms1 && (notused.foldLeft[FExp](FNot(FTrue))(_ || Feat(_)) || Feat("__feat__")) // at least feat must hold in the uppaal model
+//    //    println(s"solving ${Show(fms)}")
     //    val names = auts.zipWithIndex.map(n => getFtaName(n._1,n._2)).mkString("",",",",")
     //(0 until auts.size).map("FTA_"+_).mkString("",",",",")
 
     s"""<?xml version="1.0" encoding="utf-8"?>
         |<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
         |<nta>
-        |  <declaration>// Place global declarations here.
+        |<declaration>
+        |// Place global declarations here.
         |// Channels (actions)
         |${if (sacts.isEmpty) "" else sacts.mkString("chan ",",",";")}
         |// Features (booleans)
         |${if (feats.isEmpty) "" else feats.mkString("bool ",",",";")}
-        | </declaration>
+        |</declaration>
         |${auts.zipWithIndex.map(x=>mkTemplate(x._1,x._2)).mkString("\n")}
         |${mkContext(acts)}
-        |${mkFeatModel(fms)}
-        |<system>// Place template instantiations here.
+        |${mkFeatModel(solutions)}
+        |<system>
+        |// Place template instantiations here.
         |//(no intantiation needed)
         |// List one or more processes to be composed into a system.
         |system ${if (auts.isEmpty) ""  else usednames.map(n => n._1).mkString("",",",";")}
         |</system>
-        |  <queries>
-        |  </queries>
-        |</nta>
-        |
-        """.stripMargin
+        |<queries>
+        |</queries>
+        |</nta>""".stripMargin
   }
   //  def mkProcesses(fTA: FTA): String = {
   //    s"""fTA${fTA.act.mkString("_", "_", "")} = FTA${fTA.act.mkString("_", "_", "")}();"""
   //  }
 
+  private def mkSolutions(nfta:NFTA):Set[Set[String]] = { //(auts: Set[FTA],feats:Set[String]):Set[Set[String]] = {
+    val auts = nfta.fTAs.map(Simplify.apply)
+    val feats = auts.flatMap(_.feats)
+    val fm = Simplify(auts.fold(FTA(Set(),0,Set(),Set(),Set(),Set(),Set(),Map(),FTrue,Map()))(_ mergeFM _).fm)
+    fm.products(feats)
+  }
 
   def mkContext(acts:Set[String]) = {
 
     s"""<template>
-        |       <name x="5" y="5">Context</name>
-        |       <declaration>
+        |<name x="5" y="5">Context</name>
+        |<declaration>
         |// Place local declarations here.
-        |   </declaration>
-        |   <location id="id0" x="0" y="0"> </location>
-        |   <init ref="id0"/>"
+        |</declaration>
+        |<location id="id0" x="0" y="0"> </location>
+        |<init ref="id0"/>"
         |${(for ((a,i) <- acts.zipWithIndex) yield mkCtxTrs(a,i,acts.size,acts)).mkString("\n")}
         |</template>
      """.stripMargin
@@ -79,37 +90,39 @@ object Uppaal {
   private def mkCtxTrs(a:String,i:Int,total:Int,acts:Set[String]): String =
     if ((a.endsWith("!") && !acts.contains(a.dropRight(1)+"?"))
       ||(a.endsWith("?") && !acts.contains(a.dropRight(1)+"!")))
-      s"""  <transition>
-          |           <source ref="id0"/>
-          |           <target ref="id0"/>
-          |       <label kind="synchronisation" x="76" y="${i*30-8-((total-1)*15)}">${
+      s"""<transition>
+          |<source ref="id0"/>
+          |<target ref="id0"/>
+          |<label kind="synchronisation" x="76" y="${i*30-8-((total-1)*15)}">${
         if(a.endsWith("!")) a.dropRight(1)+"?" else a.dropRight(1)+"!"}</label>
-          |           <nail x="68" y="-51"/>
-          |           <nail x="68" y="42"/>
-          |    </transition>
+          |<nail x="68" y="-51"/>
+          |<nail x="68" y="42"/>
+          |</transition>
       """.stripMargin
     else ""
 
-  def mkFeatModel(fe:FExp) = {
-    val sols:List[(Map[String,Boolean],Int)] =
-      Solver.all(fe).map(_.filterNot(_._1 == "__feat__")).toSet.toList.zipWithIndex
+  def mkFeatModel(solutions:Set[Set[String]]) = {
+//    val sols:List[(Map[String,Boolean],Int)] =
+//      Solver.all(fe).map(_.filterNot(_._1 == "__feat__")).toSet.toList.zipWithIndex
+    val sols = solutions.zipWithIndex
     s"""<template>
-        |       <name x="5" y="5">FeatModel</name>
-        |       <declaration>
+        |<name x="5" y="5">FeatModel</name>
+        |<declaration>
         |// Place local declarations here.
-        |   </declaration>
+        |</declaration>
         |// Locations
-        |   <location id="id0" x="0" y="0"><committed/></location>
+        |<location id="id0" x="0" y="0"><committed/></location>
         |${(1 to sols.size).map(n =>
-      "   <location id=\"id"+n+"\" x=\"100\" y=\""+place(n,sols.size)+"\"> </location>").mkString("\n")}
-        |   <init ref="id0"/>"
+        "<location id=\"id"+n+"\" x=\"100\" y=\""+place(n,sols.size)+"\"> </location>").mkString("\n")}
+        |<init ref="id0"/>"
         |// Transitions
         |${(for ((sol,n) <- sols) yield
-      "   <transition> <source ref=\"id0\"/> <target ref=\"id"+(n+1)+"\"/> "+
+        "<transition> <source ref=\"id0\"/> <target ref=\"id"+(n+1)+"\"/> "+
         "<label kind=\"assignment\" x=\"130\" y=\"" + place(n+1, sols.size) + "\">"+
-        sol.toIterable.map(p => if (p._2) p._1+"=true" else "").filter(_!="").mkString(",")+
+//        sol.toIterable.map(p => if (p._2) p._1+"=true" else "").filter(_!="").mkString(",")+
+        sol.toIterable.map(p => if (p.nonEmpty) p+"=true" else "").filter(_!="").mkString(",")+
         "</label> </transition>").mkString("\n")}
-        |   </template>
+        |</template>
      """.stripMargin
   }
 
@@ -142,28 +155,30 @@ object Uppaal {
     //    val name = if (fTA.shortname.matches("[a-zA-Z_]([a-zA-Z0-9_])*") && !(kw contains fTA.shortname)) fTA.shortname else "FTA_"+index
     val name = getFtaName(fTA,index)
     s"""<template>
-        |       <name x="5" y="5">${name}</name>
-        |       <declaration>
+        |<name x="5" y="5">${name}</name>
+        |<declaration>
         |// Place local declarations 1 here.
         |// clocks:
         |${if (fTA.clocks.nonEmpty) fTA.clocks.mkString("clock ", ",", ";") else ""}
-        |   </declaration>
+        |</declaration>
+        |
         |// Locations
-        |${fTA.locs.map(loc => mkLocation(loc, fTA.cInv.getOrElse(loc, CTrue),fTA.committed contains loc,fTA.aps.getOrElse(loc,""))).mkString("\n")}
-        |   <init ref="id${fTA.init}"/>"
+        |${fTA.locs.map(loc => mkLocation(loc, fTA.cInv.getOrElse(loc, CTrue),fTA.committed contains loc,fTA.aps.getOrElse(loc,""))).mkString("\n\n")}
+        |<init ref="id${fTA.init}"/>"
+        |
         |// Transitions
-        |${fTA.edges.map(mkTransition).mkString("\n")}
-        |   </template>
+        |${fTA.edges.map(mkTransition).mkString("\n\n")}
+        |</template>
      """.stripMargin
   }
 
   private def mkTransition(e:FtaEdge): String = {
     s"""<transition>
-        |  <source ref="id${e.from}"/>
-        |  <target ref="id${e.to}"/>
-        |  ${if (e.cCons==CTrue && e.fe==FTrue) "" else mkGuard(e.from,e.cCons,e.fe)}
-        | ${mkActLabel(e)}
-        |  ${if (e.cReset.isEmpty) "" else mkReset(e.from,e.cReset)}
+        |<source ref="id${e.from}"/>
+        |<target ref="id${e.to}"/>
+        |${if (e.cCons==CTrue && e.fe==FTrue) "" else mkGuard(e.from,e.cCons,e.fe)}
+        |${mkActLabel(e)}
+        |${if (e.cReset.isEmpty) "" else mkReset(e.from,e.cReset)}
         |</transition>""".stripMargin
   }
 

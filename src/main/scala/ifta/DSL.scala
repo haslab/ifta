@@ -68,11 +68,13 @@ object DSL {
 
   // NIFTA -> NFTA -> UPPAAL
   def toUppaal(ifta:IFTA) = backend.Uppaal(NFTA(Set(IFTA2FTA.flatten(ifta))))
+  def toUppaal(ifta:IFTA,sols:Set[Set[String]]) = backend.Uppaal(NFTA(Set(IFTA2FTA.flatten(ifta))),sols)
   def toUppaal(ifta:IFTA,file:String) = {
     val bw = new BufferedWriter(new FileWriter(file))
     bw.write(backend.Uppaal(NFTA(Set(IFTA2FTA.flatten(ifta))))) // IFTA -> FTA -> UPPAAL
     bw.close()
   }
+
   def toUppaal(nIFTA: NIFTA) = backend.Uppaal(IFTA2FTA(nIFTA))
   def toUppaal(nIFTA: NIFTA, file:String) = {
     val bw = new BufferedWriter(new FileWriter(file))
