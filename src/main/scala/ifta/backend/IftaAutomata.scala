@@ -17,7 +17,7 @@ import preo.common.GenerationException
   * To be used only from ReoLanguage/ReoLive
   */
 
-// TODO: only build the automata in this class when need, not while using join
+// TODO: only build the automata in this class when needed, not while using join
 /**
   * A new representation of an Ifta, aimed at being generated from a [[preo.backend.Network]],
   * and to reuse functionality meant for [[Automata]]
@@ -50,7 +50,7 @@ case class IftaAutomata(ifta:IFTA,nifta:Set[IFTA],conns:Set[Prim]) extends Autom
       , (Simplify(e.cCons) match {
           case CTrue => ""
           case cc => Show(cc)}) + "~"
-      + e.act.filter(a => (ifta.in++ifta.out).contains(a)).map(p => getPortName(p)+getDir(p)).mkString(".") + "~"
+      + e.act.intersect(ifta.in ++ ifta.out).map(p => getPortName(p)+getDir(p)).mkString(".") + "~"
       + Show(Simplify(getRenamedFe(e.fe))) + "~"
       + e.cReset.map(c => s"$c := 0").mkString(",") + "§" + e.act.mkString("§")
       , (e.from, e.to, e.act, e.fe, e.cCons, e.cReset).hashCode().toString
@@ -59,6 +59,29 @@ case class IftaAutomata(ifta:IFTA,nifta:Set[IFTA],conns:Set[Prim]) extends Autom
 
   /** An easier to read representation */
   override def show: String = Show(Simplify(ifta))
+
+
+  /** Creates an ifta with renamed actions and fexp */
+  def getRenamedIfta:IFTA =  {
+    val edges = ifta.edges.map(e =>
+      Edge(e.from, e.cCons,
+        e.act.intersect(ifta.in ++ ifta.out).map(p => getPortName(p)),//.filterNot(_ == ""), // remove empty action
+        e.cReset,getRenamedFe(e.fe),e.to)
+    )
+
+    val ins = ifta.in.map(p => getPortName(p))
+    val outs = ifta.out.map(p => getPortName(p))
+
+    // hide internal actions (not needed for now)
+    val acts = ins ++ outs
+
+    val feats:Set[String] = getFeats.map(f => f match  {
+      case Feat(n) => n
+      case fe => throw new RuntimeException(s"Expected Feat(name), found: ${fe} ") // it should never be satisfied
+    })
+
+    IFTA(ifta.locs,ifta.init,acts,ifta.clocks,feats,edges,ifta.cInv,getFm,ins,outs,ifta.aps,ifta.shortname)
+  }
 
   /** Return the fm with feats renamed after ports (or internal ports)*/
   def getFm:FExp = getRenamedFe(Simplify(ifta.fm))
@@ -141,7 +164,7 @@ case class IftaAutomata(ifta:IFTA,nifta:Set[IFTA],conns:Set[Prim]) extends Autom
     case Feat(n)      =>
       if (n.startsWith("v_")) {
         var name = n.slice(2, n.size)
-          Feat(portName.getOrElse(name, s"f${internalNames.getOrElse(name, n)}"))
+          Feat("f"+portName.getOrElse(name, internalNames.getOrElse(name, n)))
       } else Feat(n)
     case FTrue        => FTrue
     case FAnd(e1, e2) => getRenamedFe(e1) && getRenamedFe(e2)

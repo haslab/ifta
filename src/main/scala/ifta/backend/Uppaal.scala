@@ -26,7 +26,7 @@ object Uppaal {
     resetNames()
     val auts = tas.fTAs.map(Simplify.apply)
     val acts = auts.flatMap(_.act)
-    val sacts = acts.map(x => if (x.endsWith("!") || x.endsWith("?")) x.dropRight(1) else x)
+    val sacts = acts.map(x => if (x.endsWith("!") || x.endsWith("?")) x.dropRight(1) else x).filterNot(_.isEmpty)
     val feats = auts.flatMap(_.feats)
     //    val fms = auts.map(_.fm).fold(FTrue)(_&&_)
     //    println(s"auts ${auts.mkString("\n---\n")}")
