@@ -157,7 +157,7 @@ object Uppaal {
     s"""<template>
         |<name x="5" y="5">${name}</name>
         |<declaration>
-        |// Place local declarations 1 here.
+        |// Place local declarations here.
         |// clocks:
         |${if (fTA.clocks.nonEmpty) fTA.clocks.mkString("clock ", ",", ";") else ""}
         |</declaration>

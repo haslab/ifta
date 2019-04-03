@@ -32,7 +32,9 @@ case class IftaAutomata(ifta:IFTA,nifta:Set[IFTA],conns:Set[Prim]) extends Autom
   private var internalSeed: Int = 0
 
   private lazy val portName: Map[String, String] =
-    (ifta.in ++ ifta.out).map(p => p -> mkPortName(p)).toMap
+    nifta.flatMap(i => i.act).map(p => p -> mkPortName(p)).toMap
+    //ifta.act.map(p => p -> mkPortName(p)).toMap
+    //(ifta.in ++ ifta.out).map(p => p -> mkPortName(p)).toMap
 
   private lazy val internalNames: Map[String,String] =
     (nifta.flatMap(n => n.act) -- (ifta.in ++ ifta.out)).zipWithIndex.map(m => (m._1 -> m._2.toString)).toMap
@@ -62,15 +64,15 @@ case class IftaAutomata(ifta:IFTA,nifta:Set[IFTA],conns:Set[Prim]) extends Autom
 
 
   /** Creates an ifta with renamed actions and fexp */
-  def getRenamedIfta:IFTA =  {
-    val edges = ifta.edges.map(e =>
+  def getRenamedIfta(iFta:IFTA=this.ifta):IFTA =  {
+    val edges = iFta.edges.map(e =>
       Edge(e.from, e.cCons,
-        e.act.intersect(ifta.in ++ ifta.out).map(p => getPortName(p)),//.filterNot(_ == ""), // remove empty action
+        e.act.intersect(iFta.in ++ iFta.out).map(p => getPortName(p)),
         e.cReset,getRenamedFe(e.fe),e.to)
     )
 
-    val ins = ifta.in.map(p => getPortName(p))
-    val outs = ifta.out.map(p => getPortName(p))
+    val ins = iFta.in.map(p => getPortName(p))
+    val outs = iFta.out.map(p => getPortName(p))
 
     // hide internal actions (not needed for now)
     val acts = ins ++ outs
@@ -80,7 +82,32 @@ case class IftaAutomata(ifta:IFTA,nifta:Set[IFTA],conns:Set[Prim]) extends Autom
       case fe => throw new RuntimeException(s"Expected Feat(name), found: ${fe} ") // it should never be satisfied
     })
 
-    IFTA(ifta.locs,ifta.init,acts,ifta.clocks,feats,edges,ifta.cInv,getFm,ins,outs,ifta.aps,ifta.shortname)
+    IFTA(iFta.locs,iFta.init,acts,iFta.clocks,feats,edges,iFta.cInv,getFm,ins,outs,iFta.aps,iFta.shortname)
+  }
+
+  def getRenamedNifta:NIFTA = {
+//    val iftas = nifta.map(_ match {
+//      case IFTA(locs,init,acts,clocks,feats,edges,inv,fm,ins,outs,aps,sn) =>
+//        IFTA(locs,init,
+//          acts.map(a => getPortName(a)),
+//          clocks,
+//          feats.map(f => getFeats.map(f => f match {
+//            case Feat(n) => n
+//            case fe => throw new RuntimeException(s"Expected Feat(name), found: ${fe} ") // it should never be satisfied
+//          })),
+//          edges.map(e => Edge(e.from,e.cCons,e.)))
+//    })
+//
+//    for (i <- nifta) yield {
+//      var edges = i.edges.map(e =>
+//        Edge(e.from, e.cCons,
+//          e.act.intersect(i.in ++ i.out).map(p => getPortName(p)),
+//          e.cReset,getRenamedFe(e.fe),e.to)
+//      )
+//    }
+
+//    DSL.newnifta
+    NIFTA(nifta.map(i => getRenamedIfta(i)))
   }
 
   /** Return the fm with feats renamed after ports (or internal ports)*/
@@ -96,7 +123,8 @@ case class IftaAutomata(ifta:IFTA,nifta:Set[IFTA],conns:Set[Prim]) extends Autom
     * @return
     */
   def getPortName(p: String): String = {
-    if ((ifta.in ++ ifta.out).contains(p))
+//    if ((ifta.in ++ ifta.out).contains(p))
+    if (nifta.flatMap(i => i.act).contains(p))
       portName.getOrElse(p, p.toString)
     else
       throw new RuntimeException(s"Unknown port, ${p}, for this automaton")
@@ -113,18 +141,21 @@ case class IftaAutomata(ifta:IFTA,nifta:Set[IFTA],conns:Set[Prim]) extends Autom
     */
   private def mkPortName(p: String): String = {
     var name = ""
-    // conn from which p comes - since only in out are kept, there is only one conn
-    var conn =
-      if (ifta.in.contains(p))
-        conns.find(c => c.ins.map(_.toString).contains(p))
-      else
-        conns.find(c => c.outs.map(_.toString).contains(p))
-    if (conn.nonEmpty) {
-      if (preo.DSL.PRIMITIVE.contains(conn.get.prim.name))
-        name = getPortIndexedName(p)
-      else
-        name = conn.get.prim.name
-    } else throw new RuntimeException("Port not found in IftaAutomata when assigning new name")
+    // conn from which p comes - only for inputs/outputs
+    if ((ifta.in++ifta.out).contains(p)) {
+      var conn =
+        if (ifta.in.contains(p))
+          conns.find(c => c.ins.map(_.toString).contains(p))
+        else
+          conns.find(c => c.outs.map(_.toString).contains(p))
+      if (conn.nonEmpty) {
+        if (preo.DSL.PRIMITIVE.contains(conn.get.prim.name))
+          name = getPortIndexedName(p)
+        else
+          name = conn.get.prim.name
+      } else throw new RuntimeException("Port not found in IftaAutomata when assigning new name")
+    } else // if it is internal just name it hX
+      name = getPortIndexedName(p)
     name
   }
 
@@ -143,7 +174,7 @@ case class IftaAutomata(ifta:IFTA,nifta:Set[IFTA],conns:Set[Prim]) extends Autom
     } else if (ifta.out.contains(p)) {
       outSeed += 1
       s"out${if (ifta.out.size > 1) outSeed else ""}"
-    } else ""
+    } else "h"+internalNames.getOrElse(p,p)
   }
 
   /**
