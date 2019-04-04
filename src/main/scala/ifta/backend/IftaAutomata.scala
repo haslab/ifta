@@ -86,7 +86,7 @@ case class IftaAutomata(ifta:IFTA,nifta:Set[IFTA],conns:Set[Prim]) extends Autom
     })
 
     val fm = getRenamedFe(Simplify(iFta.fm),featPrefix = true)
-    IFTA(iFta.locs,iFta.init,acts,iFta.clocks,feats,edges,iFta.cInv,fm,ins,outs,iFta.aps,iFta.shortname)
+    IFTA(iFta.locs,iFta.init,acts,iFta.clocks,feats,edges,iFta.cInv,fm,ins,outs,iFta.aps,"C_"+iFta.shortname)
   }
 
   def getRenamedNifta:NIFTA = {
