@@ -5,7 +5,7 @@ import ifta.DSL._
 import ifta.backend.Show
 import ifta.reo.Connectors._
 import preo.ast.{CPrim, CoreInterface}
-import preo.frontend.mcrl2.{Action, Channel, ITE, In, Init, Model, Nothing, Out, PrimBuilder, Process, ProcessExpr, ProcessName, Sum, Sync}
+import preo.frontend.mcrl2.{Action, Block, BoolDT, Channel, Comm, DataType, Hide, ITE, In, Init, LAnd, LIn, LNot, LTrue, Model, Nothing, Out, Par, PrimBuilder, Process, ProcessExpr, ProcessName, Seq, Sum}
 
 /**
   * Created by guillecledou on 2019-05-08
@@ -23,8 +23,10 @@ case class IftaModel(procs: List[Process], init: ProcessExpr)
     val fsActions = wrapProcesses.flatMap(_.getActions).map(_.toString.dropRight(4))
 
     val nifta = mkNifta(procs)
-    val fm = nifta.fm && mkFmSyncs(nifta,procs)
+    val fm = Simplify(nifta.fm && mkFmSyncs(nifta,procs))
     val feats = nifta.iFTAs.flatMap(i => i.feats)
+
+    val inits = renameInitExpr(init)
 
     val res = s"""
        |sort
@@ -36,18 +38,31 @@ case class IftaModel(procs: List[Process], init: ProcessExpr)
        |  product,prod${if (fsActions.nonEmpty) fsActions.mkString(",",",","") else ""}:Product;
        |
        |proc
-       |  ${mkFmProc(fm,feats)}
+       |${mkFmProc(fm,feats)}
 
-       |  ${processes.mkString("",";\n",";")}
-       |  ${wrapProcesses.map(_.toStringNoRecursion).mkString("",";\n",";")}
+       |${processes.mkString("",";\n",";")}
+       |${wrapProcesses.map(_.toStringNoRecursion).mkString("",";\n",";")}
        |
        |init
        |  block({prod,${fsActions.mkString(",")}},
        |    comm({prod | ${fsActions.mkString(" | ")} -> product},
-       |  FM || ${if (init.isInstanceOf[ProcessName] && init.asInstanceOf[ProcessName].name.startsWith("Init")) init else "Wrap"+init }));
+       |      FM || $inits));
      """.stripMargin
-
+//  FM || ${if (init.isInstanceOf[ProcessName] && init.asInstanceOf[ProcessName].name.startsWith("Init")) init else "Wrap"+init }));
     res
+  }
+
+  private def renameInitExpr(expr: ProcessExpr):ProcessExpr = expr match {
+    case p@ProcessName(n,ap) if n.startsWith("Init") => p
+    case ProcessName(n,ap) => ProcessName("Wrap"+n,ap)
+    case Par(p1,p2) => Par(renameInitExpr(p1),renameInitExpr(p2))
+    case Seq(p1,p2) => Seq(renameInitExpr(p1),renameInitExpr(p2))
+    case Block(acts,in) => Block(acts,renameInitExpr(in))
+    case Comm(s,r,in) => Comm(s,r,renameInitExpr(in))
+    case Hide(acts,in) => Hide(acts,renameInitExpr(in))
+    case Sum(vars,p) => Sum(vars,renameInitExpr(p))
+    case ITE(c,t,None) => ITE(c,renameInitExpr(t))
+    case ITE(c,t,Some(e)) => ITE(c,renameInitExpr(t),Some(renameInitExpr(e)))
   }
 
   private def renameInitSync(init:Init):Init = {
@@ -126,18 +141,12 @@ case class IftaModel(procs: List[Process], init: ProcessExpr)
   private def mkFmProc(fm:FExp,feats:Set[String]):String = {
     val featsVal = feats.map(f => "val_"+f)
     s"""
-       |FM =
-       |  sum ${featsVal.mkString(",")}:Bool .
-       |    (${fm2mcrl2(fm)}) -> prod(${feats.map(f => s"$f(val_$f)").mkString("[",",","]")});
+       |FM = sum ${featsVal.mkString(",")}:Bool .
+       |  (${fm2mcrl2(fm)}) -> prod(${feats.map(f => s"$f(val_$f)").mkString("[",",","]")});
      """.stripMargin
   }
 
 }
-//case class IftaChannel(iname:String = "Channel", inumber: Option[Int], ins: List[Action], outs: List[Action],
-//                       expression: ProcessExpr,param:Map[String,String],ifta:IFTA) extends Channel(iname, inumber,ins,outs,expression,param) {
-//
-//}
-
 
 
 object IftaModel {
@@ -148,84 +157,137 @@ object IftaModel {
       IftaModel(proc,init)
 
     def buildPrimChannel(e: CPrim,chCount:Int): Channel = e match {
+      case CPrim("sync",_,_,_) =>
+        val in = Action("sync",In(1),Some(chCount))
+        val out = Action("sync",Out(2),Some(chCount))
+        val exp = ITE(LAnd(LIn(ActionFeat(in,LTrue),"fs"),LIn(ActionFeat(out,LTrue),"fs")),in | out)
+        //        val exp = ITE(s"v_${in1}(true) in fs && v_${in2}(true) in fs",in1 | in2)
+        Channel("Sync",Some(chCount),List(in),List(out), exp, Map("fs"->"Product"))
       case CPrim("drain",_,_,_) =>
         val in1 = Action("drain",In(1),Some(chCount))
         val in2 = Action("drain",In(2),Some(chCount))
-        val exp = ITE(s"v_${in1}(true) in fs && v_${in2}(true) in fs",in1 | in2)
+        val exp = ITE(LAnd(LIn(ActionFeat(in1,LTrue),"fs"),LIn(ActionFeat(in2,LTrue),"fs")),in1 | in2)
+//        val exp = ITE(s"v_${in1}(true) in fs && v_${in2}(true) in fs",in1 | in2)
         Channel("Drain",Some(chCount),List(in1,in2),List(), exp, Map("fs"->"Product"))
       case CPrim("fifo",_,_,_) =>
         val in = Action("fifo",In(1),Some(chCount))
         val out = Action("fifo",Out(1),Some(chCount))
-        val exp = ITE(s"v_${in}(true) in fs && v_${out}(true) in fs",in & out)
+//        val exp = ITE(s"v_${in}(true) in fs && v_${out}(true) in fs",in & out)
+        val exp = ITE(LAnd(LIn(ActionFeat(in,LTrue),"fs"),LIn(ActionFeat(out,LTrue),"fs")),in & out)
         Channel("Fifo",Some(chCount),List(in),List(out), exp, Map("fs"->"Product"))
       case CPrim("fifofull",_,_,_) =>
         val in = Action("fifofull",In(1),Some(chCount))
         val out = Action("fifofull",Out(1),Some(chCount))
-        val exp = ITE(s"v_${in}(true) in fs && v_${out}(true) in fs",out & in)
+//        val exp = ITE(s"v_${in}(true) in fs && v_${out}(true) in fs",out & in)
+        val exp = ITE(LIn(ActionFeat(in,LTrue),"fs") & LIn(ActionFeat(out,LTrue),"fs"),out & in)
         Channel("Fifofull",Some(chCount),List(in),List(out), exp, Map("fs"->"Product"))
       case CPrim("lossy",_,_,_) =>
         val in = Action("lossy",In(1),Some(chCount))
         val out = Action("lossy",Out(1),Some(chCount))
-        val exp = ITE(s"v_${in}(true) in fs && v_${out}(true) in fs",(in | out) + in)
+//        val exp = ITE(s"v_${in}(true) in fs && v_${out}(true) in fs",(in | out) + in)
+        val exp = ITE(LIn(ActionFeat(in,LTrue),"fs") & LIn(ActionFeat(out,LTrue),"fs"),(in | out) + in)
         Channel("Lossy",Some(chCount),List(in),List(out), exp, Map("fs"->"Product"))
       case CPrim("dupl",_,_,_) =>
         val in = Action("dupl",In(1),Some(chCount))
         val out1 = Action("dupl",Out(1),Some(chCount))
         val out2 = Action("dupl",Out(2),Some(chCount))
-        val exp = ITE(s"v_${in}(true) in fs && v_${out1}(true) in fs && v_${out2}(true) in fs",
-            in | out1 | out2 )
+//        val exp = ITE(s"v_${in}(true) in fs && v_${out1}(true) in fs && v_${out2}(true) in fs",in | out1 | out2 )
+        val exp = ITE(LIn(ActionFeat(in,LTrue),"fs") & LIn(ActionFeat(out1,LTrue),"fs") & LIn(ActionFeat(out2,LTrue),"fs"),
+          in | out1 | out2 )
         Channel("Dupl",Some(chCount),List(in),List(out1,out2), exp, Map("fs"->"Product"))
       case CPrim("vdupl",_,_,_) =>
         val in = Action("vdupl",In(1),Some(chCount))
         val out1 = Action("vdupl",Out(1),Some(chCount))
         val out2 = Action("vdupl",Out(2),Some(chCount))
-        val exp1 = ITE(s"v_${in}(true) in fs && v_${out1}(true) in fs && v_${out2}(true) in fs",
-          in | out1 | out2 )
-        val exp2 = ITE(s"v_${in}(true) in fs && v_${out1}(true) in fs && !(v_${out2}(true) in fs)",
-          in | out1)
-        val exp3 = ITE(s"v_${in}(true) in fs && !(v_${out1}(true) in fs) && v_${out2}(true) in fs",
-          in | out2)
+//        val exp1 = ITE(s"v_${in.toString}(true) in fs && v_${out1}(true) in fs && v_${out2}(true) in fs",
+//          in | out1 | out2 )
+        val exp1 = ITE(LIn(ActionFeat(in,LTrue),"fs") & LIn(ActionFeat(out1,LTrue),"fs") & LIn(ActionFeat(out2,LTrue),"fs"),
+            in | out1 | out2 )
+//        val exp2 = ITE(s"v_${in.toString}(true) in fs && v_${out1}(true) in fs && !(v_${out2}(true) in fs)",
+//          in | out1)
+        val exp2 = ITE(LIn(ActionFeat(in,LTrue),"fs") & LIn(ActionFeat(out1,LTrue),"fs") & LNot(LIn(ActionFeat(out2,LTrue),"fs")),
+            in | out1 )
+//        val exp3 = ITE(s"v_${in.toString}(true) in fs && !(v_${out1}(true) in fs) && v_${out2}(true) in fs",
+//          in | out2)
+        val exp3 = ITE(LIn(ActionFeat(in,LTrue),"fs") & LNot(LIn(ActionFeat(out1,LTrue),"fs")) & LIn(ActionFeat(out2,LTrue),"fs"),
+          in | out2 )
         Channel("VDupl",Some(chCount),List(in),List(out1,out2), exp1 + exp2 + exp3, Map("fs"->"Product"))
+      case CPrim("xor",_,_,_) =>
+        val in = Action("xor",In(1),Some(chCount))
+        val out1 = Action("xor",Out(1),Some(chCount))
+        val out2 = Action("xor",Out(2),Some(chCount))
+        //        val exp = ITE(s"v_${in}(true) in fs && v_${out1}(true) in fs && v_${out2}(true) in fs",in | out1 | out2 )
+        val exp = ITE(LIn(ActionFeat(in,LTrue),"fs") & LIn(ActionFeat(out1,LTrue),"fs") & LIn(ActionFeat(out2,LTrue),"fs"),
+          (in | out1 ) + (in | out2))
+        Channel("Xor",Some(chCount),List(in),List(out1,out2), exp, Map("fs"->"Product"))
+      case CPrim("vxor",_,_,_) =>
+        val in = Action("vxor",In(1),Some(chCount))
+        val out1 = Action("vxor",Out(1),Some(chCount))
+        val out2 = Action("vxor",Out(2),Some(chCount))
+        val exp1 = ITE(LIn(ActionFeat(in,LTrue),"fs") & LIn(ActionFeat(out1,LTrue),"fs") & LIn(ActionFeat(out2,LTrue),"fs"),
+          (in | out1) + (in | out2) )
+        val exp2 = ITE(LIn(ActionFeat(in,LTrue),"fs") & LIn(ActionFeat(out1,LTrue),"fs") & LNot(LIn(ActionFeat(out2,LTrue),"fs")),
+          in | out1 )
+        val exp3 = ITE(LIn(ActionFeat(in,LTrue),"fs") & LNot(LIn(ActionFeat(out1,LTrue),"fs")) & LIn(ActionFeat(out2,LTrue),"fs"),
+          in | out2 )
+        Channel("VXor",Some(chCount),List(in),List(out1,out2), exp1 + exp2 + exp3, Map("fs"->"Product"))
       case CPrim("merger",_,_,_) =>
         val in1 = Action("merger",In(1),Some(chCount))
         val in2 = Action("merger",In(2),Some(chCount))
         val out = Action("merger",Out(1),Some(chCount))
-        val exp = ITE(s"v_${in1}(true) in fs && v_${in2}(true) in fs && v_${out}(true) in fs",
-          in1 | in2 | out )
+//        val exp = ITE(s"v_${in1}(true) in fs && v_${in2}(true) in fs && v_${out}(true) in fs", in1 | in2 | out )
+        val exp = ITE(LIn(ActionFeat(in1,LTrue),"fs") & LIn(ActionFeat(in2,LTrue),"fs") & LIn(ActionFeat(out,LTrue),"fs"),
+          (in1 | out) + (in2 | out) )
         Channel("Merger",Some(chCount),List(in1,in2),List(out), exp, Map("fs"->"Product"))
       case CPrim("vmerger",_,_,_) =>
         val in1 = Action("vmerger",In(1),Some(chCount))
         val in2 = Action("vmerger",In(2),Some(chCount))
         val out = Action("vmerger",Out(1),Some(chCount))
-        val exp1 = ITE(s"v_${in1}(true) in fs && v_${in2}(true) in fs && v_${out}(true) in fs",
-          in1 | in2 | out )
-        val exp2 = ITE(s"v_${in1}(true) in fs && !(v_${in2}(true) in fs) && v_${out}(true) in fs",
+//        val exp1 = ITE(s"v_${in1}(true) in fs && v_${in2}(true) in fs && v_${out}(true) in fs",
+//          in1 | in2 | out )
+        val exp1 = ITE(LIn(ActionFeat(in1,LTrue),"fs") & LIn(ActionFeat(in2,LTrue),"fs") & LIn(ActionFeat(out,LTrue),"fs"),
+          (in1 | out) + (in2 | out) )
+//        val exp2 = ITE(s"v_${in1}(true) in fs && !(v_${in2}(true) in fs) && v_${out}(true) in fs",
+//          in1 | out )
+        val exp2 = ITE(LIn(ActionFeat(in1,LTrue),"fs") & LNot(LIn(ActionFeat(in2,LTrue),"fs")) & LIn(ActionFeat(out,LTrue),"fs"),
           in1 | out )
-        val exp3 = ITE(s"!(v_${in1}(true) in fs) && v_${in2}(true) in fs && v_${out}(true) in fs",
+//        val exp3 = ITE(s"!(v_${in1}(true) in fs) && v_${in2}(true) in fs && v_${out}(true) in fs",
+//          in2 | out )
+        val exp3 = ITE(LNot(LIn(ActionFeat(in1,LTrue),"fs")) & LIn(ActionFeat(in2,LTrue),"fs") & LIn(ActionFeat(out,LTrue),"fs"),
           in2 | out )
         Channel("VMerger",Some(chCount),List(in1,in2),List(out), exp1 + exp2 + exp3, Map("fs"->"Product"))
       case CPrim("writer",_,_,_) =>
         val out = Action("writer",Out(1),Some(chCount))
-        val exp = out
+        val exp = ITE(LIn(ActionFeat(out,LTrue),"fs"),out)
         Channel("Writer",Some(chCount),List(),List(out), exp, Map("fs"->"Product"))
       case CPrim("reader",_,_,_) =>
         val in = Action("reader",In(1),Some(chCount))
-        val exp = in
+        val exp = ITE(LIn(ActionFeat(in,LTrue),"fs"),in)
         Channel("Reader",Some(chCount),List(in),List(), exp, Map("fs"->"Product"))
       case CPrim("timer",_,_,extra) => //todo: handle time properly
         val in = Action("timer",In(1),Some(chCount))
         val out = Action("timer",Out(1),Some(chCount))
-        val exp = ITE(s"v_${in}(true) in fs && v_${out}(true) in fs",in & out)
+//        val exp = ITE(s"v_${in}(true) in fs && v_${out}(true) in fs",in & out)
+        val exp = ITE(LAnd(LIn(ActionFeat(in,LTrue),"fs"),LIn(ActionFeat(out,LTrue),"fs")),in & out)
         Channel("Timer",Some(chCount),List(in),List(out), exp, Map("fs"->"Product"))
 
       case CPrim(name, CoreInterface(1), CoreInterface(1), _) =>
         val in = Action(name, In(1), Some(chCount))
         val out = Action(name, Out(1), Some(chCount))
+        val exp = ITE(LAnd(LIn(ActionFeat(in,LTrue),"fs"),LIn(ActionFeat(out,LTrue),"fs")),in | out)
         val channel = Channel(number = Some(chCount), in = List(in), out = List(out),
-          expression = in | out)
+          expression = exp,params = Map("fs"->"Product"))
         channel
 
       case CPrim(n,_,_,_) => throw new RuntimeException(s"Unknown connector ${n}")
     }
   }
 }
+
+case class ActionFeat(action:Action,value:BoolDT) extends DataType {
+  override def toString: String = "v_"+action.toString + s"($value)"
+}
+
+
+
+
