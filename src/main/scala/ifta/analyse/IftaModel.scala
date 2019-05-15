@@ -11,7 +11,6 @@ import preo.frontend.mcrl2.{Action, Block, BoolDT, Channel, Comm, DataType, Hide
   * Created by guillecledou on 2019-05-08
   */
 
-
 case class IftaModel(procs: List[Process], init: ProcessExpr)
   extends Model(procs,init) {
 
@@ -78,53 +77,26 @@ case class IftaModel(procs: List[Process], init: ProcessExpr)
 
 
   private def mkIftaInits(processes: List[Process]):(List[IftaInit],Map[ProcessName,(Action,Action,Action)]) = {
+    def getFsAction(p:ProcessName,fsMap:Map[ProcessName,(Action,Action,Action)]):Action = p.name match  {
+      case n if n.startsWith("Wrap") => Action("fs"+n.drop(4),Nothing,None)
+      case n if n.startsWith("Init") => fsMap(p)._3
+      case n => throw new RuntimeException(s"Unknown process name type: $n")
+    }
     var initsOrder:List[Init] = processes.filter(p => p.isInstanceOf[Init]).map(p => p.asInstanceOf[Init]).sortBy(_.number)
     var fsMap: Map[ProcessName,(Action,Action,Action)] = Map()
-    println("about to create newIftasInits")
     var res = initsOrder.map(i => i match {
-      case p@Init(num,sa1,sa2,List(c1,c2),hide) if c1.name.startsWith("Wrap") && c2.name.startsWith("Wrap")=>
-        println(c1   + " ww   "+ c2)
-        val fs1 = Action("fs"+c1.name.drop(4),Nothing,None)
-        val fs2 = Action("fs"+c2.name.drop(4),Nothing,None)
-        println(fs1 + "   " + fs2)
+      case p@Init(num,sa1,sa2,List(c1,c2),hide) =>
+        val fs1 = getFsAction(c1,fsMap)
+        val fs2 = getFsAction(c2,fsMap)
         fsMap+= p.getName -> (fs1,fs2,Action(fs1+"_"+fs2,Nothing,None))
         IftaInit(num,(sa1,sa2),Some((fs1,fs2)),List(c1,c2),hide)
-      case p@Init(num,sa1,sa2,List(c1,c2),hide) if c1.name.startsWith("Wrap") && c2.name.startsWith("Init") =>
-        println(c1   + " wi   "+ c2)
-        val fs1 = Action("fs"+c1.name.drop(4),Nothing,None)
-        val fs2 = fsMap(c2)._3
-        println(fs1 + "   " + fs2)
-        fsMap+= p.getName -> (fs1,fs2,Action(fs1+"_"+fs2,Nothing,None))
-        IftaInit(num,(sa1,sa2),Some((fs1,fs2)),List(c1,c2),hide)
-      case p@Init(num,sa1,sa2,List(c1,c2),hide) if c1.name.startsWith("Init") && c2.name.startsWith("Wrap") =>
-        println(c1   + " iw   "+ c2)
-        val fs1 = fsMap(c1)._3
-        val fs2 = Action("fs"+c2.name.drop(4),Nothing,None)
-        fsMap+= p.getName -> (fs1,fs2,Action(fs1+"_"+fs2,Nothing,None))
-        println(fs1 + "   " + fs2)
-        IftaInit(num,(sa1,sa2),Some((fs1,fs2)),List(c1,c2),hide)
-      case p@Init(num,sa1,sa2,List(c1,c2),hide) if c1.name.startsWith("Init") && c2.name.startsWith("Init") =>
-        println(c1   + " ii   "+ c2)
-        val fs1 = fsMap(c1)._3
-        val fs2 = fsMap(c2)._3
-        println(fs1 + "   " + fs2)
-        fsMap+= p.getName -> (fs1,fs2,Action(fs1+"_"+fs2,Nothing,None))
-        IftaInit(num,(sa1,sa2),Some((fs1,fs2)),List(c1,c2),hide)
-      case p@Init(num,sa1,sa2,List(c1),hide) if c1.name.startsWith("Init")  =>
-        println(c1   + "  i  ")
+      case p@Init(num,sa1,sa2,List(c1),hide)  =>
         val fs1 = Action("",Nothing,None)
         val fs2 = Action("",Nothing,None)
-        println(fs1 + "   " + fs2)
-        fsMap+= p.getName -> (fs1,fs2,fsMap(c1)._3)
-        IftaInit(num,(sa1,sa2),None,List(c1),hide)
-      case p@Init(num,sa1,sa2,List(c1),hide) if c1.name.startsWith("Wrap") =>
-        println(c1   + "  w  ")
-        val fs1 = Action("",Nothing,None)
-        val fs2 = Action("",Nothing,None)
-        println(fs1 + "   " + fs2)
-        fsMap+= p.getName -> (fs1,fs2,Action("fs"+c1.name,Nothing,None))
+        fsMap+= p.getName -> (fs1,fs2,getFsAction(c1,fsMap))
         IftaInit(num,(sa1,sa2),None,List(c1),hide)
     })
+
     (res,fsMap)
   }
 
@@ -238,7 +210,6 @@ case class IftaModel(procs: List[Process], init: ProcessExpr)
   }
 
 }
-
 
 case class IftaInit(number: Option[Int], syncAct:(Action,Action), fsSyncAct:Option[(Action,Action)], procs: List[ProcessName], var toHide: Boolean)
   extends Process{
