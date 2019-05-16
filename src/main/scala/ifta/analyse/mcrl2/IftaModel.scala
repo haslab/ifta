@@ -58,22 +58,20 @@ case class IftaModel(processes:List[Process],initExpr:ProcessExpr,fm:FExp,feats:
   }
 
   private def mkFmProcess(fm:FExp,feats:Set[String],fmSols:Set[Set[String]]):String = {
-//    val feats =  nifta.iFTAs.flatMap(i => i.feats)
-//    val fm = nifta.fm
     val featsValues = feats.map(f => "val_"+f)
-
+    if (fmSols.isEmpty)
     s"""
        |FM = sum ${featsValues.mkString(",")}:Bool .
-     """.stripMargin +
-      (if (fmSols.isEmpty)
+       |  (${fm2mcrl2(fm)})
+       |    -> prod(${feats.map(f => s"$f(val_$f)").mkString("[", ",", "]")});
+     """.stripMargin
+    else
       s"""
-         |  (${fm2mcrl2(fm)})
-         |    -> prod(${feats.map(f => s"$f(val_$f)").mkString("[",",","]")});
+         |FM =
+         |${fmSols.map(s => s"prod(${s.map(f =>
+            if (f == "") ""
+            else s"$f(true)").mkString("[",",","]")})").mkString(""," + \n",";")}
        """.stripMargin
-      else
-      s"""
-         |${fmSols.map(s => s"prod(${s.map(f => s"$f(val_$f)").mkString("[",",","]")})").mkString(""," + \n",";")}
-       """.stripMargin)
   }
 
   private def fm2mcrl2(fm:FExp):String = fm match {
@@ -551,10 +549,11 @@ object IftaModel {
 
     private def getInitFsActNames(init:ProcessExpr,procs:List[Process],fsMap:Map[ProcessName,(Action,Action,Action)]): Set[String] = {
       val procNames = init.getProcNames
-      val lastInitProcess = procs.filter(p => p.isInstanceOf[IftaInit]).asInstanceOf[List[IftaInit]].maxBy(_.number)
       var res:Set[String] = Set()
       res = procNames.map(p => p.name match {
-        case "delta" => fsMap(lastInitProcess.getName)._3.toString
+        case "delta" =>
+          val lastInitProcess = procs.filter(p => p.isInstanceOf[IftaInit]).asInstanceOf[List[IftaInit]].maxBy(_.number)
+          fsMap(lastInitProcess.getName)._3.toString
         case n if n.startsWith("Init") => fsMap(p)._3.toString
         case n => "fs"+n.drop(4)
       })
