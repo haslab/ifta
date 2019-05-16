@@ -89,6 +89,12 @@ object DSL {
       throw new ParseException(f.toString)
   }
 
+  def parseEfficientFexp(fe:String):FExp = Parser.parseEfficientFexp(fe) match {
+    case Parser.Success(f,_) => f
+    case f:Parser.NoSuccess =>
+      throw new ParseException(f.toString)
+  }
+
   def parserFeats(feats:String):Set[String] = Parser.parseFeats(feats) match {
     case Parser.Success(f,_) => f
     case f:Parser.NoSuccess =>

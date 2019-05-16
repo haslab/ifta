@@ -13,6 +13,8 @@ object Parser extends RegexParsers {
 
   def parseFexp(fe:String):ParseResult[FExp] = parseAll(fexp,fe)
 
+  def parseEfficientFexp(fe:String):ParseResult[FExp] = parseAll(efexp,fe)
+
   def parseProducts(prod:String):ParseResult[Set[Set[String]]] = parseAll(products,prod)
 
   def parseFeats(feats:String):ParseResult[Set[String]] = parseAll(prod,feats)
@@ -47,6 +49,17 @@ object Parser extends RegexParsers {
   "|"  ^^ { _ => (f1:FExp,f2:FExp) => f1 || f2}  |
   "-->" ^^ { _ => (f1:FExp,f2:FExp) => f1 --> f2} |
   "<->" ^^ { _ => (f1:FExp,f2:FExp) => f1 <-> f2}
+
+  /* Efficient Feature Expression */
+
+  def efexp:Parser[FExp] =
+  "Feat("~>feat<~")" |
+  "FAnd("~ efexp ~","~ efexp ~")" ^^ {case _~e1~_~e2~_ => FAnd(e1,e2)}  |
+  "FOr("~ efexp ~","~ efexp ~")" ^^ {case _~e1~_~e2~_ => FOr(e1,e2)}  |
+  "FNot("~ efexp ~")" ^^ {case _ ~ e ~ _  => FNot(e)} |
+  "FEq("~ efexp ~","~ efexp ~")" ^^ {case _~e1~_~e2~_ => FEq(e1,e2)}  |
+  "FImp("~ efexp ~","~ efexp ~")" ^^ {case _~e1~_~e2~_ => FImp(e1,e2)}
+
 
   /* Set of Products */
 
