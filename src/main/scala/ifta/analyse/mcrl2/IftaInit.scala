@@ -1,5 +1,6 @@
 package ifta.analyse.mcrl2
 
+import ifta._
 import preo.frontend.mcrl2._
 
 /**

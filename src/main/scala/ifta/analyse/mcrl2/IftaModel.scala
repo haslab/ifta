@@ -12,179 +12,68 @@ import preo.frontend.mcrl2.{Action, Block, BoolDT, Channel, Comm, DataType, Hide
   * Created by guillecledou on 2019-05-08
   */
 
-case class IftaModel(procs: List[Process], init: ProcessExpr)
-  extends Model(procs,init) {
+case class IftaModel(processes:List[Process],initExpr:ProcessExpr,fm:FExp,feats:Set[String]) extends Model(processes,initExpr) {
 
-  override def toString: String = {
+  override def toString:String = this.show()
 
-    // add a wrap process to set valid feature selections for each channel
-    var wrapProcesses = procs.filter(_.isInstanceOf[Channel]).map(c=>mkWrapProc(c.asInstanceOf[Channel]))
+  def show(fmSols:Set[Set[String]]=Set()): String = {
+      // fm process
+      val fmProc = mkFmProcess(fm,feats,fmSols)
 
-    // regular channel processes
-    var channelProcesses = procs.filter(_.isInstanceOf[Channel])
+      // wrap processes todo: maybe make a proper Wrap class
+      val wraps = processes.filter(_.getName.name.startsWith("Wrap")).asInstanceOf[List[Channel]]
+      // init processes
+      val inits = processes.filter(_.isInstanceOf[IftaInit])
+      // ifta channel processes
+      val channels = processes.filter(_.isInstanceOf[Channel]).toSet -- wraps
 
-    // rename channels in init processes to be WrapChannelX instead of ChannelX, and
-    // add action synchronization for actions representing feature selection actions
-    val initProcesses = procs.filter(p => p.isInstanceOf[Init]).asInstanceOf[List[Init]]
-    val (iftaInitProcesses,fsMap) = mkIftaInits(initProcesses.map(p => renameInitSync(p)))
+      // regular actions
+      val acts = processes.flatMap(_.getActions.filterNot(_.name.startsWith("fs")))
 
-    // processes body
-    val processes:List[Process] = channelProcesses ++ wrapProcesses ++ iftaInitProcesses
+      // actions in charge of syncrhonizing features selections
+      val fsActs =  wraps.flatMap(_.getActions).map(_.toString.dropRight(4)) ++ // basic actions
+        inits.flatMap(_.getActions).filter(_.name.startsWith("fs")) // joint actions
 
-    // build fm
-    val nifta = mkNifta(procs)
-    val fm = Simplify(nifta.fm && mkFmSyncs(nifta,procs))
-    val feats = nifta.iFTAs.flatMap(i => i.feats)
-
-    // the name of all actions in charge of syncrhonizing features selections
-    val fsActions =
-      wrapProcesses.flatMap(_.getActions).map(_.toString.dropRight(4)) ++ // basic actions
-      iftaInitProcesses.flatMap(_.getActions).filter(_.name.startsWith("fs")) // joint actions
-
-    // actions
-    val actions = processes.flatMap(_.getActions).filterNot(_.name.startsWith("fs"))
-
-    // rename init expression (delta -> delta, Channel -> WrapChannel, Init -> Init)
-    val newInit = renameInitExpr(init)
-
-    // find the feature selection actions that should synchronize in the init expression if any
-    val initFsActs = getInitFsActNames(newInit,processes,fsMap)
-
-    val res = s"""
+    s"""
        |sort
        |  Feature = struct ${feats.map(f => s"$f(v:Bool)").mkString(" | ")};
        |  Product = List(Feature);
        |
        |act
-       |  ${actions.mkString(",")};
-       |  product,prod${if (fsActions.nonEmpty) fsActions.mkString(",",",","") else ""}:Product;
+       |  ${acts.mkString(",")};
+       |  product,prod${if (fsActs.nonEmpty) fsActs.mkString(",", ",", "") else ""}:Product;
        |
        |proc
-       |${mkFmProc(fm,feats)}
-
-       |${channelProcesses.mkString("",";\n",";")}
+       |$fmProc
        |
-       |${wrapProcesses.map(_.toStringNoRecursion).mkString("",";\n",";")}
+       |${channels.mkString("", ";\n", ";")}
        |
-       |${iftaInitProcesses.mkString("",";\n",";")}
+       |${wraps.map(_.toStringNoRecursion).mkString("", ";\n", ";")}
+       |
+       |${inits.mkString("", ";\n", ";")}
        |
        |init
-       |  block({prod,${initFsActs.mkString(",")}},
-       |    comm({prod | ${initFsActs.mkString(" | ")} -> product},
-       |      FM || $newInit));
+       |  $initExpr;
      """.stripMargin
-    res
   }
 
+  private def mkFmProcess(fm:FExp,feats:Set[String],fmSols:Set[Set[String]]):String = {
+//    val feats =  nifta.iFTAs.flatMap(i => i.feats)
+//    val fm = nifta.fm
+    val featsValues = feats.map(f => "val_"+f)
 
-  private def mkIftaInits(processes: List[Process]):(List[IftaInit],Map[ProcessName,(Action,Action,Action)]) = {
-    def getFsAction(p:ProcessName,fsMap:Map[ProcessName,(Action,Action,Action)]):Action = p.name match  {
-      case n if n.startsWith("Wrap") => Action("fs"+n.drop(4),Nothing,None)
-      case n if n.startsWith("Init") => fsMap(p)._3
-      case n => throw new RuntimeException(s"Unknown process name type: $n")
-    }
-    var initsOrder:List[Init] = processes.filter(p => p.isInstanceOf[Init]).map(p => p.asInstanceOf[Init]).sortBy(_.number)
-    var fsMap: Map[ProcessName,(Action,Action,Action)] = Map()
-    var res = initsOrder.map(i => i match {
-      case p@Init(num,sa1,sa2,List(c1,c2),hide) =>
-        val fs1 = getFsAction(c1,fsMap)
-        val fs2 = getFsAction(c2,fsMap)
-        fsMap+= p.getName -> (fs1,fs2,Action(fs1+"_"+fs2,Nothing,None))
-        IftaInit(num,(sa1,sa2),Some((fs1,fs2)),List(c1,c2),hide)
-      case p@Init(num,sa1,sa2,List(c1),hide)  =>
-        val fs1 = Action("",Nothing,None)
-        val fs2 = Action("",Nothing,None)
-        fsMap+= p.getName -> (fs1,fs2,getFsAction(c1,fsMap))
-        IftaInit(num,(sa1,sa2),None,List(c1),hide)
-    })
-
-    (res,fsMap)
-  }
-
-
-  private def getInitFsActNames(init:ProcessExpr,procs:List[Process],fsMap:Map[ProcessName,(Action,Action,Action)]): Set[String] = {
-    val procNames = init.getProcNames
-    val lastInitProcess = procs.filter(p => p.isInstanceOf[IftaInit]).asInstanceOf[List[IftaInit]].maxBy(_.number)
-    var res:Set[String] = Set()
-    res = procNames.map(p => p.name match {
-      case "delta" => fsMap(lastInitProcess.getName)._3.toString
-      case n if n.startsWith("Init") => fsMap(p)._3.toString
-      case n => "fs"+n.drop(4)
-    })
-    res
-  }
-
-
-  private def renameInitExpr(expr: ProcessExpr):ProcessExpr = expr match {
-    case p@ProcessName(n,ap) if n.startsWith("Init") => p
-    case p@ProcessName("delta",ap) => p
-    case ProcessName(n,ap) => ProcessName("Wrap"+n,ap)
-    case Par(p1,p2) => Par(renameInitExpr(p1),renameInitExpr(p2))
-    case Seq(p1,p2) => Seq(renameInitExpr(p1),renameInitExpr(p2))
-    case Block(acts,in) => Block(acts,renameInitExpr(in))
-    case Comm(s,in) => Comm(s,renameInitExpr(in))
-    case Hide(acts,in) => Hide(acts,renameInitExpr(in))
-    case Sum(vars,p) => Sum(vars,renameInitExpr(p))
-    case ITE(c,t,None) => ITE(c,renameInitExpr(t))
-    case ITE(c,t,Some(e)) => ITE(c,renameInitExpr(t),Some(renameInitExpr(e)))
-  }
-
-  private def renameInitSync(init:Init):Init = {
-    Init(init.number,init.action1,init.action2, init.procs.map(p =>
-        if (p.name.startsWith("Init"))
-          p
-        else ProcessName("Wrap"+p.name,p.actualParam)),
-      init.toHide)
-  }
-
-  private def mkWrapProc(proc:Channel):Channel = {
-    val act = Action("fs"+proc.getName,Nothing,None,List(("fs","Product")))
-    Channel("Wrap" + proc.getName, None, List(act), List(), Sum(Map("fs" -> "Product"),act & proc.getNameWithActualParam),Map())
-  }
-
-  private def mkNifta(procs:List[Process]):NIFTA = {
-    val iftas = procs.filter(_.isInstanceOf[Channel]).map(c => mkIfta(c.asInstanceOf[Channel]))
-    NIFTA(iftas.toSet)
-  }
-
-  private def mkIfta(ch:Channel):IFTA = ch.name match {
-    case "Dupl" => repl(ch.in.head.toString, ch.out.head.toString, ch.out.tail.map(o => o.toString).mkString(","))
-    case "VDupl" => vrepl(ch.in.head.toString, ch.out.head.toString, ch.out.tail.map(o => o.toString).mkString(","))
-    case "Merger" => merger(ch.in.head.toString,ch.in.tail.head.toString,(ch.in.tail.drop(1) ++ ch.out).map(a=> a.toString).mkString(","))
-    case "VMerger" => vmerger(ch.in.head.toString,ch.in.tail.head.toString,(ch.in.tail.drop(1) ++ ch.out).map(a=> a.toString).mkString(","))
-    case "Sync" => sync(ch.in.head.toString,ch.out.head.toString)
-    case "Fifo" => fifo(ch.in.head.toString,ch.out.head.toString)
-    case "Fifofull" => fifofull(ch.in.head.toString,ch.out.head.toString)
-    case "Lossy" => lossy(ch.in.head.toString,ch.out.head.toString)
-    case "Xor" => router(ch.in.head.toString,ch.out.head.toString, ch.out.tail.map(o => o.toString).mkString(","))
-    case "VXor" => vrouter(ch.in.head.toString,ch.out.head.toString, ch.out.tail.map(o => o.toString).mkString(","))
-    case "Drain" => sdrain(ch.in.head.toString,ch.in.last.toString)
-    case "Writer" => writer(ch.out.head.toString)
-    case "Reader" => reader(ch.in.head.toString)
-    case "Timer" => timer(ch.in.head.toString,ch.out.head.toString,0) //todo:handle time properly
-    case n if ch.in.size == 1 && ch.out.size == 1 => sync(ch.in.head.toString,ch.out.head.toString)
-    case n => throw new RuntimeException(s"Unknown primitive ifta connector ${n}")
-  }
-
-  private def mkFmSyncs(nifta: NIFTA, processes: List[Process]):FExp = {
-    val syncs = procs.map(p => p match {
-      case i@Init(_, _, _, _, _) => mkFmSync(nifta,i)
-      case _ => FTrue
-    })
-
-    syncs.foldRight[FExp](FTrue)(_&&_)
-  }
-
-  private def mkFmSync(nifta:NIFTA,init:Init):FExp = {
-    val a1 = init.action1.toString
-    val a2 = init.action2.toString
-    val ifta1 = nifta.iFTAs.find(i => i.act.contains(a1))
-    val ifta2 = nifta.iFTAs.find(i => i.act.contains(a2))
-    (ifta1,ifta2) match {
-      case (None,_) => FTrue
-      case (_,None) => FTrue
-      case (Some(ifta1),Some(ifta2)) =>ifta1.fe(a1) <-> ifta2.fe(a2)
-    }
+    s"""
+       |FM = sum ${featsValues.mkString(",")}:Bool .
+     """.stripMargin +
+      (if (fmSols.isEmpty)
+      s"""
+         |  (${fm2mcrl2(fm)})
+         |    -> prod(${feats.map(f => s"$f(val_$f)").mkString("[",",","]")});
+       """.stripMargin
+      else
+      s"""
+         |${fmSols.map(s => s"prod(${s.map(f => s"$f(val_$f)").mkString("[",",","]")})").mkString(""," + \n",";")}
+       """.stripMargin)
   }
 
   private def fm2mcrl2(fm:FExp):String = fm match {
@@ -201,16 +90,207 @@ case class IftaModel(procs: List[Process], init: ProcessExpr)
       s"(($imp1) => ($imp2)) && (($imp2) => ($imp1))"
   }
 
-  private def mkFmProc(fm:FExp,feats:Set[String]):String = {
-    val featsVal = feats.map(f => "val_"+f)
-    s"""
-       |FM = sum ${featsVal.mkString(",")}:Bool .
-       |  (${fm2mcrl2(fm)})
-       |    -> prod(${feats.map(f => s"$f(val_$f)").mkString("[",",","]")});
-     """.stripMargin
-  }
-
 }
+
+//case class IftaModel(procs: List[Process], init: ProcessExpr)
+//  extends Model(procs,init) {
+//
+//  override def toString: String = {
+//
+//    // add a wrap process to set valid feature selections for each channel
+//    var wrapProcesses = procs.filter(_.isInstanceOf[Channel]).map(c=>mkWrapProc(c.asInstanceOf[Channel]))
+//
+//    // regular channel processes
+//    var channelProcesses = procs.filter(_.isInstanceOf[Channel])
+//
+//    // rename channels in init processes to be WrapChannelX instead of ChannelX, and
+//    // add action synchronization for actions representing feature selection actions
+//    val initProcesses = procs.filter(p => p.isInstanceOf[Init]).asInstanceOf[List[Init]]
+//    val (iftaInitProcesses,fsMap) = mkIftaInits(initProcesses.map(p => renameInitSync(p)))
+//
+//    // processes body
+//    val processes:List[Process] = channelProcesses ++ wrapProcesses ++ iftaInitProcesses
+//
+//    // build fm
+//    val nifta = mkNifta(procs)
+//    val fm = Simplify(nifta.fm && mkFmSyncs(nifta,procs))
+//    val feats = nifta.iFTAs.flatMap(i => i.feats)
+//
+//    // the name of all actions in charge of syncrhonizing features selections
+//    val fsActions =
+//      wrapProcesses.flatMap(_.getActions).map(_.toString.dropRight(4)) ++ // basic actions
+//      iftaInitProcesses.flatMap(_.getActions).filter(_.name.startsWith("fs")) // joint actions
+//
+//    // actions
+//    val actions = processes.flatMap(_.getActions).filterNot(_.name.startsWith("fs"))
+//
+//    // rename init expression (delta -> delta, Channel -> WrapChannel, Init -> Init)
+//    val newInit = renameInitExpr(init)
+//
+//    // find the feature selection actions that should synchronize in the init expression if any
+//    val initFsActs = getInitFsActNames(newInit,processes,fsMap)
+//
+//    val res = s"""
+//       |sort
+//       |  Feature = struct ${feats.map(f => s"$f(v:Bool)").mkString(" | ")};
+//       |  Product = List(Feature);
+//       |
+//       |act
+//       |  ${actions.mkString(",")};
+//       |  product,prod${if (fsActions.nonEmpty) fsActions.mkString(",",",","") else ""}:Product;
+//       |
+//       |proc
+//       |${mkFmProcess(fm,feats)}
+//
+//       |${channelProcesses.mkString("",";\n",";")}
+//       |
+//       |${wrapProcesses.map(_.toStringNoRecursion).mkString("",";\n",";")}
+//       |
+//       |${iftaInitProcesses.mkString("",";\n",";")}
+//       |
+//       |init
+//       |  block({prod,${initFsActs.mkString(",")}},
+//       |    comm({prod | ${initFsActs.mkString(" | ")} -> product},
+//       |      FM || $newInit));
+//     """.stripMargin
+//    res
+//  }
+//
+//
+//  private def mkIftaInits(processes: List[Process]):(List[IftaInit],Map[ProcessName,(Action,Action,Action)]) = {
+//    def getFsAction(p:ProcessName,fsMap:Map[ProcessName,(Action,Action,Action)]):Action = p.name match  {
+//      case n if n.startsWith("Wrap") => Action("fs"+n.drop(4),Nothing,None)
+//      case n if n.startsWith("Init") => fsMap(p)._3
+//      case n => throw new RuntimeException(s"Unknown process name type: $n")
+//    }
+//    var initsOrder:List[Init] = processes.filter(p => p.isInstanceOf[Init]).map(p => p.asInstanceOf[Init]).sortBy(_.number)
+//    var fsMap: Map[ProcessName,(Action,Action,Action)] = Map()
+//    var res = initsOrder.map(i => i match {
+//      case p@Init(num,sa1,sa2,List(c1,c2),hide) =>
+//        val fs1 = getFsAction(c1,fsMap)
+//        val fs2 = getFsAction(c2,fsMap)
+//        fsMap+= p.getName -> (fs1,fs2,Action(fs1+"_"+fs2,Nothing,None))
+//        IftaInit(num,(sa1,sa2),Some((fs1,fs2)),List(c1,c2),hide)
+//      case p@Init(num,sa1,sa2,List(c1),hide)  =>
+//        val fs1 = Action("",Nothing,None)
+//        val fs2 = Action("",Nothing,None)
+//        fsMap+= p.getName -> (fs1,fs2,getFsAction(c1,fsMap))
+//        IftaInit(num,(sa1,sa2),None,List(c1),hide)
+//    })
+//
+//    (res,fsMap)
+//  }
+//
+//
+//  private def getInitFsActNames(init:ProcessExpr,procs:List[Process],fsMap:Map[ProcessName,(Action,Action,Action)]): Set[String] = {
+//    val procNames = init.getProcNames
+//    val lastInitProcess = procs.filter(p => p.isInstanceOf[IftaInit]).asInstanceOf[List[IftaInit]].maxBy(_.number)
+//    var res:Set[String] = Set()
+//    res = procNames.map(p => p.name match {
+//      case "delta" => fsMap(lastInitProcess.getName)._3.toString
+//      case n if n.startsWith("Init") => fsMap(p)._3.toString
+//      case n => "fs"+n.drop(4)
+//    })
+//    res
+//  }
+//
+//
+//  private def renameInitExpr(expr: ProcessExpr):ProcessExpr = expr match {
+//    case p@ProcessName(n,ap) if n.startsWith("Init") => p
+//    case p@ProcessName("delta",ap) => p
+//    case ProcessName(n,ap) => ProcessName("Wrap"+n,ap)
+//    case Par(p1,p2) => Par(renameInitExpr(p1),renameInitExpr(p2))
+//    case Seq(p1,p2) => Seq(renameInitExpr(p1),renameInitExpr(p2))
+//    case Block(acts,in) => Block(acts,renameInitExpr(in))
+//    case Comm(s,in) => Comm(s,renameInitExpr(in))
+//    case Hide(acts,in) => Hide(acts,renameInitExpr(in))
+//    case Sum(vars,p) => Sum(vars,renameInitExpr(p))
+//    case ITE(c,t,None) => ITE(c,renameInitExpr(t))
+//    case ITE(c,t,Some(e)) => ITE(c,renameInitExpr(t),Some(renameInitExpr(e)))
+//  }
+//
+//  private def renameInitSync(init:Init):Init = {
+//    Init(init.number,init.action1,init.action2, init.procs.map(p =>
+//        if (p.name.startsWith("Init"))
+//          p
+//        else ProcessName("Wrap"+p.name,p.actualParam)),
+//      init.toHide)
+//  }
+//
+//  private def mkWrapProc(proc:Channel):Channel = {
+//    val act = Action("fs"+proc.getName,Nothing,None,List(("fs","Product")))
+//    Channel("Wrap" + proc.getName, None, List(act), List(), Sum(Map("fs" -> "Product"),act & proc.getNameWithActualParam),Map())
+//  }
+//
+//  private def mkNifta(procs:List[Process]):NIFTA = {
+//    val iftas = procs.filter(_.isInstanceOf[Channel]).map(c => mkIfta(c.asInstanceOf[Channel]))
+//    NIFTA(iftas.toSet)
+//  }
+//
+//  private def mkIfta(ch:Channel):IFTA = ch.name match {
+//    case "Dupl" => repl(ch.in.head.toString, ch.out.head.toString, ch.out.tail.map(o => o.toString).mkString(","))
+//    case "VDupl" => vrepl(ch.in.head.toString, ch.out.head.toString, ch.out.tail.map(o => o.toString).mkString(","))
+//    case "Merger" => merger(ch.in.head.toString,ch.in.tail.head.toString,(ch.in.tail.drop(1) ++ ch.out).map(a=> a.toString).mkString(","))
+//    case "VMerger" => vmerger(ch.in.head.toString,ch.in.tail.head.toString,(ch.in.tail.drop(1) ++ ch.out).map(a=> a.toString).mkString(","))
+//    case "Sync" => sync(ch.in.head.toString,ch.out.head.toString)
+//    case "Fifo" => fifo(ch.in.head.toString,ch.out.head.toString)
+//    case "Fifofull" => fifofull(ch.in.head.toString,ch.out.head.toString)
+//    case "Lossy" => lossy(ch.in.head.toString,ch.out.head.toString)
+//    case "Xor" => router(ch.in.head.toString,ch.out.head.toString, ch.out.tail.map(o => o.toString).mkString(","))
+//    case "VXor" => vrouter(ch.in.head.toString,ch.out.head.toString, ch.out.tail.map(o => o.toString).mkString(","))
+//    case "Drain" => sdrain(ch.in.head.toString,ch.in.last.toString)
+//    case "Writer" => writer(ch.out.head.toString)
+//    case "Reader" => reader(ch.in.head.toString)
+//    case "Timer" => timer(ch.in.head.toString,ch.out.head.toString,0) //todo:handle time properly
+//    case n if ch.in.size == 1 && ch.out.size == 1 => sync(ch.in.head.toString,ch.out.head.toString)
+//    case n => throw new RuntimeException(s"Unknown primitive ifta connector ${n}")
+//  }
+//
+//  private def mkFmSyncs(nifta: NIFTA, processes: List[Process]):FExp = {
+//    val syncs = procs.map(p => p match {
+//      case i@Init(_, _, _, _, _) => mkFmSync(nifta,i)
+//      case _ => FTrue
+//    })
+//
+//    syncs.foldRight[FExp](FTrue)(_&&_)
+//  }
+//
+//  private def mkFmSync(nifta:NIFTA,init:Init):FExp = {
+//    val a1 = init.action1.toString
+//    val a2 = init.action2.toString
+//    val ifta1 = nifta.iFTAs.find(i => i.act.contains(a1))
+//    val ifta2 = nifta.iFTAs.find(i => i.act.contains(a2))
+//    (ifta1,ifta2) match {
+//      case (None,_) => FTrue
+//      case (_,None) => FTrue
+//      case (Some(ifta1),Some(ifta2)) =>ifta1.fe(a1) <-> ifta2.fe(a2)
+//    }
+//  }
+//
+//  private def fm2mcrl2(fm:FExp):String = fm match {
+//    case FTrue => "true"
+//    case FNot(FTrue) => "false"
+//    case Feat(name) => "val_"+name
+//    case FAnd(e1, e2) => s"(${fm2mcrl2(e1)}) && (${fm2mcrl2(e2)})"
+//    case FOr(e1, e2) => s"(${fm2mcrl2(e1)}) || (${fm2mcrl2(e2)})"
+//    case FNot(e) => s"!(${fm2mcrl2(e)})"
+//    case FImp(e1, e2) => s"((${fm2mcrl2(e1)}) => (${fm2mcrl2(e2)}))"
+//    case FEq(e1, e2) =>
+//      val imp1 = fm2mcrl2(e1)
+//      val imp2 = fm2mcrl2(e2)
+//      s"(($imp1) => ($imp2)) && (($imp2) => ($imp1))"
+//  }
+//
+//  private def mkFmProcess(fm:FExp,feats:Set[String]):String = {
+//    val featsVal = feats.map(f => "val_"+f)
+//    s"""
+//       |FM = sum ${featsVal.mkString(",")}:Bool .
+//       |  (${fm2mcrl2(fm)})
+//       |    -> prod(${feats.map(f => s"$f(val_$f)").mkString("[",",","]")});
+//     """.stripMargin
+//  }
+//
+//}
 
 //case class IftaInit(number: Option[Int], syncAct:(Action,Action), fsSyncAct:Option[(Action,Action)], procs: List[ProcessName], var toHide: Boolean)
 //  extends Process{
@@ -248,10 +328,45 @@ case class IftaModel(procs: List[Process], init: ProcessExpr)
 
 object IftaModel {
 
+
   implicit object IftaPrimBuilder extends PrimBuilder[IftaModel] {
 
-    override def buildModel(proc: List[Process], init: ProcessExpr): IftaModel =
-      IftaModel(proc, init)
+    override def buildModel(procs: List[Process], init: ProcessExpr): IftaModel = {
+
+      // add a wrap process to set valid feature selections for each channel
+      var wrapProcesses = procs.filter(_.isInstanceOf[Channel]).map(c=>mkWrapProc(c.asInstanceOf[Channel]))
+
+      // regular channel processes
+      var channelProcesses = procs.filter(_.isInstanceOf[Channel])
+
+      // rename channels in init processes to be WrapChannelX instead of ChannelX, and
+      // add action synchronization for actions representing feature selection actions
+      val initProcesses = procs.filter(p => p.isInstanceOf[Init]).asInstanceOf[List[Init]]
+      val (iftaInitProcesses,fsMap) = mkIftaInits(initProcesses.map(p => renameInitSync(p)))
+
+      // processes body
+      val processes:List[Process] = channelProcesses ++ wrapProcesses ++ iftaInitProcesses
+
+      // build fm
+      val nifta = mkNifta(procs)
+      val fm = Simplify(nifta.fm && mkFmSyncs(nifta,procs))
+      val feats = nifta.iFTAs.flatMap(i => i.feats)
+
+      // rename init expression (delta -> delta, Channel -> WrapChannel, Init -> Init)
+      val newInit = renameInitExpr(init)
+
+      // find the feature selection actions that should synchronize in the init expression if any
+      val initFsActs = getInitFsActNames(newInit,processes,fsMap).map(name => Action(name,Nothing,None)).toList
+
+      // initial expression
+      val parallel = ProcessName("FM") || newInit
+      val comm = Comm(List((Action("prod",Nothing,None)::initFsActs, Action("product",Nothing,None))),parallel)
+      val initExpr = Block(Action("prod",Nothing,None)::initFsActs, comm)
+
+      IftaModel(processes,initExpr,fm,feats)
+
+//      IftaModel(procs, init)
+    }
 
     def buildPrimChannel(e: CPrim, chCount: Int): Channel = e match {
       case CPrim("sync", _, _, _) =>
@@ -408,6 +523,116 @@ object IftaModel {
     //      if(map.contains(name)) getRealName(map, map(name).getName)
     //      else name
     //  }
+
+    private def mkIftaInits(processes: List[Process]):(List[IftaInit],Map[ProcessName,(Action,Action,Action)]) = {
+      def getFsAction(p:ProcessName,fsMap:Map[ProcessName,(Action,Action,Action)]):Action = p.name match  {
+        case n if n.startsWith("Wrap") => Action("fs"+n.drop(4),Nothing,None)
+        case n if n.startsWith("Init") => fsMap(p)._3
+        case n => throw new RuntimeException(s"Unknown process name type: $n")
+      }
+      var initsOrder:List[Init] = processes.filter(p => p.isInstanceOf[Init]).map(p => p.asInstanceOf[Init]).sortBy(_.number)
+      var fsMap: Map[ProcessName,(Action,Action,Action)] = Map()
+      var res = initsOrder.map(i => i match {
+        case p@Init(num,sa1,sa2,List(c1,c2),hide) =>
+          val fs1 = getFsAction(c1,fsMap)
+          val fs2 = getFsAction(c2,fsMap)
+          fsMap+= p.getName -> (fs1,fs2,Action(fs1+"_"+fs2,Nothing,None))
+          IftaInit(num,(sa1,sa2),Some((fs1,fs2)),List(c1,c2),hide)
+        case p@Init(num,sa1,sa2,List(c1),hide)  =>
+          val fs1 = Action("",Nothing,None)
+          val fs2 = Action("",Nothing,None)
+          fsMap+= p.getName -> (fs1,fs2,getFsAction(c1,fsMap))
+          IftaInit(num,(sa1,sa2),None,List(c1),hide)
+      })
+
+      (res,fsMap)
+    }
+
+
+    private def getInitFsActNames(init:ProcessExpr,procs:List[Process],fsMap:Map[ProcessName,(Action,Action,Action)]): Set[String] = {
+      val procNames = init.getProcNames
+      val lastInitProcess = procs.filter(p => p.isInstanceOf[IftaInit]).asInstanceOf[List[IftaInit]].maxBy(_.number)
+      var res:Set[String] = Set()
+      res = procNames.map(p => p.name match {
+        case "delta" => fsMap(lastInitProcess.getName)._3.toString
+        case n if n.startsWith("Init") => fsMap(p)._3.toString
+        case n => "fs"+n.drop(4)
+      })
+      res
+    }
+
+
+    private def renameInitExpr(expr: ProcessExpr):ProcessExpr = expr match {
+      case p@ProcessName(n,ap) if n.startsWith("Init") => p
+      case p@ProcessName("delta",ap) => p
+      case ProcessName(n,ap) => ProcessName("Wrap"+n,ap)
+      case Par(p1,p2) => Par(renameInitExpr(p1),renameInitExpr(p2))
+      case Seq(p1,p2) => Seq(renameInitExpr(p1),renameInitExpr(p2))
+      case Block(acts,in) => Block(acts,renameInitExpr(in))
+      case Comm(s,in) => Comm(s,renameInitExpr(in))
+      case Hide(acts,in) => Hide(acts,renameInitExpr(in))
+      case Sum(vars,p) => Sum(vars,renameInitExpr(p))
+      case ITE(c,t,None) => ITE(c,renameInitExpr(t))
+      case ITE(c,t,Some(e)) => ITE(c,renameInitExpr(t),Some(renameInitExpr(e)))
+    }
+
+    private def renameInitSync(init:Init):Init = {
+      Init(init.number,init.action1,init.action2, init.procs.map(p =>
+        if (p.name.startsWith("Init"))
+          p
+        else ProcessName("Wrap"+p.name,p.actualParam)),
+        init.toHide)
+    }
+
+    private def mkWrapProc(proc:Channel):Channel = {
+      val act = Action("fs"+proc.getName,Nothing,None,List(("fs","Product")))
+      Channel("Wrap" + proc.getName, None, List(act), List(), Sum(Map("fs" -> "Product"),act & proc.getNameWithActualParam),Map())
+    }
+
+    private def mkNifta(procs:List[Process]):NIFTA = {
+      val iftas = procs.filter(_.isInstanceOf[Channel]).map(c => mkIfta(c.asInstanceOf[Channel]))
+      NIFTA(iftas.toSet)
+    }
+
+    private def mkIfta(ch:Channel):IFTA = ch.name match {
+      case "Dupl" => repl(ch.in.head.toString, ch.out.head.toString, ch.out.tail.map(o => o.toString).mkString(","))
+      case "VDupl" => vrepl(ch.in.head.toString, ch.out.head.toString, ch.out.tail.map(o => o.toString).mkString(","))
+      case "Merger" => merger(ch.in.head.toString,ch.in.tail.head.toString,(ch.in.tail.drop(1) ++ ch.out).map(a=> a.toString).mkString(","))
+      case "VMerger" => vmerger(ch.in.head.toString,ch.in.tail.head.toString,(ch.in.tail.drop(1) ++ ch.out).map(a=> a.toString).mkString(","))
+      case "Sync" => sync(ch.in.head.toString,ch.out.head.toString)
+      case "Fifo" => fifo(ch.in.head.toString,ch.out.head.toString)
+      case "Fifofull" => fifofull(ch.in.head.toString,ch.out.head.toString)
+      case "Lossy" => lossy(ch.in.head.toString,ch.out.head.toString)
+      case "Xor" => router(ch.in.head.toString,ch.out.head.toString, ch.out.tail.map(o => o.toString).mkString(","))
+      case "VXor" => vrouter(ch.in.head.toString,ch.out.head.toString, ch.out.tail.map(o => o.toString).mkString(","))
+      case "Drain" => sdrain(ch.in.head.toString,ch.in.last.toString)
+      case "Writer" => writer(ch.out.head.toString)
+      case "Reader" => reader(ch.in.head.toString)
+      case "Timer" => timer(ch.in.head.toString,ch.out.head.toString,0) //todo:handle time properly
+      case n if ch.in.size == 1 && ch.out.size == 1 => sync(ch.in.head.toString,ch.out.head.toString)
+      case n => throw new RuntimeException(s"Unknown primitive ifta connector ${n}")
+    }
+
+    private def mkFmSyncs(nifta: NIFTA, processes: List[Process]):FExp = {
+      val syncs = processes.map(p => p match {
+        case i@Init(_, _, _, _, _) => mkFmSync(nifta,i)
+        case _ => FTrue
+      })
+
+      syncs.foldRight[FExp](FTrue)(_&&_)
+    }
+
+    private def mkFmSync(nifta:NIFTA,init:Init):FExp = {
+      val a1 = init.action1.toString
+      val a2 = init.action2.toString
+      val ifta1 = nifta.iFTAs.find(i => i.act.contains(a1))
+      val ifta2 = nifta.iFTAs.find(i => i.act.contains(a2))
+      (ifta1,ifta2) match {
+        case (None,_) => FTrue
+        case (_,None) => FTrue
+        case (Some(ifta1),Some(ifta2)) =>ifta1.fe(a1) <-> ifta2.fe(a2)
+      }
+    }
   }
 }
 
