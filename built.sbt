@@ -18,4 +18,4 @@ libraryDependencies ++= Seq(
 //    "org.jgrapht" % "jgrapht-core" % "1.0.0"
 )
 
-excludeFilter in unmanagedSources := "IftaAutomata.scala"
+excludeFilter in unmanagedSources := "IftaAutomata.scala" || "IftaModel.scala" || "IftaInit.scala" || "ActionFeat.scala"

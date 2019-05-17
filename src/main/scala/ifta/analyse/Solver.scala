@@ -1,6 +1,7 @@
 package ifta.analyse
 
 import ifta._
+import ifta.backend.CNF
 import org.sat4j.core.VecInt
 import org.sat4j.minisat.SolverFactory
 import org.sat4j.specs.{IProblem, ISolver}
@@ -20,41 +21,41 @@ object Solver {
     * @return [[None]] if there is no solution, or [[Some(sol)]] if a solution exists
     */
   def apply(e:FExp): Option[Map[String,Boolean]] = {
-    resetVars()
+//    resetVars()
     //val cnf = toCNF(e)
-    val cnf = toCNF(Simplify(Simplify.removeSS(e))) // remove syntactic sugar and simplify first
+    val cnf = CNF.toCNFDimacs(Simplify(Simplify.removeSS(e))) // remove syntactic sugar and simplify first
 //    println("vars: "+vars.mkString(","))
 //    println("CNF: "+cnf)
     val sol = solve(cnf)
 //    println("sol: "+sol)
 
 //    sol.map(x=>rebuildSol(x.toSet))
-    sol.map(x=>rebuildTseitinSol(x.toSet))
+    sol.map(x=>CNF.rebuildTseitinSol(x.toSet))
   }
 
-  private def rebuildTseitinSol(sol:Set[Int]): Map[String,Boolean] = {
-    var res: Map[String,Boolean] = Map()
-    for((v,i) <- vars) {
-      v match {
-        case Feat(f) => {
-          if (sol contains i) res += f -> true
-          else if (sol contains (-i)) res += f -> false
-        }
-        case _ =>
-      }
-    }
-    res
-  }
+//  private def rebuildTseitinSol(sol:Set[Int]): Map[String,Boolean] = {
+//    var res: Map[String,Boolean] = Map()
+//    for((v,i) <- vars) {
+//      v match {
+//        case Feat(f) => {
+//          if (sol contains i) res += f -> true
+//          else if (sol contains (-i)) res += f -> false
+//        }
+//        case _ =>
+//      }
+//    }
+//    res
+//  }
 
   def all(e:FExp): List[Map[String,Boolean]] = {
 //    resetVars()
 //    val cnf = toCNF(e)
 //    val sols = solveAll(cnf)
 //    sols.map(x=>rebuildSol(x.toSet))
-    resetVars()
-    val cnf = toCNF(Simplify(Simplify.removeSS(e)))
+//    resetVars()
+    val cnf = CNF.toCNFDimacs(Simplify(Simplify.removeSS(e)))
     val sols = solveAll(cnf)
-    sols.map(x=> rebuildTseitinSol(x.toSet))
+    sols.map(x=> CNF.rebuildTseitinSol(x.toSet))
   }
 
 //  private var vars:Map[String,Int] = Map()
@@ -85,101 +86,101 @@ object Solver {
 //    case FEq(e1,e2) => toCNF((e1-->e2) && (e2-->e1))
 //  }
 
-  var vars: Map[FExp,Int] = Map()
-  var seed:Int = 1
-  def resetVars() = {vars = Map(); seed = 1 }
+//  var vars: Map[FExp,Int] = Map()
+//  var seed:Int = 1
+//  def resetVars() = {vars = Map(); seed = 1 }
 //  def gettVar(e:FExp):Int =
 //    if (tvars contains e) tvars(e)
 //    else {tvars += e -> tseed; tseed +=1; tseed-1}
 
-  def getVar(e:FExp):Int = {
-    var exp:FExp = e
-    var sign:Int = 1
-    e match {
-      case FNot(e1) => {exp = e1; sign = -1}
-      case _ =>
-    }
-    if (vars contains exp) vars(exp)*sign
-    else {vars += exp -> seed; seed +=1; (seed-1)*sign}
-  }
+//  def getVar(e:FExp):Int = {
+//    var exp:FExp = e
+//    var sign:Int = 1
+//    e match {
+//      case FNot(e1) => {exp = e1; sign = -1}
+//      case _ =>
+//    }
+//    if (vars contains exp) vars(exp)*sign
+//    else {vars += exp -> seed; seed +=1; (seed-1)*sign}
+//  }
 
-  /**
-    * Transforms a feature expression in CNF
-    * using Tseitin transformation.
-    * (Shell for actual tseitinCNF)
-    *
-    * @param e feature expression
-    * @return corresponding CNF in Dimacs format
-    */
-  def toCNF(e:FExp): List[List[Int]] = e match {
-    case FTrue => List()
-    case FNot(FTrue) => List(List())
-    case FNot(Feat(f)) => List(List(getVar(FNot(Feat(f)))))
-    case Feat(f) => List(List(getVar(Feat(f))))
-    case e1 => List(List(getVar(e1)))++tseitinCNF(e1)
-  }
-
-  // Two Notes on tseitin:
-  // 1 - recursive cases can be improved
-  // by checking first if the variable for the case exists,
-  // in which case there is no need to call recursively
-  // 2 - it could accept FImp and FEq
-  // and simplify the formula in the moment
-
-  /**
-    * Recursive cases for creating a tseitin CNF
-    *
-    * @param e feature expression
-    * @return tseitin CNF in Dimacs format
-    */
-  private def tseitinCNF(e:FExp):List[List[Int]] = e match{
-    case FTrue => List()
-    //case Feat(f) => List(List(gettVar(Feat(f))))
-    case Feat(f) => List()
-    case FNot(FTrue) => List(List())
-    case FNot(e) => tseitinCNF(e)
-    case FAnd(e1,e2) => tseitinCNF(e1) ++ tseitinCNF(e2) ++ tseitinAnd(e1,e2)
-    case FOr(e1,e2) => tseitinCNF(e1) ++ tseitinCNF(e2) ++ tseitinOr(e1,e2)
-  }
-
-  /**
-    * Creates a tseitin AND clause
-    *
-    * @param e1 frst feature expression for And clause
-    * @param e2 snd feature expression for And clause
-    * @return V <-> FAnd(e1,e2) in CNF Dimacs
-    */
-  private def tseitinAnd(e1:FExp,e2:FExp):List[List[Int]] = {
-    val v = getVar(FAnd(e1,e2))
-    val ve1 = getVar(e1)
-    val ve2 = getVar(e2)
-    List(List(-v,ve1),List(-v,ve2),List(v,-ve1,-ve2))
-  }
-
-  /**
-    * Creates a tseitin OR clause
-    *
-    * @param e1 frst feature expression for Or clause
-    * @param e2 snd feature expression for Or clause
-    * @return V <-> FOr(e1,e2) in CNF Dimacs
-    */
-  private def tseitinOr(e1:FExp,e2:FExp):List[List[Int]] = {
-    val v = getVar(FOr(e1,e2))
-    val ve1 = getVar(e1)
-    val ve2 = getVar(e2)
-    List(List(v,-ve1),List(v,-ve2),List(-v,ve1,ve2))
-  }
-
-  // Just to check how it tseitinCNF works
-  def showTseitin(cnf:List[List[Int]]):String ={
-    var clauses:Set[FExp] =Set()
-    var inverseMap:Map[Int,FExp] =Map()
-    for ((f,i) <- vars) inverseMap += i -> f
-    for (c <-cnf) {
-      clauses += c.map(x => if (x>0) inverseMap(x) else FNot(inverseMap(-x))).fold(FNot(FTrue))(_||_)
-    }
-    clauses.map(e => backend.Show(e)).mkString("","\n","")
-  }
+//  /**
+//    * Transforms a feature expression in CNF
+//    * using Tseitin transformation.
+//    * (Shell for actual tseitinCNF)
+//    *
+//    * @param e feature expression
+//    * @return corresponding CNF in Dimacs format
+//    */
+//  def toCNF(e:FExp): List[List[Int]] = e match {
+//    case FTrue => List()
+//    case FNot(FTrue) => List(List())
+//    case FNot(Feat(f)) => List(List(getVar(FNot(Feat(f)))))
+//    case Feat(f) => List(List(getVar(Feat(f))))
+//    case e1 => List(List(getVar(e1)))++tseitinCNF(e1)
+//  }
+//
+//  // Two Notes on tseitin:
+//  // 1 - recursive cases can be improved
+//  // by checking first if the variable for the case exists,
+//  // in which case there is no need to call recursively
+//  // 2 - it could accept FImp and FEq
+//  // and simplify the formula in the moment
+//
+//  /**
+//    * Recursive cases for creating a tseitin CNF
+//    *
+//    * @param e feature expression
+//    * @return tseitin CNF in Dimacs format
+//    */
+//  private def tseitinCNF(e:FExp):List[List[Int]] = e match{
+//    case FTrue => List()
+//    //case Feat(f) => List(List(gettVar(Feat(f))))
+//    case Feat(f) => List()
+//    case FNot(FTrue) => List(List())
+//    case FNot(e) => tseitinCNF(e)
+//    case FAnd(e1,e2) => tseitinCNF(e1) ++ tseitinCNF(e2) ++ tseitinAnd(e1,e2)
+//    case FOr(e1,e2) => tseitinCNF(e1) ++ tseitinCNF(e2) ++ tseitinOr(e1,e2)
+//  }
+//
+//  /**
+//    * Creates a tseitin AND clause
+//    *
+//    * @param e1 frst feature expression for And clause
+//    * @param e2 snd feature expression for And clause
+//    * @return V <-> FAnd(e1,e2) in CNF Dimacs
+//    */
+//  private def tseitinAnd(e1:FExp,e2:FExp):List[List[Int]] = {
+//    val v = getVar(FAnd(e1,e2))
+//    val ve1 = getVar(e1)
+//    val ve2 = getVar(e2)
+//    List(List(-v,ve1),List(-v,ve2),List(v,-ve1,-ve2))
+//  }
+//
+//  /**
+//    * Creates a tseitin OR clause
+//    *
+//    * @param e1 frst feature expression for Or clause
+//    * @param e2 snd feature expression for Or clause
+//    * @return V <-> FOr(e1,e2) in CNF Dimacs
+//    */
+//  private def tseitinOr(e1:FExp,e2:FExp):List[List[Int]] = {
+//    val v = getVar(FOr(e1,e2))
+//    val ve1 = getVar(e1)
+//    val ve2 = getVar(e2)
+//    List(List(v,-ve1),List(v,-ve2),List(-v,ve1,ve2))
+//  }
+//
+//  // Just to check how it tseitinCNF works
+//  def showTseitin(cnf:List[List[Int]]):String ={
+//    var clauses:Set[FExp] =Set()
+//    var inverseMap:Map[Int,FExp] =Map()
+//    for ((f,i) <- vars) inverseMap += i -> f
+//    for (c <-cnf) {
+//      clauses += c.map(x => if (x>0) inverseMap(x) else FNot(inverseMap(-x))).fold(FNot(FTrue))(_||_)
+//    }
+//    clauses.map(e => backend.Show(e)).mkString("","\n","")
+//  }
 
   //  def -->(other:FExp) = FImp(this,other) //FNot(this) || other
 //  def <->(other:FExp) = FEq(this,other)  //(this --> other) && (other --> this)

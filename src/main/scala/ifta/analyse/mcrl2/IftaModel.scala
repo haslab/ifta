@@ -3,7 +3,7 @@ package ifta.analyse.mcrl2
 import ifta._
 import ifta.DSL._
 import ifta.analyse.Simplify
-import ifta.backend.Show
+import ifta.backend.{CNF, Show}
 import ifta.reo.Connectors._
 import preo.ast.{CPrim, CoreInterface}
 import preo.frontend.mcrl2.{Action, Block, BoolDT, Channel, Comm, DataType, Hide, ITE, In, Init, LAnd, LIn, LNot, LTrue, Model, Nothing, Out, Par, PrimBuilder, Process, ProcessExpr, ProcessName, Seq, Sum}
@@ -50,7 +50,7 @@ case class IftaModel(processes:List[Process],initExpr:ProcessExpr,fm:FExp,feats:
        |
        |${wraps.map(_.toStringNoRecursion).mkString("", ";\n", ";")}
        |
-       |${inits.mkString("", ";\n", ";")}
+       |${if (inits.nonEmpty) inits.mkString("", ";\n", ";") else ""}
        |
        |init
        |  $initExpr;
@@ -74,7 +74,9 @@ case class IftaModel(processes:List[Process],initExpr:ProcessExpr,fm:FExp,feats:
        """.stripMargin
   }
 
-  private def fm2mcrl2(fm:FExp):String = fm match {
+
+
+  private def fm2mcrl2(fm:FExp):String = Simplify(fm) match {
     case FTrue => "true"
     case FNot(FTrue) => "false"
     case Feat(name) => "val_"+name
