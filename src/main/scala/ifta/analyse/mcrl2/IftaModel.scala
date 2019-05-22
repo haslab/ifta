@@ -6,7 +6,7 @@ import ifta.analyse.Simplify
 import ifta.backend.{CNF, Show}
 import ifta.reo.Connectors._
 import preo.ast.{CPrim, CoreInterface}
-import preo.frontend.mcrl2.{Action, Block, BoolDT, Channel, Comm, DataType, Hide, ITE, In, Init, LAnd, LIn, LNot, LTrue, Model, Nothing, Out, Par, PrimBuilder, Process, ProcessExpr, ProcessName, Seq, Sum}
+import preo.frontend.mcrl2._ //{Action, Block, BoolDT, Channel, Comm, DataType, Hide, ITE, In, Init, LAnd, LIn, LNot, LTrue, Model, Nothing, Out, Par, PrimBuilder, Process, ProcessExpr, ProcessName, Seq, Sum}
 
 /**
   * Created by guillecledou on 2019-05-08
@@ -371,7 +371,7 @@ object IftaModel {
     def buildPrimChannel(e: CPrim, chCount: Int): Channel = e match {
       case CPrim("sync", _, _, _) =>
         val in = Action("sync", In(1), Some(chCount))
-        val out = Action("sync", Out(2), Some(chCount))
+        val out = Action("sync", Out(1), Some(chCount))
         val exp = ITE(LAnd(LIn(ActionFeat(in, LTrue), "fs"), LIn(ActionFeat(out, LTrue), "fs")), in | out)
         //        val exp = ITE(s"v_${in1}(true) in fs && v_${in2}(true) in fs",in1 | in2)
         Channel("Sync", Some(chCount), List(in), List(out), exp, Map("fs" -> "Product"))
