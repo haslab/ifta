@@ -101,6 +101,8 @@ object CNF {
     case FNot(e) => tseitinCNF(e)
     case FAnd(e1,e2) => tseitinCNF(e1) ++ tseitinCNF(e2) ++ tseitinAnd(e1,e2)
     case FOr(e1,e2) => tseitinCNF(e1) ++ tseitinCNF(e2) ++ tseitinOr(e1,e2)
+    case _ =>
+      throw new RuntimeException("Unexpected feat. expr. when generating CNF. Term needs to be simplified before conversion.")
   }
 
   /**

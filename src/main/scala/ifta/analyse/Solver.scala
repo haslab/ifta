@@ -4,7 +4,7 @@ import ifta._
 import ifta.backend.CNF
 import org.sat4j.core.VecInt
 import org.sat4j.minisat.SolverFactory
-import org.sat4j.specs.{IProblem, ISolver}
+import org.sat4j.specs.ISolver
 import org.sat4j.tools.ModelIterator
 
 
@@ -236,9 +236,10 @@ object Solver {
 
     // just to experiment with the constraint solver
   def main(args: Array[String]) {
+    import scala.language.implicitConversions
     implicit def toFeat(s:String): Feat = Feat(s)
 
-    def test(fExp: FExp) =
+    def test(fExp: FExp): Unit =
       println(s"testing $fExp - ${Solver(fExp)}")
 
     test("a" --> "b")

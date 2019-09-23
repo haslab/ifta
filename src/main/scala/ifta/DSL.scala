@@ -1,9 +1,10 @@
 package ifta
 
 import java.io.{BufferedWriter, FileWriter}
+import scala.language.implicitConversions
 
 import ifta.analyse.{IFTA2FTA, Parser, Simplify}
-import ifta.backend.{Springy, Vis}
+import ifta.backend.{Dot, Springy, Vis}
 import ifta.common.ParseException
 
 object DSL {
@@ -33,43 +34,43 @@ object DSL {
   val newifta = IFTA(Set(0),0,Set(),Set(),Set(),Set(),Map(),true,Set(),Set(),Map())
   val newnifta = NIFTA(Set())
 
-  val toDot = ifta.backend.Dot
-  def con2dot(nIFTA: NIFTA) = ifta.backend.Dot.connector(nIFTA)
+  //val toDot: Dot.type = ifta.backend.Dot
+  def con2dot(nIFTA: NIFTA): String = ifta.backend.Dot.connector(nIFTA)
 
   def toSpringy(iFTA: IFTA) = Springy(iFTA)
-  def toSpringy(iFTA: IFTA,file:String) = {
+  def toSpringy(iFTA: IFTA,file:String): Unit = {
     val bw = new BufferedWriter(new FileWriter(file))
     bw.write(Springy(iFTA))
     bw.close()
   }
 
-  def con2springy(nIFTA: NIFTA) = Springy.connector(nIFTA)
-  def con2springy(nIFTA: NIFTA,file:String) = {
+  def con2springy(nIFTA: NIFTA): String = Springy.connector(nIFTA)
+  def con2springy(nIFTA: NIFTA,file:String): Unit = {
     val bw = new BufferedWriter(new FileWriter(file))
     bw.write(Springy.connector(nIFTA))
     bw.close()
   }
 
   def toVis(iFTA: IFTA) = Vis(iFTA)
-  def toVis(iFTA: IFTA,file:String) = {
+  def toVis(iFTA: IFTA,file:String): Unit = {
     val bw = new BufferedWriter(new FileWriter(file))
     bw.write(Vis(iFTA))
     bw.close()
   }
 
-  def con2vis(nIFTA: NIFTA) = Vis.connector(nIFTA)
-  def con2vis(nIFTA: NIFTA,file:String) = {
+  def con2vis(nIFTA: NIFTA): String = Vis.connector(nIFTA)
+  def con2vis(nIFTA: NIFTA,file:String): Unit = {
     val bw = new BufferedWriter(new FileWriter(file))
     bw.write(Vis.connector(nIFTA))
     bw.close()
   }
 
-  def toFTA = IFTA2FTA
+  //def toFTA: IFTA2FTA.type = IFTA2FTA
 
   // NIFTA -> NFTA -> UPPAAL
   def toUppaal(ifta:IFTA) = backend.Uppaal(NFTA(Set(IFTA2FTA.flatten(ifta))))
   def toUppaal(ifta:IFTA,solutions:Set[Set[String]]) = backend.Uppaal(NFTA(Set(IFTA2FTA.flatten(ifta))),solutions)
-  def toUppaal(ifta:IFTA,file:String) = {
+  def toUppaal(ifta:IFTA,file:String): Unit = {
     val bw = new BufferedWriter(new FileWriter(file))
     bw.write(backend.Uppaal(NFTA(Set(IFTA2FTA.flatten(ifta))))) // IFTA -> FTA -> UPPAAL
     bw.close()
@@ -77,7 +78,7 @@ object DSL {
 
   def toUppaal(nIFTA: NIFTA) = backend.Uppaal(IFTA2FTA(nIFTA))
   def toUppaal(nIFTA: NIFTA,solutions:Set[Set[String]]) = backend.Uppaal(IFTA2FTA(nIFTA),solutions)
-  def toUppaal(nIFTA: NIFTA, file:String) = {
+  def toUppaal(nIFTA: NIFTA, file:String): Unit = {
     val bw = new BufferedWriter(new FileWriter(file))
     bw.write(backend.Uppaal(IFTA2FTA(nIFTA))) // NIFTA -> NFTA -> UPPAAL
     bw.close()
