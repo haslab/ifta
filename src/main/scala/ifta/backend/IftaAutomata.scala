@@ -211,6 +211,8 @@ object IftaAutomata {
       */
     def buildAutomata(e: Prim, seed: Int): (IftaAutomata,Int) = {
       var iFta:IFTA =  e match {
+        // if prim has ports with same name (selfloop) then return an emtpy automaton
+        case Prim(CPrim(_, _, _, _), ins, outs,_) if (ins++outs).groupBy(p=>p).exists(g=>g._2.size>1) => newifta
         case Prim(CPrim("sync",_,_,_),List(a),List(b),_) =>
           sync(a.toString,b.toString) name "sync"
         case Prim(CPrim("id",_,_,_),List(a),List(b),_) =>
