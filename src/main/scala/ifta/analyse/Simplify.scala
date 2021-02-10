@@ -10,11 +10,13 @@ object Simplify {
 
   def apply(iFTA:IFTA): IFTA = {
     val i = removeUnreach(iFTA)
-    IFTA(i.locs, i.init, i.act, i.clocks, i.feats, i.edges.map(apply), i.cInv.mapValues(apply), apply(i.fm), i.in, i.out,i.aps,i.shortname)
+    IFTA(i.locs, i.init, i.act, i.clocks, i.feats, i.edges.map(apply), 
+      i.cInv.view.mapValues(apply).toMap, apply(i.fm), i.in, i.out,i.aps,i.shortname)
   }
 
   def apply(i:FTA): FTA =
-    FTA(i.locs,i.init,i.committed,i.act,i.clocks,i.feats,i.edges.map(apply),i.cInv.mapValues(apply),apply(i.fm),i.aps,i.shortname)
+    FTA(i.locs,i.init,i.committed,i.act,i.clocks,i.feats,i.edges.map(apply),
+      i.cInv.view.mapValues(apply).toMap,apply(i.fm),i.aps,i.shortname)
 
   def apply(f:FExp): FExp = try {
     f match {

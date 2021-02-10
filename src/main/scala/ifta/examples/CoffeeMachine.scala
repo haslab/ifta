@@ -25,6 +25,6 @@ object CoffeeMachine {
   // alternative (and equivalent) ways to calculate the product
   val aut2a = (cm sync link) * (myRouter sync link)
   val aut2b = (cm || myRouter) product link
-  val aut2c = net2 product ()
+  val aut2c = net2.product()
   val aut2d = net2.flatten // <-- prefered one
 }
