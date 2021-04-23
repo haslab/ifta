@@ -234,49 +234,49 @@ object Solver {
 
 
 
-    // just to experiment with the constraint solver
-  def main(args: Array[String]) {
-    import scala.language.implicitConversions
-    implicit def toFeat(s:String): Feat = Feat(s)
-
-    def test(fExp: FExp): Unit =
-      println(s"testing $fExp - ${Solver(fExp)}")
-
-    test("a" --> "b")
-    test(("a" && "b") || ("b" && "c") )
-    test(("a" || "b") && ("b" || "c") )
-    test(("a" || "b") && FNot("a") && FNot("b") )
-
-    //    val MAXVAR: Int = 1000000
-//    val NBCLAUSES: Int = 500000
-
-//    val solver:ISolver = SolverFactory.newDefault()
-
-    // prepare the solver to accept MAXVAR variables. MANDATORY for MAXSAT solving
-//    solver.newVar(MAXVAR)
-//    solver.setExpectedNumberOfClauses(NBCLAUSES)
-    // Feed the solver using Dimacs format, using arrays of int
-    // (best option to avoid dependencies on SAT4J IVecInt)
-//    solver.addClause(new VecInt(List[Int](1,-3).toArray)) // "a \/ not c"
-
-//    for (i <- 0 until NBCLAUSES) {
-//      int [] clause = // get the clause from somewhere
-//        // the clause should not contain a 0, only integer (positive or negative)
-//        // with absolute values less or equal to MAXVAR
-//        // e.g. int [] clause = {1, -3, 7}; is fine
-//        // while int [] clause = {1, -3, 7, 0}; is not fine
-//        solver.addClause(new VecInt(clause)); // adapt Array to IVecInt
-//    }
-
-    // we are done. Working now on the IProblem interface
-//    val problem: IProblem  = solver
-//    println("problem: "+problem+" (done)")
-//    if (problem.isSatisfiable()) {
-//      println("sol: "+problem.findModel().mkString(","))
-//    } else {
-//      println("sol not found")
-//    }
-
-  }
+//    // just to experiment with the constraint solver
+//  def main(args: Array[String]) {
+//    import scala.language.implicitConversions
+//    implicit def toFeat(s:String): Feat = Feat(s)
+//
+//    def test(fExp: FExp): Unit =
+//      println(s"testing $fExp - ${Solver(fExp)}")
+//
+//    test("a" --> "b")
+//    test(("a" && "b") || ("b" && "c") )
+//    test(("a" || "b") && ("b" || "c") )
+//    test(("a" || "b") && FNot("a") && FNot("b") )
+//
+//    //    val MAXVAR: Int = 1000000
+////    val NBCLAUSES: Int = 500000
+//
+////    val solver:ISolver = SolverFactory.newDefault()
+//
+//    // prepare the solver to accept MAXVAR variables. MANDATORY for MAXSAT solving
+////    solver.newVar(MAXVAR)
+////    solver.setExpectedNumberOfClauses(NBCLAUSES)
+//    // Feed the solver using Dimacs format, using arrays of int
+//    // (best option to avoid dependencies on SAT4J IVecInt)
+////    solver.addClause(new VecInt(List[Int](1,-3).toArray)) // "a \/ not c"
+//
+////    for (i <- 0 until NBCLAUSES) {
+////      int [] clause = // get the clause from somewhere
+////        // the clause should not contain a 0, only integer (positive or negative)
+////        // with absolute values less or equal to MAXVAR
+////        // e.g. int [] clause = {1, -3, 7}; is fine
+////        // while int [] clause = {1, -3, 7, 0}; is not fine
+////        solver.addClause(new VecInt(clause)); // adapt Array to IVecInt
+////    }
+//
+//    // we are done. Working now on the IProblem interface
+////    val problem: IProblem  = solver
+////    println("problem: "+problem+" (done)")
+////    if (problem.isSatisfiable()) {
+////      println("sol: "+problem.findModel().mkString(","))
+////    } else {
+////      println("sol not found")
+////    }
+//
+//  }
 
 }

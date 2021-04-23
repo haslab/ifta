@@ -24,17 +24,20 @@ object Parser extends RegexParsers {
   /* Feature Expression */
 
   val feat: Parser[FExp] = """[a-zA-Z][a-zA-Z0-9_]*""".r ^^ {case f => Feat(f)}
-  val top: Parser[FExp] = /*true*/ """⊤""".r ^^ {_ => FTrue}
-  val bottom:Parser[FExp] = /*!true*/ """⊥""".r ^^ {_ => FNot(FTrue)}
+  val top: Parser[FExp] = /*true*/ """⊤""".r ^^ {_ => FTrue} | """true""".r ^^ {_ => FTrue}
+  val bottom:Parser[FExp] = /*!true*/ """⊥""".r ^^ {_ => FNot(FTrue)} | """false""".r ^^ {_ => FNot(FTrue)}
 
   def fexp:Parser[FExp] =
     leftFexp ~ binOp ~ fexp ^^ {case f ~ op ~ f1 => op(f,f1)} |
     leftFexp
 
   def leftFexp:Parser[FExp] =
-    feat |
     bottom |
     top |
+    feat |
+    //"!"~leftFexp ^^ {case _~f => FNot(f)}
+      "!"~bottom    ^^ {case _~f => FTrue} |
+      "!"~top    ^^ {case _~f => FNot(FTrue)} |
     "!"~feat    ^^ {case _~f => FNot(f)} |
     "!"~parFexp ^^ {case _~f => FNot(f)} |
     parFexp
@@ -53,6 +56,7 @@ object Parser extends RegexParsers {
   /* Efficient Feature Expression */
 
   def efexp:Parser[FExp] =
+  "FTrue" ^^ {_ => FTrue} |
   "Feat("~>feat<~")" |
   "FAnd("~ efexp ~","~ efexp ~")" ^^ {case _~e1~_~e2~_ => FAnd(e1,e2)}  |
   "FOr("~ efexp ~","~ efexp ~")" ^^ {case _~e1~_~e2~_ => FOr(e1,e2)}  |
@@ -71,7 +75,7 @@ object Parser extends RegexParsers {
 
   def prod: Parser[Set[String]] =
     "("~>feats<~")" |
-    "()" ^^ {case _ => Set("")}
+    "()" ^^ {case _ => Set()}
 
   def feats:Parser[Set[String]] =
     featName~","~feats ^^ {case f~_~set => set ++ Set(f)} |
