@@ -62,7 +62,8 @@ object Parser extends RegexParsers {
   "FOr("~ efexp ~","~ efexp ~")" ^^ {case _~e1~_~e2~_ => FOr(e1,e2)}  |
   "FNot("~ efexp ~")" ^^ {case _ ~ e ~ _  => FNot(e)} |
   "FEq("~ efexp ~","~ efexp ~")" ^^ {case _~e1~_~e2~_ => FEq(e1,e2)}  |
-  "FImp("~ efexp ~","~ efexp ~")" ^^ {case _~e1~_~e2~_ => FImp(e1,e2)}
+  "FImp("~ efexp ~","~ efexp ~")" ^^ {case _~e1~_~e2~_ => FImp(e1,e2)} |
+  "FXor("~ efexp ~","~ efexp ~")" ^^ {case _~e1~_~e2~_ => FOr(FAnd(e1,FNot(e2)),FAnd(e2,FNot(e1)))}
 
 
   /* Set of Products */
