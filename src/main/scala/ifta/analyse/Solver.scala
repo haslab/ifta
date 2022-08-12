@@ -53,9 +53,12 @@ object Solver {
 //    val sols = solveAll(cnf)
 //    sols.map(x=>rebuildSol(x.toSet))
 //    resetVars()
-    val cnf = CNF.toCNFDimacs(Simplify(Simplify.removeSS(e)))
-    val sols = solveAll(cnf)
-    sols.map(x=> CNF.rebuildTseitinSol(x.toSet))
+    synchronized {
+      val cnf = CNF.toCNFDimacs(Simplify(Simplify.removeSS(e)))
+      val sols = solveAll(cnf)
+      val res = sols.map(x => CNF.rebuildTseitinSol(x.toSet))
+      res
+    }
   }
 
 //  private var vars:Map[String,Int] = Map()

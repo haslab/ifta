@@ -10,6 +10,7 @@ import ifta.analyse.Simplify
 
 object CNF {
 
+  // DANGER: concurrent executions of CNF must be protected by a lock to avoid sharing variables!
   private var vars: Map[FExp,Int] = Map()
   private var seed:Int = 1
 
